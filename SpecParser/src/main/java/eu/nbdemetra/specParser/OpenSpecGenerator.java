@@ -1,0 +1,67 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package eu.nbdemetra.specParser;
+
+import ec.nbdemetra.sa.MultiProcessingDocument;
+import ec.nbdemetra.sa.MultiProcessingManager;
+import ec.nbdemetra.ws.WorkspaceItem;
+import ec.nbdemetra.ws.nodes.WsNode;
+import ec.nbdemetra.x13.X13DocumentManager;
+import ec.tss.sa.documents.X13Document;
+import ec.tstoolkit.utilities.IModifiable;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JOptionPane;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
+import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle;
+
+/**
+ *
+ * @author Nina Gonschorreck
+ */
+@ActionID(category = "Tools",
+        id = "eu.nbdemetra.x13spec.OpenSpecGenerator")
+@ActionRegistration(displayName = "#CTL_OpenSpecGenerator")
+@ActionReferences({
+    @ActionReference(path = X13DocumentManager.ITEMPATH, position = 1000, separatorAfter = 1090),
+    @ActionReference(path = MultiProcessingManager.ITEMPATH, position = 1000, separatorAfter = 1090)
+})
+@NbBundle.Messages("CTL_OpenSpecGenerator=Open Spec Generator")
+
+public class OpenSpecGenerator implements ActionListener {
+
+    private WsNode context;
+
+    public OpenSpecGenerator(WsNode context) {
+        this.context = context;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+        //search in actually Workspace MultiProcessingDocument or X13Document (both implement IModifiable)
+        WorkspaceItem w = (WorkspaceItem) context.getWorkspace().searchDocument(context.lookup(), IModifiable.class);
+
+        if (w.getElement() instanceof X13Document) {
+
+            //vllt Factory
+            new SingleSpec((X13Document) w.getElement(), w.getId(), w.getDisplayName());
+
+//            ((X13Document) w.getElement()).getSpecification();
+        } else if (w.getElement() instanceof MultiProcessingDocument) {
+
+            //vllt Factory
+            new MultiSpec(((MultiProcessingDocument) w.getElement()).getCurrent(),w.getId(), w.getDisplayName());
+
+        } else {
+            JOptionPane.showInputDialog(null, "nix");
+        }
+    }
+
+}
