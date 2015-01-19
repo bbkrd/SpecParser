@@ -116,8 +116,10 @@ public class WinX13SpecSeparator {
                 spec.getX11Specification().setMode(DecompositionMode.LogAdditive);
                 break;
             case "pseudoadd":
+                errors.add("No Support for value " + content + " in " + partName.name());
                 break;
             default:
+                errors.add("No Support for value " + content + " in " + partName.name());
                 break;
         }
     }
@@ -163,6 +165,8 @@ public class WinX13SpecSeparator {
                         tmp.add(SeasonalFilterOption.Msr);
                         break;
                     default:
+                        errors.add("No Support for value " + content + " in " + partName.name());
+                        tmp.add(null);
                         break;
                 }
             }
@@ -177,32 +181,54 @@ public class WinX13SpecSeparator {
          *   Set the correct length of Hendersonfilter for JD+
          */
         content = content.replaceAll(" ", "");
-        int t = Integer.parseInt(content);
-        spec.getX11Specification().setHendersonFilterLength(t);
+        try {
+            int t = Integer.parseInt(content);
+            spec.getX11Specification().setHendersonFilterLength(t);
+        } catch (NumberFormatException ex) {
+            errors.add(content + " isn't a correct argument for HendersonFilter in " + partName.name());
+        }
+
     }
 
     public void read_sigmalim(SpecificationPart partName, String content) {
 
-        /*
-         *   
+        /* 
+         *    Selects the values for lower and upper sigma
          */
-        content = content.replaceAll("\\(", "");
-        content = content.replaceAll("\\)", "");
-        content = content.trim();
+         content = content.replaceAll(";", "");
+        String cont = content.replaceAll("\\(", "");
+        cont = cont.replaceAll("\\)", "");
 
-        String[] tmp;
-        if (content.contains(",")) {
-            tmp = content.split(",");
-        } else if (content.contains("\t")) {
-            tmp = content.split("\t");
-        } else {
-            tmp = content.split(" ");
+        if (cont.startsWith("\\s")) {
+            cont = cont.substring(1);
+        }
+        if (cont.endsWith("\\s")) {
+            cont = cont.substring(0, cont.length() - 2);
         }
 
-        if (tmp[0].isEmpty()) {
-            spec.getX11Specification().setSigma(1.5, Double.parseDouble(tmp[1]));
+        String[] tmp;
+        if (cont.contains(",")) {
+            tmp = cont.split(",");
+        } else if (cont.contains("\t")) {
+            tmp = cont.split("\t");
         } else {
-            spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), Double.parseDouble(tmp[1]));
+            tmp = cont.split(" ");
+        }
+
+        try {
+            if (tmp.length == 1) {
+                spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), 2.5);
+            } else {
+                if (tmp[0].isEmpty() || tmp[0].equals(" ")) {
+                    spec.getX11Specification().setSigma(1.5, Double.parseDouble(tmp[1]));
+                } else if (tmp[1].isEmpty() || tmp[1].equals(" ")) {
+                    spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), 2.5);
+                } else {
+                    spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), Double.parseDouble(tmp[1]));
+                }
+            }
+        } catch (NumberFormatException e) {
+            errors.add(content+" is no correct format for the sigma argument in "+partName.name());
         }
     }
 
