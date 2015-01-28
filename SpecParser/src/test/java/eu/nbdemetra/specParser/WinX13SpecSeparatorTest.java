@@ -5,10 +5,11 @@
  */
 package eu.nbdemetra.specParser;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import ec.satoolkit.DecompositionMode;
+import ec.satoolkit.x11.SeasonalFilterOption;
+import ec.satoolkit.x11.X11Specification;
+import ec.satoolkit.x13.X13Specification;
+import static junit.framework.TestCase.assertEquals;
 import org.junit.Test;
 
 /**
@@ -33,15 +34,120 @@ public class WinX13SpecSeparatorTest {
         }
     }
 
-    @Test
+//    @Test
+    public void testeX11() {
+
+        String winX11text = "x11{ mode = add\n"
+                + "trendma = 13\n"
+                + "sigmalim =(1.25  2.75)\n" 
+                + "seasonalma = s3x9\n"
+                + "title = \"3x9 moving average, mad\"\n"
+                + "appendfcst = yes\n"
+                + "appendbcst = no\n"
+                + "final = user\n"
+                + "print = ( brief +b2)\n"
+                + "save = ( d10 d11 )\n"
+                + "savelog = ( m7 q )}";
+
+        System.out.println(winX11text);
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.buildSpec(winX11text);
+        X13Specification erg = sep.getResult();
+
+        for (String s : sep.getErrorList()) {
+            System.out.println(s);
+        }
+
+        X11Specification x11 = new X11Specification();
+        x11.setMode(DecompositionMode.Additive);
+        x11.setSeasonalFilter(SeasonalFilterOption.S3X9);
+        x11.setHendersonFilterLength(13);
+        x11.setSigma(1.25, 2.75);
+
+        X13Specification x13 = new X13Specification();
+        x13.setX11Specification(x11);
+
+        assertEquals(x13, erg);
+    }
+
+//    @Test
     public void teste_sigmalim() {
 
-        String test = "(a, b);";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        double lowerSigma = 0.6;
+        double upperSigma = 2.45;
 
-        sep.read_sigmalim(SpecificationPart.X11, test);
-        for(String t: sep.getErrorList()){
-            System.out.println(t);
+        String winX13Text = " ( " + lowerSigma + "   " + upperSigma + " ) ;";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_sigmalim(SpecificationPart.X11, winX13Text);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getX11Specification().setLowerSigma(lowerSigma);
+        x13.getX11Specification().setUpperSigma(upperSigma);
+
+        assertEquals(erg, x13);
+    }
+
+//    @Test
+    public void teste_mode() {
+
+        String winX13Text = " mult;";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_mode(SpecificationPart.X11, winX13Text);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getX11Specification().setMode(DecompositionMode.Multiplicative);
+
+        assertEquals(erg, x13);
+    }
+
+//    @Test
+    public void teste_sesonalma() {
+
+        SeasonalFilterOption[] filter = {SeasonalFilterOption.S3X15, SeasonalFilterOption.S3X15, SeasonalFilterOption.Stable};
+
+        StringBuilder sb = new StringBuilder("(");
+        for (SeasonalFilterOption s : filter) {
+            sb.append(s.toString()).append("\t");
+        }
+        sb.append(")");
+        String winX13Text = sb.toString();
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_seasonalma(SpecificationPart.X11, winX13Text);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getX11Specification().setSeasonalFilters(filter);
+
+        assertEquals(x13, erg);
+    }
+
+//    @Test
+    public void teste_trendma() {
+
+        int trend = 13;
+
+        String winX13Text = " " + trend + ";";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_trendma(SpecificationPart.X11, winX13Text);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getX11Specification().setHendersonFilterLength(trend);
+
+        assertEquals(x13, erg);
+    }
+
+    @Test
+    public void teste_model(){
+        
+        String model = " (0,1,0)( [2], 1, 1)12;";
+        
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_model(SpecificationPart.ARIMA, model);
+        for(String e : sep.getErrorList()){
+            System.out.println(e);
         }
     }
 }

@@ -54,7 +54,7 @@ public class SpecCollector {
             // Translation from WinX13Spec to JDemetra+Spec
             WinX13SpecSeparator separator = new WinX13SpecSeparator();
             separator.buildSpec(winX13SpecText);
-            jdSpec=separator.getResult();
+//            jdSpec=separator.getResult();
             errors = separator.getErrorList();
         } else {
             //Translation from JDemetra+Spec to WinX13Spec
