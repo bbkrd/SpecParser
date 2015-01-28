@@ -240,12 +240,131 @@ public class WinX13SpecSeparator {
 
     public void read_ar(SpecificationPart partName, String content) {
 
+        /*  assigned String
+        *   case 1: (x, ..., y);
+        *   case 2: (, x);
+        *   case 3: (x,);
+        *
+        *   x, y with or without 'f'
+        */
+        
+//        1. Delete all unnecassary letters
         content = content.replaceAll(";", "");
         String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
+
+//        2. Get coefficients vector with zeros and default values (calculated in read_model)
+        Parameter[] phi = spec.getRegArimaSpecification().getArima().getPhi();
+        Parameter[] bPhi = spec.getRegArimaSpecification().getArima().getBPhi();
+
+//        3. Case with blank value
+        StringBuilder sb = new StringBuilder();
+        if (s.startsWith(",")) {
+            sb.append("-0.1").append(s);
+            s = sb.toString();
+            sb = new StringBuilder();
+        }
+        if (s.endsWith(",")) {
+            sb.append(s).append("-0.1");
+            s = sb.toString();
+        }
+
+        //Parameters for loops
+        String[] tmp;
+        tmp = s.split(",");
+        int counter = 0;
+        double value;
         
+//        4. Set assigned parameters on the correct position in the vector
+        if (phi != null) {
+            for (Parameter p : phi) {
+                if (p.getValue() == -0.1) {
+                    if (tmp[counter].contains("f")) {
+                        p.setType(ParameterType.Fixed);
+                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    }
+                    value = Double.parseDouble(tmp[counter])*-1.0;
+                    p.setValue(value);
+                    counter++;
+                }
+            }
+        }
+        if (bPhi != null) {
+            for (Parameter p : bPhi) {
+                  if (p.getValue() == -0.1) {
+                    if (tmp[counter].contains("f")) {
+                        p.setType(ParameterType.Fixed);
+                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    }
+                    value = Double.parseDouble(tmp[counter])*-1.0;
+                    p.setValue(value);
+                    counter++;
+                }
+            }
+        }
     }
 
     public void read_ma(SpecificationPart partName, String content) {
+        /*  assigned String
+        *   case 1: (x, ..., y);
+        *   case 2: (, x);
+        *   case 3: (x,);
+        *
+        *   x, y with or without 'f'
+        */
+        
+//        1. Delete all unnecassary letters
+        content = content.replaceAll(";", "");
+        String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
+
+//        2. Get coefficients vector with zeros and default values (calculated in read_model)
+        Parameter[] theta = spec.getRegArimaSpecification().getArima().getTheta();
+        Parameter[] bTheta = spec.getRegArimaSpecification().getArima().getBTheta();
+
+//        3. Case with blank value
+        StringBuilder sb = new StringBuilder();
+        if (s.startsWith(",")) {
+            sb.append("-0.1").append(s);
+            s = sb.toString();
+            sb = new StringBuilder();
+        }
+        if (s.endsWith(",")) {
+            sb.append(s).append("-0.1");
+            s = sb.toString();
+        }
+
+        //Parameters for loops
+        String[] tmp;
+        tmp = s.split(",");
+        int counter = 0;
+        double value;
+        
+//        4. Set assigned parameters on the correct position in the vector
+        if (theta != null) {
+            for (Parameter q : theta) {
+                if (q.getValue() == -0.1) {
+                    if (tmp[counter].contains("f")) {
+                        q.setType(ParameterType.Fixed);
+                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    }
+                    value = Double.parseDouble(tmp[counter])*-1.0;
+                    q.setValue(value);
+                    counter++;
+                }
+            }
+        }
+        if (bTheta != null) {
+            for (Parameter q : bTheta) {
+                  if (q.getValue() == -0.1) {
+                    if (tmp[counter].contains("f")) {
+                        q.setType(ParameterType.Fixed);
+                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    }
+                    value = Double.parseDouble(tmp[counter])*-1.0;
+                    q.setValue(value);
+                    counter++;
+                }
+            }
+        }
     }
 
     public void read_model(SpecificationPart partName, String content) {
@@ -262,7 +381,7 @@ public class WinX13SpecSeparator {
 
         //1. Split on ")(" with or without spaces
         String[] sep = content.split("\\s*\\)\\s*\\(\\s*");
-        
+
         String[] match;
         boolean sarima;
         String p, d, q;
@@ -326,7 +445,7 @@ public class WinX13SpecSeparator {
 //                i) extract arguments in [...]
                 p = p.replaceAll("\\[", "").replaceAll("\\]", "");
                 p_array = p.split(",");
-                
+
 //              ii) set parameter, when not use 0 else default
                 p = p_array[p_array.length - 1];
                 p_para = new Parameter[Integer.parseInt(p)];
@@ -358,7 +477,7 @@ public class WinX13SpecSeparator {
                 q = q.replaceAll("\\[", "").replaceAll("\\]", "");
                 q_array = q.split(",");
                 q = q_array[q_array.length - 1];
-                
+
 //                ii) set parameter
                 q_para = new Parameter[Integer.parseInt(q)];
                 for (int j = 0; j < q_para.length; j++) {

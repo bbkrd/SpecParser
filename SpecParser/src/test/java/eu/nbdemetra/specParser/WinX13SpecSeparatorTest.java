@@ -9,6 +9,7 @@ import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
+import ec.tstoolkit.Parameter;
 import static junit.framework.TestCase.assertEquals;
 import org.junit.Test;
 
@@ -142,12 +143,17 @@ public class WinX13SpecSeparatorTest {
     @Test
     public void teste_model(){
         
-        String model = " (0,1,0)( [2], 1, 1)12;";
-        
+        String model = " (2,1,[3])(1 1 1);";
+        String ar = "(, 0.7f,)";
+        String ma ="(0.2f,);";
         WinX13SpecSeparator sep = new WinX13SpecSeparator();
         sep.read_model(SpecificationPart.ARIMA, model);
-        for(String e : sep.getErrorList()){
-            System.out.println(e);
+        sep.read_ar(SpecificationPart.ARIMA, ar);
+        sep.read_ma(SpecificationPart.ARIMA, ma);
+        
+        for(Parameter p : sep.getResult().getRegArimaSpecification().getArima().getTheta()){
+            System.out.println("p: "+p.getValue()+" "+p.getType());
         }
+        
     }
 }
