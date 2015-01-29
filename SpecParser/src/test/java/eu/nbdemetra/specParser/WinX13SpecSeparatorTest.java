@@ -10,6 +10,7 @@ import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tstoolkit.Parameter;
+import ec.tstoolkit.ParameterType;
 import static junit.framework.TestCase.assertEquals;
 import org.junit.Test;
 
@@ -40,7 +41,7 @@ public class WinX13SpecSeparatorTest {
 
         String winX11text = "x11{ mode = add\n"
                 + "trendma = 13\n"
-                + "sigmalim =(1.25  2.75)\n" 
+                + "sigmalim =(1.25  2.75)\n"
                 + "seasonalma = s3x9\n"
                 + "title = \"3x9 moving average, mad\"\n"
                 + "appendfcst = yes\n"
@@ -141,19 +142,41 @@ public class WinX13SpecSeparatorTest {
     }
 
     @Test
-    public void teste_model(){
-        
+    public void teste_model() {
+
         String model = " (2,1,[3])(1 1 1);";
-        String ar = "(, 0.7f,)";
-        String ma ="(0.2f,);";
+        String ar = "(, 0.7f,);";
+        String ma = "(0.2f,);";
         WinX13SpecSeparator sep = new WinX13SpecSeparator();
         sep.read_model(SpecificationPart.ARIMA, model);
         sep.read_ar(SpecificationPart.ARIMA, ar);
         sep.read_ma(SpecificationPart.ARIMA, ma);
-        
-        for(Parameter p : sep.getResult().getRegArimaSpecification().getArima().getTheta()){
-            System.out.println("p: "+p.getValue()+" "+p.getType());
-        }
-        
+        X13Specification erg = sep.getResult();
+
+        Parameter[] phi = {new Parameter(-0.1, ParameterType.Undefined),
+            new Parameter(-0.7, ParameterType.Fixed)};
+
+        Parameter[] theta = {new Parameter(0.0, ParameterType.Undefined),
+            new Parameter(0.0, ParameterType.Undefined),
+            new Parameter(-0.2, ParameterType.Fixed)};
+
+        Parameter[] bphi = {new Parameter(-0.1, ParameterType.Undefined)};
+
+        Parameter[] btheta = {new Parameter(-0.1, ParameterType.Undefined)};
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getArima().setP(2);
+        x13.getRegArimaSpecification().getArima().setPhi(phi);
+        x13.getRegArimaSpecification().getArima().setD(1);
+        x13.getRegArimaSpecification().getArima().setQ(3);
+        x13.getRegArimaSpecification().getArima().setTheta(theta);
+        x13.getRegArimaSpecification().getArima().setBP(1);
+        x13.getRegArimaSpecification().getArima().setBPhi(bphi);
+        x13.getRegArimaSpecification().getArima().setBD(1);
+        x13.getRegArimaSpecification().getArima().setBQ(1);
+        x13.getRegArimaSpecification().getArima().setBTheta(btheta);
+
+//        assertEquals(x13.getRegArimaSpecification().getArima().getPhi(), erg.getRegArimaSpecification().getArima().getPhi());
+        assertEquals(x13, erg);
     }
 }
