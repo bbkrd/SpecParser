@@ -141,7 +141,7 @@ public class WinX13SpecSeparatorTest {
         assertEquals(x13, erg);
     }
 
-    @Test
+//    @Test
     public void teste_model() {
 
         String model = " (2,1,[3])(1 1 1);";
@@ -177,6 +177,165 @@ public class WinX13SpecSeparatorTest {
         x13.getRegArimaSpecification().getArima().setBTheta(btheta);
 
 //        assertEquals(x13.getRegArimaSpecification().getArima().getPhi(), erg.getRegArimaSpecification().getArima().getPhi());
+        assertEquals(x13, erg);
+    }
+
+//    @Test
+    public void teste_acceptdefault() {
+        String s = "no";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_acceptdefault(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
+
+        assertEquals(x13, erg);
+
+        s = "yes";
+        sep.read_acceptdefault(SpecificationPart.AUTOMDL, s);
+        erg = sep.getResult();
+
+        x13.getRegArimaSpecification().getAutoModel().setAcceptDefault(true);
+
+        assertEquals(x13, erg);
+    }
+
+//    @Test
+    public void teste_checkmu() {
+        String s = "no";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_checkmu(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setCheckMu(false);
+
+        assertEquals(x13, erg);
+
+        s = "yes";
+        sep.read_checkmu(SpecificationPart.AUTOMDL, s);
+        erg = sep.getResult();
+
+        x13.getRegArimaSpecification().getAutoModel().setCheckMu(true);
+
+        assertEquals(x13, erg);
+    }
+
+    public void teste_mixed() {
+
+        String s = " no;";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_mixed(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setMixed(false);
+
+        assertEquals(x13, erg);
+
+        s = "yes;";
+        sep.read_mixed(SpecificationPart.AUTOMDL, s);
+        erg = sep.getResult();
+
+        x13.getRegArimaSpecification().getAutoModel().setMixed(true);
+
+        assertEquals(x13, erg);
+    }
+
+    @Test
+    public void teste_ljungboxlimit() {
+
+        String s = " 0.95;";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_ljungboxlimit(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(0.95);
+
+        assertEquals(x13, erg);
+    }
+
+    @Test
+    public void teste_armalimit() {
+
+        String s = " 0.95;";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_armalimit(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setArmaSignificance(0.95);
+
+        assertEquals(x13, erg);
+    }
+
+    @Test
+    public void teste_balanced() {
+        String s = "no";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_balanced(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setBalanced(false);
+
+        assertEquals(x13, erg);
+
+        s = "yes";
+        sep.read_balanced(SpecificationPart.AUTOMDL, s);
+        erg = sep.getResult();
+
+        x13.getRegArimaSpecification().getAutoModel().setBalanced(true);
+
+        assertEquals(x13, erg);
+    }
+    @Test
+    public void teste_bhrinitial() {
+        String s = "no";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_hrinitial(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setHannanRissanen(false);
+
+        assertEquals(x13, erg);
+
+        s = "yes";
+        sep.read_hrinitial(SpecificationPart.AUTOMDL, s);
+        erg = sep.getResult();
+
+        x13.getRegArimaSpecification().getAutoModel().setHannanRissanen(true);
+
+        assertEquals(x13, erg);
+    }
+    
+     @Test
+    public void teste_reducecv() {
+
+        String s = " 0.06;";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_reducecv(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setPercentReductionCV(0.06);
+
+        assertEquals(x13, erg);
+    }
+     @Test
+    public void teste_urfinal() {
+
+        String s = "1;";
+        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        sep.read_urfinal(SpecificationPart.AUTOMDL, s);
+        X13Specification erg = sep.getResult();
+
+        X13Specification x13 = new X13Specification();
+        x13.getRegArimaSpecification().getAutoModel().setUnitRootLimit(1);
+
         assertEquals(x13, erg);
     }
 }
