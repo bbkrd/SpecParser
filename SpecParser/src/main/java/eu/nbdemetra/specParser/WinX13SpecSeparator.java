@@ -9,6 +9,7 @@ import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
+import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
 import ec.tstoolkit.modelling.arima.x13.X13Exception;
@@ -29,21 +30,23 @@ public class WinX13SpecSeparator {
         return errors.toArray(new String[errors.size()]);
     }
 
-    public X13Specification getResult() {
+    public X13Document getResult() {
         //ProcessingContext benötigt woher???
-//        X13Document x13 = new X13Document(null);
-//        x13.setSpecification(spec);
-        return spec;
+        X13Document x13 = new X13Document();
+        x13.setSpecification(spec);
+        return x13;
     }
 
     public void buildSpec(String winX13Text) {
 
         //0. delete all comments and empty lines
         StringBuilder sb = new StringBuilder();
+        
         String[] allLines = winX13Text.split("\n");
         for (String line : allLines) {
+            line=line.trim();
             if (line.contains("#")) {
-                line = line.substring(0, line.indexOf("#") - 1);
+                line = line.substring(0, line.indexOf("#"));
             }
             if (!line.replaceAll("\\s", "").isEmpty()) {
                 sb.append(";").append(line);
@@ -108,7 +111,7 @@ public class WinX13SpecSeparator {
          */
         content = content.replaceAll(";", "").trim();
         content = content.replaceAll(" ", "");
-        switch (content) {
+        switch (content.toLowerCase()) {
             case "add":
                 spec.getX11Specification().setMode(DecompositionMode.Additive);
                 break;
@@ -583,7 +586,7 @@ public class WinX13SpecSeparator {
             errors.add("Wrong format for ljungboxlimit in " + partName);
         }
     }
-    
+
     public void read_armalimit(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
@@ -593,11 +596,11 @@ public class WinX13SpecSeparator {
             spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(value);
         } catch (NumberFormatException ex) {
             errors.add("Wrong format for armalimit in " + partName);
-        }catch(X13Exception e){
+        } catch (X13Exception e) {
             errors.add(e.toString());
         }
     }
-    
+
     public void read_balanced(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toUpperCase();
@@ -614,8 +617,8 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-    
-     public void read_hrinitial(SpecificationPart partName, String content) {
+
+    public void read_hrinitial(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toUpperCase();
 
@@ -631,7 +634,8 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-     public void read_reducecv(SpecificationPart partName, String content) {
+
+    public void read_reducecv(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
@@ -640,12 +644,12 @@ public class WinX13SpecSeparator {
             spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(value);
         } catch (NumberFormatException ex) {
             errors.add("Wrong format for reducecv in " + partName);
-        } catch(X13Exception e){
+        } catch (X13Exception e) {
             errors.add(e.getMessage());
         }
     }
-     
-     public void read_urfinal(SpecificationPart partName, String content) {
+
+    public void read_urfinal(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
@@ -654,16 +658,30 @@ public class WinX13SpecSeparator {
             spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(value);
         } catch (NumberFormatException ex) {
             errors.add("Wrong format for urfinal in " + partName);
-        }  catch(X13Exception e){
+        } catch (X13Exception e) {
             errors.add(e.getMessage());
         }
     }
+
+    public void read_tol(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+
+        try {
+            double value = Double.parseDouble(content);
+            spec.getRegArimaSpecification().getEstimate().setTol(value);
+        } catch (NumberFormatException ex) {
+            errors.add("Wrong format for tol in " + partName);
+        } catch (X13Exception e) {
+            errors.add(e.getMessage());
+        }
+    }
+
     /*
      * empty methods
      *
      *   argument is not supported, but it is not an error
      */
-
     public void read_title(SpecificationPart partName, String content) {
     }
 
