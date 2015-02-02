@@ -22,21 +22,21 @@ import java.util.ArrayList;
  * @author Nina Gonschorreck
  */
 public class WinX13SpecSeparator {
-
+    
     private X13Specification spec = new X13Specification();
     private ArrayList<String> errors = new ArrayList();
-
+    
     public String[] getErrorList() {
         return errors.toArray(new String[errors.size()]);
     }
-
+    
     public X13Document getResult() {
         //ProcessingContext benötigt woher???
         X13Document x13 = new X13Document();
         x13.setSpecification(spec);
         return x13;
     }
-
+    
     public void buildSpec(String winX13Text) {
 
         //0. delete all comments and empty lines
@@ -44,7 +44,7 @@ public class WinX13SpecSeparator {
         
         String[] allLines = winX13Text.split("\n");
         for (String line : allLines) {
-            line=line.trim();
+            line = line.trim();
             if (line.contains("#")) {
                 line = line.substring(0, line.indexOf("#"));
             }
@@ -56,7 +56,7 @@ public class WinX13SpecSeparator {
 
         //1. split on "}" to seperate the specification parts
         String[] specParts = winX13Text.split("}");
-
+        
         Method m;
         StringBuilder method;
         SpecificationPart specPartName;
@@ -80,7 +80,7 @@ public class WinX13SpecSeparator {
                         lineSplitted[0] = lineSplitted[0].replaceAll("\\s", "");
                         method = new StringBuilder("read_");
                         method.append(lineSplitted[0].toLowerCase());
-
+                        
                         try {
                             //5. try to invoke the method for the argument
                             m = this.getClass().getMethod(method.toString().toLowerCase(), SpecificationPart.class, String.class);
@@ -94,7 +94,7 @@ public class WinX13SpecSeparator {
                 errors.add("No support for " + specPartSplitted[0]);
             }
         }
-
+        
     }
 
     /* The following methods have to be public, 
@@ -129,7 +129,7 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-
+    
     public void read_seasonalma(SpecificationPart partName, String content) {
 
         /*
@@ -139,9 +139,9 @@ public class WinX13SpecSeparator {
         content = content.replaceAll(";", "").trim();
         content = content.replaceAll("\\(", "");
         content = content.replaceAll("\\)", "");
-
+        
         String[] filter = content.split("\\s");
-
+        
         ArrayList<SeasonalFilterOption> tmp = new ArrayList();
         for (String item : filter) {
             if (!item.isEmpty()) {
@@ -179,9 +179,9 @@ public class WinX13SpecSeparator {
             }
         }
         spec.getX11Specification().setSeasonalFilters((SeasonalFilterOption[]) tmp.toArray(new SeasonalFilterOption[tmp.size()]));
-
+        
     }
-
+    
     public void read_trendma(SpecificationPart partName, String content) {
 
         /*
@@ -195,16 +195,16 @@ public class WinX13SpecSeparator {
         } catch (NumberFormatException ex) {
             errors.add(content + " isn't a correct argument for HendersonFilter in " + partName.name());
         }
-
+        
     }
-
+    
     public void read_sigmalim(SpecificationPart partName, String content) {
 
         /* 
          *    Selects the values for lower and upper sigma
          */
         content = content.replaceAll(";", "").trim();
-
+        
         String cont = content.replaceAll("\\s+", " ");
         cont = cont.replaceAll("\\s*\\(\\s*", "");
         cont = cont.replaceAll("\\s*\\)\\s*", "");
@@ -223,7 +223,7 @@ public class WinX13SpecSeparator {
         } else {
             tmp = cont.split(" ");
         }
-
+        
         try {
             if (tmp.length == 1) {
                 spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), 2.5);
@@ -240,7 +240,7 @@ public class WinX13SpecSeparator {
             errors.add(content + " is no correct format for the sigma argument in " + partName.name());
         }
     }
-
+    
     public void read_ar(SpecificationPart partName, String content) {
 
         /*  assigned String
@@ -253,6 +253,7 @@ public class WinX13SpecSeparator {
 //        1. Delete all unnecassary letters
         content = content.replaceAll(";", "");
         String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        s = s.toLowerCase();
 
 //        2. Get coefficients vector with zeros and default values (calculated in read_model)
         Parameter[] phi = spec.getRegArimaSpecification().getArima().getPhi();
@@ -261,15 +262,16 @@ public class WinX13SpecSeparator {
 //        3. Case with blank value
         StringBuilder sb = new StringBuilder();
         if (s.startsWith(",")) {
-            sb.append("0.1").append(s);
+            sb.append(";").append(s);
             s = sb.toString();
             sb = new StringBuilder();
         }
         if (s.endsWith(",")) {
-            sb.append(s).append("0.1");
+            sb.append(s).append(";");
             s = sb.toString();
         }
-
+        s = s.replaceAll(",\\s*,", ",;,");
+        
         //Parameters for loops
         String[] tmp;
         tmp = s.split(",");
@@ -280,11 +282,18 @@ public class WinX13SpecSeparator {
         if (phi != null) {
             for (Parameter p : phi) {
                 if (p.getValue() == 0.1) {
-                    if (tmp[counter].contains("f")) {
-                        p.setType(ParameterType.Fixed);
-                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    if (!tmp[counter].equals(";")) {
+                        if (tmp[counter].contains("f")) {
+                            p.setType(ParameterType.Fixed);
+                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                        } else {
+                            p.setType(ParameterType.Initial);
+                        }
+                        value = Double.parseDouble(tmp[counter]) * -1.0;
+                    } else {
+                        value = -0.1;
+                        p.setType(ParameterType.Undefined);
                     }
-                    value = Double.parseDouble(tmp[counter]) * -1.0;
                     p.setValue(value);
                     counter++;
                 }
@@ -293,18 +302,25 @@ public class WinX13SpecSeparator {
         if (bPhi != null) {
             for (Parameter p : bPhi) {
                 if (p.getValue() == 0.1) {
-                    if (tmp[counter].contains("f")) {
-                        p.setType(ParameterType.Fixed);
-                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    if (!tmp[counter].equals(";")) {
+                        if (tmp[counter].contains("f")) {
+                            p.setType(ParameterType.Fixed);
+                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                        } else {
+                            p.setType(ParameterType.Initial);
+                        }
+                        value = Double.parseDouble(tmp[counter]) * -1.0;
+                    } else {
+                        value = -0.1;
+                        p.setType(ParameterType.Undefined);
                     }
-                    value = Double.parseDouble(tmp[counter]) * -1.0;
                     p.setValue(value);
                     counter++;
                 }
             }
         }
     }
-
+    
     public void read_ma(SpecificationPart partName, String content) {
         /*  assigned String
          *   case 1: (x, ..., y);
@@ -317,6 +333,7 @@ public class WinX13SpecSeparator {
 //        1. Delete all unnecassary letters
         content = content.replaceAll(";", "");
         String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        s = s.toUpperCase();
 
 //        2. Get coefficients vector with zeros and default values (calculated in read_model)
         Parameter[] theta = spec.getRegArimaSpecification().getArima().getTheta();
@@ -325,14 +342,15 @@ public class WinX13SpecSeparator {
 //        3. Case with blank value
         StringBuilder sb = new StringBuilder();
         if (s.startsWith(",")) {
-            sb.append("0.1").append(s);
+            sb.append(";").append(s);
             s = sb.toString();
             sb = new StringBuilder();
         }
         if (s.endsWith(",")) {
-            sb.append(s).append("0.1");
+            sb.append(s).append(";");
             s = sb.toString();
         }
+        s = s.replaceAll(",\\s*,", ",;,");
 
         //Parameters for loops
         String[] tmp;
@@ -344,11 +362,18 @@ public class WinX13SpecSeparator {
         if (theta != null) {
             for (Parameter q : theta) {
                 if (q.getValue() == 0.1) {
-                    if (tmp[counter].contains("f")) {
-                        q.setType(ParameterType.Fixed);
-                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    if (!tmp[counter].equals(";")) {
+                        if (tmp[counter].contains("F")) {
+                            q.setType(ParameterType.Fixed);
+                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("F"));
+                        } else {
+                            q.setType(ParameterType.Initial);
+                        }
+                        value = Double.parseDouble(tmp[counter]) * -1.0;
+                    } else {
+                        value = -0.1;
+                        q.setType(ParameterType.Undefined);
                     }
-                    value = Double.parseDouble(tmp[counter]) * -1.0;
                     q.setValue(value);
                     counter++;
                 }
@@ -357,18 +382,25 @@ public class WinX13SpecSeparator {
         if (bTheta != null) {
             for (Parameter q : bTheta) {
                 if (q.getValue() == 0.1) {
-                    if (tmp[counter].contains("f")) {
-                        q.setType(ParameterType.Fixed);
-                        tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                    if (!tmp[counter].equals(";")) {
+                        if (tmp[counter].contains("F")) {
+                            q.setType(ParameterType.Fixed);
+                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("F"));
+                        } else {
+                            q.setType(ParameterType.Initial);
+                        }
+                        value = Double.parseDouble(tmp[counter]) * -1.0;
+                    } else {
+                        value = -0.1;
+                        q.setType(ParameterType.Undefined);
                     }
-                    value = Double.parseDouble(tmp[counter]) * -1.0;
                     q.setValue(value);
                     counter++;
                 }
             }
         }
     }
-
+    
     public void read_model(SpecificationPart partName, String content) {
 
         /*  assigned String
@@ -384,7 +416,7 @@ public class WinX13SpecSeparator {
 
         //1. Split on ")(" with or without spaces
         String[] sep = content.split("\\s*\\)\\s*\\(\\s*");
-
+        
         String[] match;
         boolean sarima;
         String p, d, q;
@@ -398,6 +430,7 @@ public class WinX13SpecSeparator {
             s = sep[i].trim();
             p = null;
             q = null;
+            d=null;
             sarima = false;
 
 //            3. Check it is the part of saisonal (SARIMA)
@@ -405,7 +438,7 @@ public class WinX13SpecSeparator {
             if ((i + 1) == 2 || match.length == 2) {
                 sarima = true;
             }
-
+            
             s = match[0].trim();
             s = s.replaceAll("\\(", "").trim();
 
@@ -443,7 +476,7 @@ public class WinX13SpecSeparator {
                 for (int j = 0; j < p_para.length; j++) {
                     p_para[j] = new Parameter(0.1, ParameterType.Undefined);
                 }
-
+                
             } else {
 //                i) extract arguments in [...]
                 p = p.replaceAll("\\[", "").replaceAll("\\]", "");
@@ -453,7 +486,7 @@ public class WinX13SpecSeparator {
                 p = p_array[p_array.length - 1];
                 p_para = new Parameter[Integer.parseInt(p)];
                 for (int j = 0; j < p_para.length; j++) {
-                    p_para[j] = new Parameter(0.0, ParameterType.Undefined);
+                    p_para[j] = new Parameter(0.0, ParameterType.Fixed);
                 }
                 for (String a : p_array) {
                     p_para[Integer.parseInt(a) - 1] = new Parameter(0.1, ParameterType.Undefined);
@@ -463,18 +496,18 @@ public class WinX13SpecSeparator {
 //                i) extract q
                 if (s.startsWith(",")) {
                     start = s.indexOf(",");
-                    s = s.substring(start + 1).trim();
+                    s = s.substring(start).trim();
                 }
                 start = s.indexOf(",");
-                q = s.substring(0, start);
-                s = s.substring(start + 1);
+                q = s.substring(start+1);
+                s = s.substring(0, start);
 
 //                ii) set default parameter
                 q_para = new Parameter[Integer.parseInt(q)];
                 for (int j = 0; j < q_para.length; j++) {
                     q_para[j] = new Parameter(0.1, ParameterType.Undefined);
                 }
-
+                
             } else {
 //                i) extract arguments in [...]
                 q = q.replaceAll("\\[", "").replaceAll("\\]", "");
@@ -484,12 +517,12 @@ public class WinX13SpecSeparator {
 //                ii) set parameter
                 q_para = new Parameter[Integer.parseInt(q)];
                 for (int j = 0; j < q_para.length; j++) {
-                    q_para[j] = new Parameter(0.0, ParameterType.Undefined);
+                    q_para[j] = new Parameter(0.0, ParameterType.Fixed);
                 }
                 for (String a : q_array) {
                     q_para[Integer.parseInt(a) - 1] = new Parameter(0.1, ParameterType.Undefined);
                 }
-
+                
             }
 
 //            c) extract d
@@ -519,15 +552,15 @@ public class WinX13SpecSeparator {
             } catch (X13Exception e) {
                 errors.add("Parameters for model in ARIMA are not correct");
             }
-
+            
         }
-
+        
     }
-
+    
     public void read_acceptdefault(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim().toUpperCase();
-
+        
         switch (content) {
             case "YES":
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(true);
@@ -540,11 +573,11 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-
+    
     public void read_checkmu(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim().toUpperCase();
-
+        
         switch (content) {
             case "YES":
                 spec.getRegArimaSpecification().getAutoModel().setCheckMu(true);
@@ -557,11 +590,11 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-
+    
     public void read_mixed(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim().toUpperCase();
-
+        
         switch (content) {
             case "YES":
                 spec.getRegArimaSpecification().getAutoModel().setMixed(true);
@@ -574,11 +607,11 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-
+    
     public void read_ljungboxlimit(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim();
-
+        
         try {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(value);
@@ -586,11 +619,11 @@ public class WinX13SpecSeparator {
             errors.add("Wrong format for ljungboxlimit in " + partName);
         }
     }
-
+    
     public void read_armalimit(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim();
-
+        
         try {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(value);
@@ -600,11 +633,11 @@ public class WinX13SpecSeparator {
             errors.add(e.toString());
         }
     }
-
+    
     public void read_balanced(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim().toUpperCase();
-
+        
         switch (content) {
             case "YES":
                 spec.getRegArimaSpecification().getAutoModel().setBalanced(true);
@@ -617,11 +650,11 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-
+    
     public void read_hrinitial(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim().toUpperCase();
-
+        
         switch (content) {
             case "YES":
                 spec.getRegArimaSpecification().getAutoModel().setHannanRissanen(true);
@@ -634,11 +667,11 @@ public class WinX13SpecSeparator {
                 break;
         }
     }
-
+    
     public void read_reducecv(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim();
-
+        
         try {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(value);
@@ -648,11 +681,11 @@ public class WinX13SpecSeparator {
             errors.add(e.getMessage());
         }
     }
-
+    
     public void read_urfinal(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim();
-
+        
         try {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(value);
@@ -662,11 +695,11 @@ public class WinX13SpecSeparator {
             errors.add(e.getMessage());
         }
     }
-
+    
     public void read_tol(SpecificationPart partName, String content) {
-
+        
         content = content.replaceAll(";", "").trim();
-
+        
         try {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getEstimate().setTol(value);
@@ -684,44 +717,44 @@ public class WinX13SpecSeparator {
      */
     public void read_title(SpecificationPart partName, String content) {
     }
-
+    
     public void read_save(SpecificationPart partName, String content) {
     }
-
+    
     public void read_savelog(SpecificationPart partName, String content) {
     }
-
+    
     public void read_print(SpecificationPart partName, String content) {
     }
-
+    
     public void read_type(SpecificationPart partName, String content) {
     }
 
     //This method print the x11 specification to controll your results.
     public void x11ToString() {
-
+        
         X11Specification x11 = spec.getX11Specification();
-
+        
         StringBuilder sb = new StringBuilder("X11\n"
                 + "###\n");
-
+        
         sb.append("Mode = ").append(x11.getMode()).append("\n");
-
+        
         sb.append("Seasonal = ( ");
         if (x11.getSeasonalFilters() != null) {
-
+            
             for (SeasonalFilterOption item : x11.getSeasonalFilters()) {
                 sb.append(item).append(" ");
             }
-
+            
         }
         sb.append(")\n");
-
+        
         sb.append("Trend = ").append(x11.getHendersonFilterLength()).append("\n");
-
+        
         sb.append("Sigma = (").append(x11.getLowerSigma()).append(" ").append(x11.getUpperSigma()).append(")");
-
+        
         System.out.println(sb.toString());
-
+        
     }
 }
