@@ -23,10 +23,10 @@ public class WinX13SpecSeparatorTest {
     public WinX13SpecSeparatorTest() {
     }
 
-//    @Test
+    @Test
     public void testSpecBuild() {
 
-        String winX13Text = "x11 { mode = add\n\t#nix\n\t seasonalma = 3x15 }\n arima{ model=nix\n\t}\nregression{ \n}\n";
+        String winX13Text = "x11 {sigmalim = (1.6\n 2.1)}";
 
         WinX13SpecSeparator sep = new WinX13SpecSeparator();
         sep.buildSpec(winX13Text);
@@ -243,7 +243,7 @@ public class WinX13SpecSeparatorTest {
         assertEquals(x13, erg);
     }
 
-    @Test
+//    @Test
     public void teste_ljungboxlimit() {
 
         String s = " 0.95;";
@@ -339,7 +339,7 @@ public class WinX13SpecSeparatorTest {
         assertEquals(x13, erg);
     }
     
-     @Test
+//     @Test
     public void teste_tol() {
 
         String s = "1e-5;";
