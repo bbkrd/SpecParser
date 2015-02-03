@@ -30,8 +30,6 @@ public class MultiSpec {
     private Id id;
     private WorkspaceItem ws;
 
-  
-
     public MultiSpec(WorkspaceItem ws) {
 
         //TODO: 
@@ -39,15 +37,17 @@ public class MultiSpec {
         //      Liste pflegen mit warnings für MyCellRender im window uebergeben
         MultiTopComponent window;
         if (!activeWindows.containsKey(ws.getId())) {
-            this.ws=ws;
+            this.ws = ws;
             this.id = ws.getId();
             window = new MultiTopComponent(ws.getDisplayName());
             window.setName("SpecParser for " + ws.getDisplayName());
 
             SingleSpec single;
             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
-                single = new SingleSpec(item);
-                singleSpecList.add(single);
+                if (!item.getEstimationMethod().name.contains("tramo")) {
+                    single = new SingleSpec(item);
+                    singleSpecList.add(single);
+                }
             }
 
             window.setSingleSpecList(singleSpecList);
