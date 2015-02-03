@@ -52,7 +52,7 @@ public class OpenSpecParser implements ActionListener {
 
             //vllt Factory
 //            new SingleSpec((X13Document) w.getElement(), w.getId(), w.getDisplayName());
-           SingleSpec s = SingleSpec.create(w);
+           SingleSpec s = new SingleSpec(w);
            w=s.getWorkspace();
            //            context.
 //            context=WsNode(Children.createChildren(s.getWorkspace().getOwner(), w.getId()), s.getSpecCollector(), w.getId());
@@ -60,7 +60,7 @@ public class OpenSpecParser implements ActionListener {
         } else if (w.getElement() instanceof MultiProcessingDocument) {
 
             //vllt Factory
-            new MultiSpec(((MultiProcessingDocument) w.getElement()).getCurrent(),w.getId(), w.getDisplayName());
+            new MultiSpec(w);
 
         } else {
             JOptionPane.showInputDialog(null, "nix");

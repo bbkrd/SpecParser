@@ -179,6 +179,10 @@ public final class SingleTopComponent extends TopComponent {
     private javax.swing.JToolBar toolBar;
     // End of variables declaration//GEN-END:variables
     private SpecViewer specViewer;
+    
+    public SpecViewer getSpecViewer(){
+        return specViewer;
+    }
 
 //    public void refreshSpecCollector() {
 //

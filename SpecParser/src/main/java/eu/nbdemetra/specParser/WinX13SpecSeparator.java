@@ -31,7 +31,6 @@ public class WinX13SpecSeparator {
     }
 
     public X13Document getResult() {
-        //ProcessingContext benötigt woher???
         X13Document x13 = new X13Document();
         x13.setSpecification(spec);
         return x13;
@@ -39,16 +38,14 @@ public class WinX13SpecSeparator {
 
     public void buildSpec(String winX13Text) {
 
-        System.out.println(""+winX13Text);
         //0. delete all comments and empty lines
-        StringBuilder sb;// = new StringBuilder();
+        StringBuilder sb;
         StringBuilder collector = new StringBuilder();
 
         boolean linebreak = false;
         String[] allLines = winX13Text.split("\n");
         for (String line : allLines) {
             line = line.trim();
-            System.out.println("line:"+line);
             if (line.contains("#")) {
                 line = line.substring(0, line.indexOf("#"));
             }
@@ -61,24 +58,17 @@ public class WinX13SpecSeparator {
                     linebreak=false;
                     line=line.replaceAll(";", " ");
                 }
-//                else{
-//                    line=line.replaceAll(";", "");
-//                }
                 sb=new StringBuilder();
                 line = sb.append(line).toString();
             }
             if(line.contains("(")){
                 if(!line.contains(")")){
                     linebreak = true;
-//                    line=line.replaceAll(";", "");
                 }
             }
-            System.out.println("linebreak:"+linebreak);
-            System.out.println("line:"+line);
             collector.append(line);
         }
         winX13Text = collector.toString();
-        System.out.println(""+winX13Text);
 
         //1. split on "}" to seperate the specification parts
         String[] specParts = winX13Text.split("}");

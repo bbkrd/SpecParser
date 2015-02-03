@@ -25,11 +25,7 @@ public class SingleSpec {
     private String displayName;
     private WorkspaceItem w;
 
-    public static SingleSpec create(WorkspaceItem w) {
-
-        SingleSpec single = new SingleSpec(w);
-        return single;
-    }
+   
 
     /*Constructor for MultiDocument Spec windows*/
     public SingleSpec(SaItem item) {
@@ -41,20 +37,22 @@ public class SingleSpec {
     public SingleSpec(WorkspaceItem w) {
 
         if (!activeWindows.containsKey(w.getId())) {
-            this.w=w;
+            this.w = w;
             this.spec = new SpecCollector(w);
             this.id = w.getId();
             this.displayName = w.getDisplayName();
             window = new SingleTopComponent();
-            window.setName("SpecGenerator for " + this.displayName);
+            window.setName("SpecParser for " + this.displayName);
 
             window.setSpecView(spec);
             window.open();
             window.requestActive();
 
             activeWindows.put(this.id, window);
+            window.setSpecView(spec);
         } else {
-            window = activeWindows.get(this.id);
+            window = activeWindows.get(w.getId());
+            spec = window.getSpecViewer().getSpecCollector();
             if (window.isOpen()) {
                 window.requestActive();
             } else {
@@ -62,7 +60,6 @@ public class SingleSpec {
                 window.requestActive();
             }
         }
-        window.setSpecView(spec);
     }
 
     public String getDisplayName() {
@@ -88,8 +85,9 @@ public class SingleSpec {
             return null;
         }
     }
-    public WorkspaceItem getWorkspace(){
-        w=spec.getWS();
+
+    public WorkspaceItem getWorkspace() {
+//        w = spec.getWS();
         return w;
     }
 }
