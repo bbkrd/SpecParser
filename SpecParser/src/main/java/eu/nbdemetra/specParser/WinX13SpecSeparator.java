@@ -41,7 +41,7 @@ public class WinX13SpecSeparator {
 
         System.out.println(""+winX13Text);
         //0. delete all comments and empty lines
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb;// = new StringBuilder();
         StringBuilder collector = new StringBuilder();
 
         boolean linebreak = false;

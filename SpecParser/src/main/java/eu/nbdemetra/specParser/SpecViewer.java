@@ -6,27 +6,10 @@
 package eu.nbdemetra.specParser;
 
 import ec.tss.documents.TsDocument;
-import ec.tss.sa.documents.SaDocument;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer;
-import java.awt.event.ActionEvent;
-import java.io.BufferedReader;
-import java.io.File;
-
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import javax.swing.AbstractAction;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
-import javax.swing.filechooser.FileFilter;
-
-import org.openide.util.Exceptions;
 
 /**
  * This class shows the transformation of a SingleSpec. The WinX13Spec is in the
@@ -47,8 +30,6 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
     // FACTORY METHODS >
     public static SpecViewer create(SpecCollector spec) {
-        
-        
         SpecViewer viewer = new SpecViewer(Type.APPLY, spec);       
         return viewer;
     }

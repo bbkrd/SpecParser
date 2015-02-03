@@ -5,6 +5,7 @@
  */
 package eu.nbdemetra.specParser;
 
+import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.utilities.Id;
@@ -16,14 +17,20 @@ import java.util.HashMap;
  */
 public class SingleSpec {
 
-    private SpecCollector spec = new SpecCollector();
+    private SpecCollector spec;
     private SaItem item;
     private SingleTopComponent window;
     private static HashMap<Id, SingleTopComponent> activeWindows = new HashMap();
     private Id id;
     private String displayName;
+    private WorkspaceItem w;
 
-    
+    public static SingleSpec create(WorkspaceItem w) {
+
+        SingleSpec single = new SingleSpec(w);
+        return single;
+    }
+
     /*Constructor for MultiDocument Spec windows*/
     public SingleSpec(SaItem item) {
         this.item = item;
@@ -31,14 +38,15 @@ public class SingleSpec {
     }
 
     /*Constructor for SingleDocuments*/
-    public SingleSpec(X13Document x13, Id id, String displayName) {
+    public SingleSpec(WorkspaceItem w) {
 
-        if (!activeWindows.containsKey(id)) {
-            this.spec.setJDSpec(x13);
-            this.id=id;
-            this.displayName=displayName;
+        if (!activeWindows.containsKey(w.getId())) {
+            this.w=w;
+            this.spec = new SpecCollector(w);
+            this.id = w.getId();
+            this.displayName = w.getDisplayName();
             window = new SingleTopComponent();
-            window.setName("SpecGenerator for "+this.displayName);
+            window.setName("SpecGenerator for " + this.displayName);
 
             window.setSpecView(spec);
             window.open();
@@ -55,16 +63,16 @@ public class SingleSpec {
             }
         }
         window.setSpecView(spec);
-            }
+    }
 
-    public String getDisplayName(){
+    public String getDisplayName() {
         return displayName;
     }
-    
-    public SpecCollector getSpecCollector(){
+
+    public SpecCollector getSpecCollector() {
         return spec;
     }
-    
+
     public SaItem getSaItem() {
         return item;
     }
@@ -79,5 +87,9 @@ public class SingleSpec {
         } else {
             return null;
         }
+    }
+    public WorkspaceItem getWorkspace(){
+        w=spec.getWS();
+        return w;
     }
 }

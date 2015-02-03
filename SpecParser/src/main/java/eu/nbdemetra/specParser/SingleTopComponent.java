@@ -74,14 +74,15 @@ public final class SingleTopComponent extends TopComponent {
 
                     try {
                         FileReader f = new FileReader(file);
-                        BufferedReader br = new BufferedReader(f);
-                        StringBuilder s = new StringBuilder();
-                        String zeile;
-                        while ((zeile = br.readLine()) != null) {
-                            s.append(zeile);
-                            s.append("\n");
+                        StringBuilder s;
+                        try (BufferedReader br = new BufferedReader(f)) {
+                            s = new StringBuilder();
+                            String zeile;
+                            while ((zeile = br.readLine()) != null) {
+                                s.append(zeile);
+                                s.append("\n");
+                            }
                         }
-                        br.close();
 
                         SpecCollector sp = specViewer.getSpecCollector();
                         sp.setWinX13Spec(s.toString());
@@ -93,11 +94,11 @@ public final class SingleTopComponent extends TopComponent {
                     } catch (IOException ex) {
                         Exceptions.printStackTrace(ex);
                     }
-
-                } else {
-
-//                    errormessage.setText("Auswahl abgebrochen");
-                }
+                } 
+//                    else {
+//
+////                    errormessage.setText("Auswahl abgebrochen");
+//                }
             }
         });
         JButton save = new JButton(new AbstractAction("Save WinX13Spec") {
@@ -179,9 +180,9 @@ public final class SingleTopComponent extends TopComponent {
     // End of variables declaration//GEN-END:variables
     private SpecViewer specViewer;
 
-    public void refreshSpecCollector() {
-
-    }
+//    public void refreshSpecCollector() {
+//
+//    }
 
     @Override
     public void componentOpened() {

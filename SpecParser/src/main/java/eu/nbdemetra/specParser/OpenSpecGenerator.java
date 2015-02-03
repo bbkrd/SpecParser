@@ -51,8 +51,11 @@ public class OpenSpecGenerator implements ActionListener {
         if (w.getElement() instanceof X13Document) {
 
             //vllt Factory
-            new SingleSpec((X13Document) w.getElement(), w.getId(), w.getDisplayName());
-
+//            new SingleSpec((X13Document) w.getElement(), w.getId(), w.getDisplayName());
+           SingleSpec s = SingleSpec.create(w);
+           w=s.getWorkspace();
+           //            context.
+//            context=WsNode(Children.createChildren(s.getWorkspace().getOwner(), w.getId()), s.getSpecCollector(), w.getId());
 //            ((X13Document) w.getElement()).getSpecification();
         } else if (w.getElement() instanceof MultiProcessingDocument) {
 

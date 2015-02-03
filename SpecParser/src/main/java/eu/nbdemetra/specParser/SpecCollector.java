@@ -5,6 +5,7 @@
  */
 package eu.nbdemetra.specParser;
 
+import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.documents.SaDocument;
 
 /**
@@ -24,6 +25,13 @@ public class SpecCollector {
     private String winX13SpecText;
     private SaDocument jdSpec;
     private String[] errors;
+    private WorkspaceItem ws;
+    
+    public SpecCollector(WorkspaceItem w){
+        ws=w;
+        //Default-Methode?
+        jdSpec=(SaDocument) ws.getElement();
+    }
 
     public void setWinX13Spec(String text) {
         this.winX13SpecText = text;
@@ -35,6 +43,7 @@ public class SpecCollector {
 
     public void setJDSpec(SaDocument x13) {
         this.jdSpec = x13;
+        ws.setElement(jdSpec);
     }
 
     public SaDocument getJDSpec() {
@@ -47,6 +56,10 @@ public class SpecCollector {
         }
         return errors;
     }
+    
+    public WorkspaceItem getWS(){
+        return ws;
+    }
 
     public void translate(TranslationTo_Type type) {
 
@@ -55,6 +68,7 @@ public class SpecCollector {
             WinX13SpecSeparator separator = new WinX13SpecSeparator();
             separator.buildSpec(winX13SpecText);
             jdSpec=separator.getResult();
+            ws.setElement(jdSpec);
             errors = separator.getErrorList();
         } else {
             //Translation from JDemetra+Spec to WinX13Spec
