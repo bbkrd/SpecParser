@@ -26,19 +26,19 @@ import org.openide.util.NbBundle;
  * @author Nina Gonschorreck
  */
 @ActionID(category = "Tools",
-        id = "eu.nbdemetra.x13spec.OpenSpecGenerator")
-@ActionRegistration(displayName = "#CTL_OpenSpecGenerator")
+        id = "eu.nbdemetra.x13spec.OpenSpecParser")
+@ActionRegistration(displayName = "#CTL_OpenSpecParser")
 @ActionReferences({
     @ActionReference(path = X13DocumentManager.ITEMPATH, position = 1000, separatorAfter = 1090),
     @ActionReference(path = MultiProcessingManager.ITEMPATH, position = 1000, separatorAfter = 1090)
 })
-@NbBundle.Messages("CTL_OpenSpecGenerator=Open Spec Generator")
+@NbBundle.Messages("CTL_OpenSpecParser=Open Spec Parser")
 
-public class OpenSpecGenerator implements ActionListener {
+public class OpenSpecParser implements ActionListener {
 
     private WsNode context;
 
-    public OpenSpecGenerator(WsNode context) {
+    public OpenSpecParser(WsNode context) {
         this.context = context;
     }
 
