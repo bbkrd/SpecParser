@@ -75,7 +75,8 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         
         this.spec = spec;
         winX13Text.setText(this.spec.getWinX13Spec());
-        errormessage.setText("ERRORS\n\n");
+        errormessage.setText("ERRORS\n"
+                + "******\n");
         for(String a: this.spec.getErrors()){
             errormessage.append(a+"\n");
         }

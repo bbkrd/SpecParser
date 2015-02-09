@@ -8,7 +8,6 @@ package eu.nbdemetra.specParser;
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.SaItem;
-import ec.tss.sa.SaProcessing;
 import ec.tstoolkit.utilities.Id;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,13 +38,13 @@ public class MultiSpec {
         if (!activeWindows.containsKey(ws.getId())) {
             this.ws = ws;
             this.id = ws.getId();
-            window = new MultiTopComponent(ws.getDisplayName());
+            window = new MultiTopComponent(ws);
             window.setName("SpecParser for " + ws.getDisplayName());
 
             SingleSpec single;
             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
                 if (!item.getEstimationMethod().name.contains("tramo")) {
-                    single = new SingleSpec(item);
+                    single = new SingleSpec(item, ws);
                     singleSpecList.add(single);
                 }
             }
@@ -64,5 +63,10 @@ public class MultiSpec {
                 window.requestActive();
             }
         }
+        this.ws=activeWindows.get(this.ws.getId()).getWs();
     }
+    
+//    public WorkspaceItem getWorkspace(){
+//        return ws;
+//    }
 }

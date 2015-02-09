@@ -7,30 +7,36 @@ package eu.nbdemetra.specParser;
 
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.documents.SaDocument;
+import ec.tss.sa.documents.X13Document;
 
 /**
  *
  * @author Nina Gonschorreck
  */
-
 public class SpecCollector {
-/**
- *   This class colletcs both specifications (WinX13, JD+) of a SingleSpec. 
- *
- *   @param winX13SpecText saves the content of a WinX13Specification in a form of *.SPC file 
- *   @param jdSpec saves the JDemetra+ specification as an object of SaDocument
- *   @param errors collects the errors by translation of specifications
- */
-    
+
+    /**
+     * This class colletcs both specifications (WinX13, JD+) of a SingleSpec.
+     *
+     * @param winX13SpecText saves the content of a WinX13Specification in a
+     * form of *.SPC file
+     * @param jdSpec saves the JDemetra+ specification as an object of
+     * SaDocument
+     * @param errors collects the errors by translation of specifications
+     */
     private String winX13SpecText;
     private SaDocument jdSpec;
     private String[] errors;
     private WorkspaceItem ws;
+
     
-    public SpecCollector(WorkspaceItem w){
-        ws=w;
-        //Default-Methode?
-        jdSpec=(SaDocument) ws.getElement();
+    public SpecCollector(WorkspaceItem w) {
+        ws = w;
+        //eigene Default-Methode entwickeln (?)
+        
+        if(ws.getElement() instanceof X13Document){
+            jdSpec = (SaDocument) ws.getElement();
+        }
     }
 
     public void setWinX13Spec(String text) {
@@ -43,7 +49,9 @@ public class SpecCollector {
 
     public void setJDSpec(SaDocument x13) {
         this.jdSpec = x13;
-        ws.setElement(jdSpec);
+        if (ws != null) {
+            ws.setElement(jdSpec);
+        }
     }
 
     public SaDocument getJDSpec() {
@@ -51,24 +59,28 @@ public class SpecCollector {
     }
 
     public String[] getErrors() {
-        if(errors==null){
-         errors = new String[]{}; 
+        if (errors == null) {
+            errors = new String[]{};
         }
         return errors;
     }
-    
-    public WorkspaceItem getWS(){
-        return ws;
-    }
 
+    public void setName(String name){
+        ws.setDisplayName(name);
+    }
+       
     public void translate(TranslationTo_Type type) {
 
         if (type == TranslationTo_Type.JDSpec) {
             // Translation from WinX13Spec to JDemetra+Spec
             WinX13SpecSeparator separator = new WinX13SpecSeparator();
             separator.buildSpec(winX13SpecText);
-            jdSpec=separator.getResult();
-            ws.setElement(jdSpec);
+            jdSpec = separator.getResult();
+            if (ws != null) {
+                if (ws.getElement() instanceof X13Document) {
+                    ws.setElement(jdSpec);
+                }
+            }
             errors = separator.getErrorList();
         } else {
             //Translation from JDemetra+Spec to WinX13Spec

@@ -87,6 +87,7 @@ public final class SingleTopComponent extends TopComponent {
                         SpecCollector sp = specViewer.getSpecCollector();
                         sp.setWinX13Spec(s.toString());
                         sp.translate(TranslationTo_Type.JDSpec);
+                        sp.setName(file.getName());
                         specViewer.refresh(sp);
 
                     } catch (FileNotFoundException ex) {
@@ -112,14 +113,15 @@ public final class SingleTopComponent extends TopComponent {
                 chooser.showSaveDialog(null);
                 try {
                     File file = chooser.getSelectedFile();
-                    FileWriter fw = new FileWriter(file);
-                    fw.write(specViewer.getSpecCollector().getWinX13Spec());
-                    fw.close();
+                    try (FileWriter fw = new FileWriter(file)) {
+                        fw.write(specViewer.getSpecCollector().getWinX13Spec());
+                    }
                     if (!file.toString().endsWith(".spc")) {
                         file.renameTo(new File(file.toString() + ".spc"));
                     }
                 } catch (IOException ex) {
 //                    winX13Text.setText("Nothing happend");
+                    Exceptions.printStackTrace(ex);
                 }
             }
         });

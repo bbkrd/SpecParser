@@ -42,7 +42,7 @@ public class WinX13SpecSeparatorTest {
         String winX11text = "x11{ mode = add\n"
                 + "trendma = 13\n"
                 + "sigmalim =(1.25  2.75)\n"
-                + "seasonalma = s3x9\n"
+                + "seasonalma = (s3x9)\n"
                 + "title = \"3x9 moving average, mad\"\n"
                 + "appendfcst = yes\n"
                 + "appendbcst = no\n"
@@ -76,7 +76,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_sigmalim() {
 
         double lowerSigma = 0.6;
-        double upperSigma = 2.45;
+        double upperSigma = 2.5;
 
         String winX13Text = " ( " + lowerSigma + "   " + upperSigma + " ) ;";
         WinX13SpecSeparator sep = new WinX13SpecSeparator();

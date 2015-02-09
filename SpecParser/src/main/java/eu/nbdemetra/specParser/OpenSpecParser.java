@@ -53,14 +53,15 @@ public class OpenSpecParser implements ActionListener {
             //vllt Factory
 //            new SingleSpec((X13Document) w.getElement(), w.getId(), w.getDisplayName());
            SingleSpec s = new SingleSpec(w);
-           w=s.getWorkspace();
+//           w=s.getWorkspace();
            //            context.
 //            context=WsNode(Children.createChildren(s.getWorkspace().getOwner(), w.getId()), s.getSpecCollector(), w.getId());
 //            ((X13Document) w.getElement()).getSpecification();
         } else if (w.getElement() instanceof MultiProcessingDocument) {
 
             //vllt Factory
-            new MultiSpec(w);
+            MultiSpec m = new MultiSpec(w);
+//            w=m.getWorkspace();
 
         } else {
             JOptionPane.showInputDialog(null, "nix");

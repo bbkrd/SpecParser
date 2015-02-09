@@ -12,7 +12,15 @@ import ec.satoolkit.x13.X13Specification;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
+import ec.tstoolkit.modelling.DefaultTransformationType;
+import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
+import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.X13Exception;
+import ec.tstoolkit.timeseries.Day;
+import ec.tstoolkit.timeseries.Month;
+import ec.tstoolkit.timeseries.TsPeriodSelector;
+import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
+import ec.tstoolkit.timeseries.regression.OutlierType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -50,19 +58,19 @@ public class WinX13SpecSeparator {
                 line = line.substring(0, line.indexOf("#"));
             }
             if (!line.replaceAll("\\s", "").isEmpty()) {
-                sb=new StringBuilder(";");
+                sb = new StringBuilder(";");
                 line = sb.append(line).toString();
             }
-            if(linebreak==true){
-                if(line.contains(")")){
-                    linebreak=false;
-                    line=line.replaceAll(";", " ");
+            if (linebreak == true) {
+                if (line.contains(")")) {
+                    linebreak = false;
+                    line = line.replaceAll(";", " ");
                 }
-                sb=new StringBuilder();
+                sb = new StringBuilder();
                 line = sb.append(line).toString();
             }
-            if(line.contains("(")){
-                if(!line.contains(")")){
+            if (line.contains("(")) {
+                if (!line.contains(")")) {
                     linebreak = true;
                 }
             }
@@ -87,10 +95,10 @@ public class WinX13SpecSeparator {
             try {
                 specPartName = SpecificationPart.valueOf(specPartSplitted[0].toUpperCase());
                 //all values for one argument in one line
-                specPartSplitted[1]=specPartSplitted[1].replaceAll("\n", " ");
+                specPartSplitted[1] = specPartSplitted[1].replaceAll("\n", " ");
                 //3. split on line breaks signed by ;
                 lines = specPartSplitted[1].split(";");
-                
+
 //                //4. for each line split on "=" to separate arguments and values
                 for (String tmp : lines) {
                     if (tmp.contains("=")) {
@@ -104,7 +112,7 @@ public class WinX13SpecSeparator {
                             m = this.getClass().getMethod(method.toString().toLowerCase(), SpecificationPart.class, String.class);
                             m.invoke(this, specPartName, lineSplitted[1]);
                         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-                            errors.add("No support for " + lineSplitted[0] + " in " + specPartName.name());
+                            errors.add(specPartName.name()+": No support for " + lineSplitted[0]);
                         }
                     }
                 }
@@ -112,7 +120,6 @@ public class WinX13SpecSeparator {
                 errors.add("No support for " + specPartSplitted[0]);
             }
         }
-
     }
 
     /* The following methods have to be public, 
@@ -140,10 +147,10 @@ public class WinX13SpecSeparator {
                 spec.getX11Specification().setMode(DecompositionMode.LogAdditive);
                 break;
             case "pseudoadd":
-                errors.add("No Support for value " + content + " for mode in " + partName.name());
+                errors.add(partName+": No Support for value " + content + " for mode" );
                 break;
             default:
-                errors.add("No Support for value " + content + " for mode in " + partName.name());
+                errors.add(partName+": No Support for value " + content + " for mode ");
                 break;
         }
     }
@@ -153,9 +160,8 @@ public class WinX13SpecSeparator {
         /*
          *   Select the correct seasonal filters for JD+
          */
-        
         spec.getX11Specification().setSeasonal(true);
-        
+
         //Delete the brackets
         content = content.replaceAll(";", "").trim();
         content = content.replaceAll("\\(", "");
@@ -193,7 +199,7 @@ public class WinX13SpecSeparator {
                         tmp.add(SeasonalFilterOption.Msr);
                         break;
                     default:
-                        errors.add("No Support for value " + content + " in " + partName.name());
+                        errors.add(partName+": No Support for value " + content);
                         tmp.add(null);
                         break;
                 }
@@ -213,9 +219,8 @@ public class WinX13SpecSeparator {
             int t = Integer.parseInt(content);
             spec.getX11Specification().setHendersonFilterLength(t);
         } catch (NumberFormatException ex) {
-            errors.add(content + " isn't a correct argument for HendersonFilter in " + partName.name());
+            errors.add(partName+": "+content + " isn't a correct argument for HendersonFilter");
         }
-
     }
 
     public void read_sigmalim(SpecificationPart partName, String content) {
@@ -257,7 +262,7 @@ public class WinX13SpecSeparator {
                 }
             }
         } catch (NumberFormatException e) {
-            errors.add(content + " is no correct format for the sigma argument in " + partName.name());
+            errors.add(partName+": "+content + " is no correct format for the sigma argument");
         }
     }
 
@@ -446,8 +451,8 @@ public class WinX13SpecSeparator {
         //invalid format for ARIMA model: (...)(...)3(...)
         String[] match = content.split("\\d+\\(");
         if (match.length > 1) {
-            errors.add("No support for an ARIMA model like "+content);
-        } else{
+            errors.add(partName+": No support for an ARIMA model like " + content);
+        } else {
 
             String[] sep = content.split("\\s*\\)\\s*\\(\\s*");
 
@@ -579,9 +584,9 @@ public class WinX13SpecSeparator {
                         spec.getRegArimaSpecification().getArima().setBTheta(q_para);
                     }
                 } catch (NumberFormatException e) {
-                    errors.add("Model in ARIMA is not correct");
+                    errors.add(partName+": Model is not correct");
                 } catch (X13Exception e) {
-                    errors.add("Parameters for model in ARIMA are not correct");
+                    errors.add(partName+": Parameters for model are not correct");
                 }
             }
         }
@@ -599,7 +604,7 @@ public class WinX13SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
                 break;
             default:
-                errors.add("Wrong value for acceptdefault in " + partName);
+                errors.add(partName+": Wrong value for acceptdefault");
                 break;
         }
     }
@@ -616,7 +621,7 @@ public class WinX13SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setCheckMu(false);
                 break;
             default:
-                errors.add("Wrong value for checkmu in " + partName);
+                errors.add(partName+": Wrong value for checkmu");
                 break;
         }
     }
@@ -633,7 +638,7 @@ public class WinX13SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setMixed(false);
                 break;
             default:
-                errors.add("Wrong value for checkmu in " + partName);
+                errors.add(partName+": Wrong value for mixed");
                 break;
         }
     }
@@ -646,7 +651,7 @@ public class WinX13SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(value);
         } catch (NumberFormatException ex) {
-            errors.add("Wrong format for ljungboxlimit in " + partName);
+            errors.add(partName+": Wrong format for ljungboxlimit");
         }
     }
 
@@ -658,7 +663,7 @@ public class WinX13SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(value);
         } catch (NumberFormatException ex) {
-            errors.add("Wrong format for armalimit in " + partName);
+            errors.add(partName+": Wrong format for armalimit");
         } catch (X13Exception e) {
             errors.add(e.toString());
         }
@@ -676,7 +681,7 @@ public class WinX13SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setBalanced(false);
                 break;
             default:
-                errors.add("Wrong value for balanced in " + partName);
+                errors.add(partName+": Wrong value for balanced");
                 break;
         }
     }
@@ -693,7 +698,7 @@ public class WinX13SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setHannanRissanen(false);
                 break;
             default:
-                errors.add("Wrong value for balanced in " + partName);
+                errors.add(partName+": Wrong value for balanced");
                 break;
         }
     }
@@ -706,7 +711,7 @@ public class WinX13SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(value);
         } catch (NumberFormatException ex) {
-            errors.add("Wrong format for reducecv in " + partName);
+            errors.add( partName+": Wrong format for reducecv");
         } catch (X13Exception e) {
             errors.add(e.getMessage());
         }
@@ -720,7 +725,7 @@ public class WinX13SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(value);
         } catch (NumberFormatException ex) {
-            errors.add("Wrong format for urfinal in " + partName);
+            errors.add(partName+": Wrong format for urfinal");
         } catch (X13Exception e) {
             errors.add(e.getMessage());
         }
@@ -734,9 +739,271 @@ public class WinX13SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getEstimate().setTol(value);
         } catch (NumberFormatException ex) {
-            errors.add("Wrong format for tol in " + partName);
+            errors.add(partName+": Wrong format for tol");
         } catch (X13Exception e) {
             errors.add(e.getMessage());
+        }
+    }
+
+    public void read_critical(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+        String s = content;
+        if (s.contains("(")) {
+            s = content.replaceAll("\\(", "").replaceAll("\\)", "").split(",")[0].trim();
+            errors.add(partName+": No support for more than one critical value , critical value is set to " + s);
+        }
+        try {
+            spec.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(Double.parseDouble(s));
+        } catch (NumberFormatException e) {
+            errors.add( partName+": Wrong format for critical value");
+        }
+    }
+
+    public void read_lsrun(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+        try {
+            int value = Integer.parseInt(content);
+            spec.getRegArimaSpecification().getOutliers().setLSRun(value);
+        } catch (NumberFormatException e) {
+            errors.add(partName+": Wrong format for lsrun");
+        }
+    }
+
+    public void read_method(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+        switch (content.toUpperCase()) {
+            case "ADDONE":
+                spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
+                break;
+            case "ADDALL":
+                errors.add(partName+": No support for value " + content);
+//                spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddAll);
+                break;
+            default:
+                errors.add(partName+": Wrong value for method ");
+                break;
+        }
+    }
+
+    public void read_span(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+        String s = content.replaceAll("\\(", ";");
+        s = s.replaceAll("\\(", ";");
+        String[] split = s.split(",");
+
+        if (split.length == 2) {
+
+            TsPeriodSelector p = new TsPeriodSelector();
+            if (split[0].contains(";")) {
+                if (split[1].contains(";")) {
+                    //Fehler im Format
+                    errors.add(partName+": In span are two missing values");
+                } else {
+                    //to
+                    p.to(calcDay(split[1]));
+                }
+            } else {
+                if (split[1].contains(";")) {
+                    //from
+                    p.from(calcDay(split[0]));
+
+                } else {
+                    //between
+                    p.between(calcDay(split[0]), calcDay(split[1]));
+                }
+            }
+
+//          = new Day(jahr monat tag);
+            spec.getRegArimaSpecification().getOutliers().setSpan(p);
+
+        } else {
+            //Fehler
+            errors.add(partName+": Wrong format for span");
+        }
+    }
+
+    private Day calcDay(String day) {
+
+        String[] split = day.split("\\.");
+        int year = Integer.parseInt(split[0].trim());
+
+        Day erg = null;
+        switch (split[1].trim().toUpperCase()) {
+            case "JAN":
+                erg = new Day(year, Month.January, 0);
+                break;
+            case "FEB":
+                erg = new Day(year, Month.February, 0);
+                break;
+            case "MAR":
+                erg = new Day(year, Month.March, 0);
+                break;
+            case "APR":
+                erg = new Day(year, Month.April, 0);
+                break;
+            case "MAY":
+                erg = new Day(year, Month.May, 0);
+                break;
+            case "JUN":
+                erg = new Day(year, Month.June, 0);
+                break;
+            case "JUL":
+                erg = new Day(year, Month.July, 0);
+                break;
+            case "AUG":
+                erg = new Day(year, Month.August, 0);
+                break;
+            case "SEP":
+                erg = new Day(year, Month.September, 0);
+                break;
+            case "OCT":
+                erg = new Day(year, Month.October, 0);
+                break;
+            case "NOV":
+                erg = new Day(year, Month.November, 0);
+                break;
+            case "DEC":
+                erg = new Day(year, Month.December, 0);
+                break;
+            default:
+                try {
+                    int quarter = Integer.parseInt(split[1].trim());
+                    if (quarter == 1) {
+                        erg = new Day(year, Month.January, 0);
+                    } else if (quarter == 2) {
+                        erg = new Day(year, Month.April, 0);
+                    } else if (quarter == 2) {
+                        erg = new Day(year, Month.July, 0);
+                    } else if (quarter == 2) {
+                        erg = new Day(year, Month.October, 0);
+                    } else {
+                        errors.add("Date format is not supported");
+                    }
+                } catch (NumberFormatException e) {
+                    errors.add("Wrong format for date");
+                }
+                break;
+        }
+
+        return erg;
+    }
+
+    public void read_types(SpecificationPart partName, String content) {
+
+        String s = content.replaceAll(";", "").trim();
+        if (s.contains("\\(")) {
+            s = s.replaceAll("\\(", "").replaceAll("\\)", "");
+            String[] split = s.split("\\s+");
+
+            ArrayList<SingleOutlierSpec> value = new ArrayList();
+            for (String t : split) {
+                t = t.trim().toUpperCase();
+                switch (t) {
+                    case "ALL":
+                        value.add(new SingleOutlierSpec(OutlierType.AO));
+                        value.add(new SingleOutlierSpec(OutlierType.LS));
+                        value.add(new SingleOutlierSpec(OutlierType.TC));
+                        break;
+                    case "NONE":
+                        break;
+                    case "AO":
+                        value.add(new SingleOutlierSpec(OutlierType.AO));
+                        break;
+                    case "LS":
+                        value.add(new SingleOutlierSpec(OutlierType.LS));
+                        break;
+                    case "TC":
+                        value.add(new SingleOutlierSpec(OutlierType.TC));
+                        break;
+                    default:
+                        errors.add(partName+": No support for " + t + "in types");
+                        break;
+                }
+            }
+            spec.getRegArimaSpecification().getOutliers().setTypes((SingleOutlierSpec[]) value.toArray());
+        }
+    }
+
+    public void read_tcrate(SpecificationPart partName, String content) {
+
+        String s = content.replaceAll(";", "").trim();
+        try {
+            double value = Double.parseDouble(s);
+            spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(value);
+        } catch (NumberFormatException e) {
+            errors.add(partName+": Wrong format for tcrate");
+        }
+    }
+
+    public void read_function(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+
+        switch (content.toUpperCase()) {
+            case "LOG":
+                spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
+                break;
+            case "NONE":
+                spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
+                break;
+            case "AUTO":
+                spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Auto);
+                break;
+            default:
+                errors.add(partName+": No support for " + content + " in function");
+                spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
+                break;
+        }
+    }
+
+    public void read_power(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+
+        try {
+            double value = Double.parseDouble(content);
+            if (value == 0.0) {
+                spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
+            }
+        } catch (NumberFormatException e) {
+            errors.add(partName+": No support for power = " + content);
+        }
+    }
+
+    public void read_aicdiff(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+        try {
+            double value = Double.parseDouble(content);
+            spec.getRegArimaSpecification().getTransform().setAICDiff(value);
+        } catch (NumberFormatException e) {
+            errors.add(partName+": Wrong Format for " + content + " in aicdiff");
+        }
+    }
+
+    public void read_adjust(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+
+        switch (content.toUpperCase()) {
+            case "LOM":
+            case "LOQ":
+                spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.LengthOfPeriod);
+                break;
+            case "LPYEAR":
+                spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.LeapYear);
+                break;
+            case "NONE":
+                spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
+                break;
+            default:
+                errors.add(partName+": No support for " + content + " in adjust");
+                spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
+                break;
         }
     }
 

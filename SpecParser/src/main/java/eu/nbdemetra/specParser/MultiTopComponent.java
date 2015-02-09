@@ -5,8 +5,16 @@
  */
 package eu.nbdemetra.specParser;
 
+import ec.nbdemetra.sa.MultiProcessingDocument;
+import ec.nbdemetra.ws.WorkspaceItem;
+import ec.satoolkit.ISaSpecification;
+import ec.tss.sa.EstimationPolicyType;
+import ec.tss.sa.SaItem;
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,10 +24,10 @@ import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
+import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 
@@ -62,6 +70,7 @@ public final class MultiTopComponent extends TopComponent {
     private static Map<Integer, SingleTopComponent> activeWindows = new HashMap();
 
     private String displayName;
+    private WorkspaceItem ws;
 
     public MultiTopComponent() {
 
@@ -70,9 +79,10 @@ public final class MultiTopComponent extends TopComponent {
         open = true;
     }
 
-    public MultiTopComponent(String displayName) {
+    public MultiTopComponent(WorkspaceItem w) {
 
-        this.displayName = displayName;
+        ws = w;
+        this.displayName = w.getDisplayName();
         initComponents();
         setToolTipText(Bundle.HINT_MultiDocSpecWindowTopComponent());
         open = true;
@@ -113,6 +123,7 @@ public final class MultiTopComponent extends TopComponent {
         jScrollPane2 = new javax.swing.JScrollPane();
         errorText = new javax.swing.JTextArea();
         singleSpecName = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
 
         specList.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -147,6 +158,13 @@ public final class MultiTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(singleSpecName, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.singleSpecName.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.jButton1.text")); // NOI18N
+        jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButton1MouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -154,14 +172,20 @@ public final class MultiTopComponent extends TopComponent {
             .addGroup(layout.createSequentialGroup()
                 .addGap(27, 27, 27)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(saveGreen)
-                    .addComponent(saveAll)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(singleSpecName)
-                            .addComponent(jScrollPane2))))
+                            .addComponent(jScrollPane2)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(saveGreen)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(saveAll)
+                                .addGap(47, 47, 47)
+                                .addComponent(jButton1)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -175,7 +199,9 @@ public final class MultiTopComponent extends TopComponent {
                         .addComponent(jScrollPane2))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
-                .addComponent(saveAll)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saveAll)
+                    .addComponent(jButton1))
                 .addGap(18, 18, 18)
                 .addComponent(saveGreen)
                 .addGap(13, 13, 13))
@@ -265,9 +291,82 @@ public final class MultiTopComponent extends TopComponent {
         // TODO add your handling code here:
     }//GEN-LAST:event_saveGreenActionPerformed
 
+    private void jButton1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseClicked
+        // TODO add your handling code here:JFileChooser fc = new JFileChooser();
+        JFileChooser fc = new JFileChooser();
+        fc.setFileFilter(new MyFilter(".mta"));
+        fc.setAcceptAllFileFilterUsed(false);
+
+        int state = fc.showOpenDialog(null);
+
+        if (state == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+
+            try {
+                FileReader f = new FileReader(file);
+//                StringBuilder s;
+                try (BufferedReader brMTA = new BufferedReader(f)) {
+//                    s = new StringBuilder();
+                    StringBuilder path = new StringBuilder(file.getPath());
+                    String tmp = path.substring(0, path.lastIndexOf(file.getName()));
+                    
+
+                    String zeile;
+                    SpecCollector sp;
+                    SaItem item;
+                    FileReader singleFile;
+                    ArrayList<SingleSpec> s = new ArrayList();
+//                    int counter =0;
+                    String lineSpec;
+                    StringBuilder sb;
+                    while ((zeile = brMTA.readLine()) != null) {
+                        path = new StringBuilder(tmp);
+                        zeile = zeile.trim();
+                        singleFile = new FileReader(new File(path.append(zeile + ".SPC").toString()));
+                        try (BufferedReader brSpec = new BufferedReader(singleFile)) {
+                            sb = new StringBuilder();
+                            while ((lineSpec = brSpec.readLine()) != null) {
+                                sb.append(lineSpec);
+                                sb.append("\n");
+
+                            }
+                            //Default x13document wird in spec collector angelegt
+                            sp = new SpecCollector(ws);
+                            sp.setWinX13Spec(sb.toString());
+//                            sp.translate(TranslationTo_Type.JDSpec);
+
+                            item = new SaItem((ISaSpecification) sp.getJDSpec().getSpecification(), null);
+
+                            //hinzufuegen zum workspace
+                            ((MultiProcessingDocument) ws.getElement()).getCurrent().add(item);
+//                            sp.translate(TranslationTo_Type.JDSpec);
+//                            s.add(new SingleSpec(item, ws));
+                        }
+
+//                        item.newSpecification(, EstimationPolicyType.None);
+                        //oeffne zeile.spc
+                        //translate mit SpecCollector arbeiten (WorkspaceItem)
+                        //SaItem new Specification: SpecCollector getJDSpec() + estimation PolicyType.None
+                        //damit dann SingleSpec
+                        //lege neuen eintrag in singlespecliste an
+                        System.out.println("sb:" + sb.toString());
+//                        counter++;
+                    }
+                    setSingleSpecList(s);
+                }
+
+            } catch (FileNotFoundException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }//GEN-LAST:event_jButton1MouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea errorText;
+    private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JButton saveAll;
@@ -303,6 +402,10 @@ public final class MultiTopComponent extends TopComponent {
         String version = p.getProperty("version");
         // TODO read your settings according to their version
     }
+
+    public WorkspaceItem getWs() {
+        return ws;
+    }
 }
 
 /**
@@ -318,14 +421,14 @@ class MyCellRenderer extends JLabel implements ListCellRenderer {
         SingleSpec singleSpec = (SingleSpec) value;
         String s = (index + 1) + "     " + singleSpec.getSaItem().toString();
         setText(s);
-        
+
         if (isSelected) {
             setBackground(list.getSelectionBackground());
             setForeground(list.getSelectionForeground());
         } else {
             //display red or green logic because of the translation has errors or not
             String[] errorlist = singleSpec.getSpecCollector().getErrors();
-            if (errorlist.length==0) {
+            if (errorlist.length == 0) {
                 setBackground(Color.green);
             } else {
                 setBackground(Color.red);

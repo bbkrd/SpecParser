@@ -7,7 +7,6 @@ package eu.nbdemetra.specParser;
 
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.SaItem;
-import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.utilities.Id;
 import java.util.HashMap;
 
@@ -23,13 +22,15 @@ public class SingleSpec {
     private static HashMap<Id, SingleTopComponent> activeWindows = new HashMap();
     private Id id;
     private String displayName;
-    private WorkspaceItem w;
+    private WorkspaceItem ws;
 
    
 
     /*Constructor for MultiDocument Spec windows*/
-    public SingleSpec(SaItem item) {
+    public SingleSpec(SaItem item, WorkspaceItem w) {
         this.item = item;
+        this.ws=w;
+        spec = new SpecCollector(ws);
         spec.setJDSpec(item.toDocument());
     }
 
@@ -37,7 +38,7 @@ public class SingleSpec {
     public SingleSpec(WorkspaceItem w) {
 
         if (!activeWindows.containsKey(w.getId())) {
-            this.w = w;
+            this.ws = w;
             this.spec = new SpecCollector(w);
             this.id = w.getId();
             this.displayName = w.getDisplayName();
@@ -53,18 +54,22 @@ public class SingleSpec {
         } else {
             window = activeWindows.get(w.getId());
             spec = window.getSpecViewer().getSpecCollector();
+            window.setName("SpecParser for "+w.getDisplayName());
+            
             if (window.isOpen()) {
                 window.requestActive();
             } else {
                 window.open();
                 window.requestActive();
             }
+            
+            
         }
     }
 
-    public String getDisplayName() {
-        return displayName;
-    }
+//    public String getDisplayName() {
+//        return displayName;
+//    }
 
     public SpecCollector getSpecCollector() {
         return spec;
@@ -86,8 +91,8 @@ public class SingleSpec {
         }
     }
 
-    public WorkspaceItem getWorkspace() {
-//        w = spec.getWS();
-        return w;
-    }
+//    public WorkspaceItem getWorkspace() {
+////        w = spec.getWS();
+//        return ws;
+//    }
 }
