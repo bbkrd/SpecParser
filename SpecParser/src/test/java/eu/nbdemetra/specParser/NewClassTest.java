@@ -94,7 +94,7 @@ public class NewClassTest {
 
         WinX13SpecSeparator jd = new WinX13SpecSeparator();      
 //        jd.buildSpec(erg);
-        jd.x11ToString();
+//        jd.x11ToString();
  
     }  
 
