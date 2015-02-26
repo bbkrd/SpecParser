@@ -59,7 +59,7 @@ public final class SingleTopComponent extends TopComponent {
         open = true;
 
         //Button for save WinX13 Spec to file ends with .spc
-        JButton load = new JButton(new AbstractAction("Load WinX13Spec") {
+        JButton load = new JButton(new AbstractAction("Load WinX12Spec") {
             @Override
             public void actionPerformed(ActionEvent e) {
 
@@ -102,7 +102,7 @@ public final class SingleTopComponent extends TopComponent {
 //                }
             }
         });
-        JButton save = new JButton(new AbstractAction("Save WinX13Spec") {
+        JButton save = new JButton(new AbstractAction("Save WinX12Spec") {
             @Override
             public void actionPerformed(ActionEvent e) {
 
@@ -126,7 +126,7 @@ public final class SingleTopComponent extends TopComponent {
             }
         });
         //Button for refresh winX13Spec from JD+ Spec
-        JButton refreshX13 = new JButton(new AbstractAction("Refresh WinX13Spec") {
+        JButton refreshX13 = new JButton(new AbstractAction("Refresh WinX12Spec") {
             @Override
             public void actionPerformed(ActionEvent e) {
 

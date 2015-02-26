@@ -47,7 +47,7 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         errormessage = new JTextArea();
 
         winX13Text.setText("empty");
-        errormessage.setText("Fehlermeldungen");
+        errormessage.setText("error messages");
 
         scrollText = new JScrollPane(winX13Text);
         scrollError = new JScrollPane(errormessage);
