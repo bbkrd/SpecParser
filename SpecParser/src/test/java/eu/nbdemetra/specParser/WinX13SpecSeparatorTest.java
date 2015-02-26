@@ -7,12 +7,10 @@ package eu.nbdemetra.specParser;
 
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
-import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
 import static junit.framework.TestCase.assertEquals;
-import org.junit.Test;
 
 /**
  *
@@ -23,7 +21,7 @@ public class WinX13SpecSeparatorTest {
     public WinX13SpecSeparatorTest() {
     }
 
-    @Test
+//    @Test
     public void testSpecBuild() {
 
         String winX13Text = "x11 {sigmalim = (1.6\n 2.1)}";
@@ -35,43 +33,7 @@ public class WinX13SpecSeparatorTest {
             System.out.println(error);
         }
     }
-
-//    @Test
-    public void testeX11() {
-
-        String winX11text = "x11{ mode = add\n"
-                + "trendma = 13\n"
-                + "sigmalim =(1.25  2.75)\n"
-                + "seasonalma = (s3x9)\n"
-                + "title = \"3x9 moving average, mad\"\n"
-                + "appendfcst = yes\n"
-                + "appendbcst = no\n"
-                + "final = user\n"
-                + "print = ( brief +b2)\n"
-                + "save = ( d10 d11 )\n"
-                + "savelog = ( m7 q )}";
-
-        System.out.println(winX11text);
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
-        sep.buildSpec(winX11text);
-        X13Specification erg = sep.getResult().getSpecification();
-
-        for (String s : sep.getErrorList()) {
-            System.out.println(s);
-        }
-
-        X11Specification x11 = new X11Specification();
-        x11.setMode(DecompositionMode.Additive);
-        x11.setSeasonalFilter(SeasonalFilterOption.S3X9);
-        x11.setHendersonFilterLength(13);
-        x11.setSigma(1.25, 2.75);
-
-        X13Specification x13 = new X13Specification();
-        x13.setX11Specification(x11);
-
-        assertEquals(x13, erg);
-    }
-
+    
 //    @Test
     public void teste_sigmalim() {
 

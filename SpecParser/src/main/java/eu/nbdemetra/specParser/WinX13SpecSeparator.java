@@ -33,6 +33,8 @@ public class WinX13SpecSeparator {
     private X13Specification spec = new X13Specification();
     private ArrayList<String> errors = new ArrayList();
 
+    private Period period = Period.MONTH;
+
     public WinX13SpecSeparator() {
         setDefaults();
     }
@@ -404,10 +406,10 @@ public class WinX13SpecSeparator {
                     } else if (quarter == 4) {
                         erg = new Day(year, Month.October, 0);
                     } else {
-                        errors.add(partName+": Date format is not supported");
+                        errors.add(partName + ": Date format is not supported");
                     }
                 } catch (NumberFormatException e) {
-                    errors.add(partName+": Wrong format for date");
+                    errors.add(partName + ": Wrong format for date");
                 }
                 break;
         }
@@ -446,6 +448,11 @@ public class WinX13SpecSeparator {
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong format for critical value");
         }
+    }
+
+    public void read_file(SpecificationPart partName, String content) {
+
+        errors.add(partName + ": To load data is not possible");
     }
 
     public void read_function(SpecificationPart partName, String content) {
@@ -589,6 +596,26 @@ public class WinX13SpecSeparator {
         }
     }
 
+    public void read_maxlead(SpecificationPart partName, String content) {
+
+        content=content.trim();
+        
+        try{
+            int forecast = Integer.parseInt(content);
+            
+            if(forecast % period.value != 0){
+                errors.add(partName+": In JD+ only integers for forecasts horizon allowed. Please correct this manually in the JD+ specification");
+            }
+            
+            //rounded down when result is no integer, parse in integer
+            int div = forecast/period.value*(-1);
+            spec.getX11Specification().setForecastHorizon(div);
+            
+        }catch(NumberFormatException e){
+            errors.add(partName+": Wrong format for MAXLEAD");
+        }
+    }
+
     public void read_method(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
@@ -597,7 +624,7 @@ public class WinX13SpecSeparator {
                 spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
                 break;
             case "ADDALL":
-                errors.add(partName + ": No support for value " + content);
+                errors.add(partName + ": No support for value " + content.toUpperCase());
 //                spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddAll);
                 break;
             default:
@@ -641,10 +668,10 @@ public class WinX13SpecSeparator {
                 spec.getX11Specification().setMode(DecompositionMode.LogAdditive);
                 break;
             case "pseudoadd":
-                errors.add(partName + ": No Support for value " + content + " for mode");
+                errors.add(partName + ": No Support for value " + content.toUpperCase() + " in mode");
                 break;
             default:
-                errors.add(partName + ": No Support for value " + content + " for mode ");
+                errors.add(partName + ": No Support for value " + content.toUpperCase() + " in mode ");
                 break;
         }
     }
@@ -820,6 +847,28 @@ public class WinX13SpecSeparator {
 
         read_span(SpecificationPart.ESTIMATE, content);
 
+    }
+
+    public void read_period(SpecificationPart partName, String content) {
+
+        content = content.trim();
+        try {
+            int p = Integer.parseInt(content);
+            switch (p) {
+                case 12:
+                    period = Period.MONTH;
+                    break;
+                case 4:
+                    period = Period.QUARTER;
+                    break;
+                default:
+                    errors.add(partName + ": Period " + p + " are not possible. Set to default 12");
+                    period = Period.MONTH;
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            errors.add(partName + ": Wrong format for PERIOD");
+        }
     }
 
     public void read_power(SpecificationPart partName, String content) {
@@ -1041,46 +1090,46 @@ public class WinX13SpecSeparator {
     public void read_types(SpecificationPart partName, String content) {
 
         spec.getRegArimaSpecification().getOutliers().clearTypes();
-        
+
         String s = content.replaceAll(";", "").trim();
-       
-            s = s.replaceAll("\\(", "").replaceAll("\\)", "");
-            String[] split = s.split("\\s+");
+
+        s = s.replaceAll("\\(", "").replaceAll("\\)", "");
+        String[] split = s.split("\\s+");
 
 //            ArrayList<SingleOutlierSpec> value = new ArrayList();
-            for (String t : split) {
-                t = t.trim().toUpperCase();
-                switch (t) {
-                    case "ALL":
-                        spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
-                        spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
-                        spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
+        for (String t : split) {
+            t = t.trim().toUpperCase();
+            switch (t) {
+                case "ALL":
+                    spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
+                    spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
+                    spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
 //                        value.add(new SingleOutlierSpec(OutlierType.AO));
 //                        value.add(new SingleOutlierSpec(OutlierType.LS));
 //                        value.add(new SingleOutlierSpec(OutlierType.TC));
-                        break;
-                    case "NONE":
-                        spec.getRegArimaSpecification().getOutliers().clearTypes();
-                        break;
-                    case "AO":
-                        spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
+                    break;
+                case "NONE":
+                    spec.getRegArimaSpecification().getOutliers().clearTypes();
+                    break;
+                case "AO":
+                    spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
 //                        value.add(new SingleOutlierSpec(OutlierType.AO));
-                        break;
-                    case "LS":
-                        spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
+                    break;
+                case "LS":
+                    spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
 //                        value.add(new SingleOutlierSpec(OutlierType.LS));
-                        break;
-                    case "TC":
-                        spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
+                    break;
+                case "TC":
+                    spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
 //                        value.add(new SingleOutlierSpec(OutlierType.TC));
-                        break;
-                    default:
-                        errors.add(partName + ": No support for " + t + "in types");
-                        break;
-                }
+                    break;
+                default:
+                    errors.add(partName + ": No support for " + t + "in types");
+                    break;
             }
+        }
 //            spec.getRegArimaSpecification().getOutliers().setTypes((SingleOutlierSpec[]) value.toArray());
-        
+
     }
 
     public void read_urfinal(SpecificationPart partName, String content) {
@@ -1105,16 +1154,10 @@ public class WinX13SpecSeparator {
     public void read_decimals(SpecificationPart partName, String content) {
     }
 
-    public void read_file(SpecificationPart partName, String content) {
-    }
-
     public void read_format(SpecificationPart partName, String content) {
     }
 
     public void read_name(SpecificationPart partName, String content) {
-    }
-
-    public void read_period(SpecificationPart partName, String content) {
     }
 
     public void read_precision(SpecificationPart partName, String content) {
@@ -1127,6 +1170,9 @@ public class WinX13SpecSeparator {
     }
 
     public void read_savelog(SpecificationPart partName, String content) {
+    }
+
+    public void read_start(SpecificationPart partName, String content) {
     }
 
     public void read_title(SpecificationPart partName, String content) {

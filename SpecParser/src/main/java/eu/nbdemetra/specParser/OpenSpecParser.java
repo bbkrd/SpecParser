@@ -32,7 +32,7 @@ import org.openide.util.NbBundle;
     @ActionReference(path = X13DocumentManager.ITEMPATH, position = 1000, separatorAfter = 1090),
     @ActionReference(path = MultiProcessingManager.ITEMPATH, position = 1000, separatorAfter = 1090)
 })
-@NbBundle.Messages("CTL_OpenSpecParser=Open Spec Parser")
+@NbBundle.Messages("CTL_OpenSpecParser=Open SpecParser")
 
 public class OpenSpecParser implements ActionListener {
 
