@@ -268,7 +268,7 @@ public class WinX13SpecSeparator {
 //        4. Set assigned parameters on the correct position in the vector
         if (phi != null) {
             for (Parameter p : phi) {
-                if (p.getValue() == 0.1) {
+                if (p.getValue() == -0.1) {
                     if (!tmp[counter].equals(";")) {
                         if (tmp[counter].contains("f")) {
                             p.setType(ParameterType.Fixed);
@@ -288,7 +288,7 @@ public class WinX13SpecSeparator {
         }
         if (bPhi != null) {
             for (Parameter p : bPhi) {
-                if (p.getValue() == 0.1) {
+                if (p.getValue() == -0.1) {
                     if (!tmp[counter].equals(";")) {
                         if (tmp[counter].contains("f")) {
                             p.setType(ParameterType.Fixed);
@@ -556,7 +556,7 @@ public class WinX13SpecSeparator {
 //        4. Set assigned parameters on the correct position in the vector
         if (theta != null) {
             for (Parameter q : theta) {
-                if (q.getValue() == 0.1) {
+                if (q.getValue() == -0.1) {
                     if (!tmp[counter].equals(";")) {
                         if (tmp[counter].contains("F")) {
                             q.setType(ParameterType.Fixed);
@@ -576,7 +576,7 @@ public class WinX13SpecSeparator {
         }
         if (bTheta != null) {
             for (Parameter q : bTheta) {
-                if (q.getValue() == 0.1) {
+                if (q.getValue() == -0.1) {
                     if (!tmp[counter].equals(";")) {
                         if (tmp[counter].contains("F")) {
                             q.setType(ParameterType.Fixed);
@@ -772,7 +772,7 @@ public class WinX13SpecSeparator {
 //                ii) set default parameter
                     p_para = new Parameter[Integer.parseInt(p)];
                     for (int j = 0; j < p_para.length; j++) {
-                        p_para[j] = new Parameter(0.1, ParameterType.Undefined);
+                        p_para[j] = new Parameter(-0.1, ParameterType.Undefined);
                     }
 
                 } else {
@@ -787,7 +787,7 @@ public class WinX13SpecSeparator {
                         p_para[j] = new Parameter(0.0, ParameterType.Fixed);
                     }
                     for (String a : p_array) {
-                        p_para[Integer.parseInt(a) - 1] = new Parameter(0.1, ParameterType.Undefined);
+                        p_para[Integer.parseInt(a) - 1] = new Parameter(-0.1, ParameterType.Undefined);
                     }
                 }
                 if (q == null) {
@@ -803,7 +803,7 @@ public class WinX13SpecSeparator {
 //                ii) set default parameter
                     q_para = new Parameter[Integer.parseInt(q)];
                     for (int j = 0; j < q_para.length; j++) {
-                        q_para[j] = new Parameter(0.1, ParameterType.Undefined);
+                        q_para[j] = new Parameter(-0.1, ParameterType.Undefined);
                     }
 
                 } else {
@@ -818,7 +818,7 @@ public class WinX13SpecSeparator {
                         q_para[j] = new Parameter(0.0, ParameterType.Fixed);
                     }
                     for (String a : q_array) {
-                        q_para[Integer.parseInt(a) - 1] = new Parameter(0.1, ParameterType.Undefined);
+                        q_para[Integer.parseInt(a) - 1] = new Parameter(-0.1, ParameterType.Undefined);
                     }
                 }
 

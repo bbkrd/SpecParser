@@ -5,6 +5,7 @@
  */
 package eu.nbdemetra.specParser;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,6 +14,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -95,11 +97,9 @@ public final class SingleTopComponent extends TopComponent {
                     } catch (IOException ex) {
                         Exceptions.printStackTrace(ex);
                     }
-                } 
-//                    else {
-//
-////                    errormessage.setText("Auswahl abgebrochen");
-//                }
+                }else if (state == JFileChooser.CANCEL_OPTION){
+                    JOptionPane.showMessageDialog(null, "File istn't loaded");
+                }
             }
         });
         JButton save = new JButton(new AbstractAction("Save WinX12Spec") {
@@ -110,18 +110,21 @@ public final class SingleTopComponent extends TopComponent {
                 JFileChooser chooser = new JFileChooser(path);
                 chooser.setFileFilter(new MyFilter(".spc"));
                 chooser.setAcceptAllFileFilterUsed(false);
-                chooser.showSaveDialog(null);
-                try {
-                    File file = chooser.getSelectedFile();
-                    try (FileWriter fw = new FileWriter(file)) {
-                        fw.write(specViewer.getSpecCollector().getWinX13Spec());
+                int result = chooser.showSaveDialog(null);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        File file = chooser.getSelectedFile();
+                        try (FileWriter fw = new FileWriter(file)) {
+                            fw.write(specViewer.getSpecCollector().getWinX13Spec());
+                        }
+                        if (!file.toString().endsWith(".spc")) {
+                            file.renameTo(new File(file.toString() + ".spc"));
+                        }
+                    } catch (IOException ex) {
+                        Exceptions.printStackTrace(ex);
                     }
-                    if (!file.toString().endsWith(".spc")) {
-                        file.renameTo(new File(file.toString() + ".spc"));
-                    }
-                } catch (IOException ex) {
-//                    winX13Text.setText("Nothing happend");
-                    Exceptions.printStackTrace(ex);
+                } else if (result == JFileChooser.CANCEL_OPTION) {
+                    JOptionPane.showMessageDialog(null, "File isn't saved");
                 }
             }
         });
@@ -146,17 +149,32 @@ public final class SingleTopComponent extends TopComponent {
             }
         });
 
+//        save.setBorderPainted(true);
+//        save.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+//        load.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        load.setBackground(Color.LIGHT_GRAY);
+//        save.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        save.setBackground(Color.LIGHT_GRAY);
+//        refreshX13.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        refreshX13.setBackground(Color.LIGHT_GRAY);
+//        refreshJD.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        refreshJD.setBackground(Color.LIGHT_GRAY);
+
         toolBar.add(load, 0);
-        toolBar.add(save, 1);
-        toolBar.add(refreshX13, 2);
-        toolBar.add(refreshJD, 3);
+        toolBar.add(new JButton(), 1);
+        toolBar.add(save, 2);
+        toolBar.add(new JButton(), 3);
+        toolBar.add(refreshX13, 4);
+        toolBar.add(new JButton(), 5);
+        toolBar.add(refreshJD, 6);
+
     }
 
     public void setSpecView(SpecCollector spec) {
 
         specViewer = SpecViewer.create(spec);
 
-                //Button for load Winx13 Spec from file
+        //Button for load Winx13 Spec from file
         add(specViewer);
         specViewer.refreshHeader();
     }
@@ -181,15 +199,14 @@ public final class SingleTopComponent extends TopComponent {
     private javax.swing.JToolBar toolBar;
     // End of variables declaration//GEN-END:variables
     private SpecViewer specViewer;
-    
-    public SpecViewer getSpecViewer(){
+
+    public SpecViewer getSpecViewer() {
         return specViewer;
     }
 
 //    public void refreshSpecCollector() {
 //
 //    }
-
     @Override
     public void componentOpened() {
         open = true;
