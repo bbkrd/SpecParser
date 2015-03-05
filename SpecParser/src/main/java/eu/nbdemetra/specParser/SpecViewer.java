@@ -45,6 +45,8 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
         winX13Text = new JTextArea();
         errormessage = new JTextArea();
+        
+        errormessage.setFocusable(false);
 
         winX13Text.setText("empty");
         errormessage.setText("error messages");

@@ -730,7 +730,7 @@ public class WinX13SpecSeparator {
                     sarima = true;
                     if (period != null) {
                         if (!match[1].trim().equals(period.value + "")) {
-                            errors.add(partName + ": Period is not identical to period in SERIES");
+                            errors.add(partName+": Periods are not conform.");
                         } //else all right
                     } else {
                         read_period(partName, match[1]);
