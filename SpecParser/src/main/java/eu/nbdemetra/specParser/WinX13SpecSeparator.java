@@ -33,7 +33,7 @@ public class WinX13SpecSeparator {
     private X13Specification spec = new X13Specification();
     private ArrayList<String> errors = new ArrayList();
 
-    private Period period = Period.MONTH;
+    private Period period;// = Period.MONTH;
 
     public WinX13SpecSeparator() {
         setDefaults();
@@ -598,21 +598,21 @@ public class WinX13SpecSeparator {
 
     public void read_maxlead(SpecificationPart partName, String content) {
 
-        content=content.trim();
-        
-        try{
+        content = content.trim();
+
+        try {
             int forecast = Integer.parseInt(content);
-            
-            if(forecast % period.value != 0){
-                errors.add(partName+": In JD+ only integers for forecasts horizon allowed. Please correct this manually in the JD+ specification");
+
+            if (forecast % period.value != 0) {
+                errors.add(partName + ": In JD+ only integers for forecasts horizon allowed. Please correct this manually in the JD+ specification");
             }
-            
+
             //rounded down when result is no integer, parse in integer
-            int div = forecast/period.value*(-1);
+            int div = forecast / period.value * (-1);
             spec.getX11Specification().setForecastHorizon(div);
-            
-        }catch(NumberFormatException e){
-            errors.add(partName+": Wrong format for MAXLEAD");
+
+        } catch (NumberFormatException e) {
+            errors.add(partName + ": Wrong format for MAXLEAD");
         }
     }
 
@@ -723,8 +723,18 @@ public class WinX13SpecSeparator {
 
 //            3. Check it is the part of saisonal (SARIMA)
                 match = s.split("\\)");
-                if ((i + 1) == 2 || match.length == 2) {
+                if ((i + 1) == 2) {
                     sarima = true;
+                }
+                if (match.length == 2) {
+                    sarima = true;
+                    if (period != null) {
+                        if (!match[1].trim().equals(period.value + "")) {
+                            errors.add(partName + ": Period is not identical to period in SERIES");
+                        } //else all right
+                    } else {
+                        read_period(partName, match[1]);
+                    }
                 }
 
                 s = match[0].trim();
@@ -949,7 +959,12 @@ public class WinX13SpecSeparator {
                 }
             }
         }
-        spec.getX11Specification().setSeasonalFilters((SeasonalFilterOption[]) tmp.toArray(new SeasonalFilterOption[tmp.size()]));
+        if (tmp.size() == 1 || tmp.size() == period.value) {
+            spec.getX11Specification().setSeasonalFilters((SeasonalFilterOption[]) tmp.toArray(new SeasonalFilterOption[tmp.size()]));
+        }else{
+            errors.add(partName+": Periods are not conform. Sesonal filter is set to "+tmp.get(0));
+            spec.getX11Specification().setSeasonalFilter(tmp.get(0));
+        }
     }
 
     public void read_sigmalim(SpecificationPart partName, String content) {
