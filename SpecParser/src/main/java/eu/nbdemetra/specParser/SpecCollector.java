@@ -6,6 +6,8 @@
 package eu.nbdemetra.specParser;
 
 import ec.nbdemetra.ws.WorkspaceItem;
+import ec.tss.Ts;
+import ec.tss.TsFactory;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
 
@@ -29,12 +31,11 @@ public class SpecCollector {
     private String[] errors;
     private WorkspaceItem ws;
 
-    
     public SpecCollector(WorkspaceItem w) {
         ws = w;
         //eigene Default-Methode entwickeln (?)
-        
-        if(ws.getElement() instanceof X13Document){
+
+        if (ws.getElement() instanceof X13Document) {
             jdSpec = (SaDocument) ws.getElement();
         }
     }
@@ -65,10 +66,10 @@ public class SpecCollector {
         return errors;
     }
 
-    public void setName(String name){
+    public void setName(String name) {
         ws.setDisplayName(name);
     }
-       
+
     public void translate(TranslationTo_Type type) {
 
         if (type == TranslationTo_Type.JDSpec) {
@@ -79,6 +80,9 @@ public class SpecCollector {
             if (ws != null) {
                 if (ws.getElement() instanceof X13Document) {
                     ws.setElement(jdSpec);
+                    if (separator.getTs().getTsData() != null) {
+                        ((X13Document) ws.getElement()).setInput(separator.getTs());
+                    }
                 }
             }
             errors = separator.getErrorList();

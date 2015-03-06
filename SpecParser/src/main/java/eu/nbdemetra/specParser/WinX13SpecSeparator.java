@@ -8,6 +8,8 @@ package eu.nbdemetra.specParser;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x13.X13Specification;
+import ec.tss.Ts;
+import ec.tss.TsFactory;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
@@ -20,6 +22,14 @@ import ec.tstoolkit.timeseries.PeriodSelectorType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.regression.OutlierType;
+import ec.tstoolkit.timeseries.simplets.TsData;
+import ec.tstoolkit.timeseries.simplets.TsFrequency;
+import ec.tstoolkit.timeseries.simplets.TsPeriod;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,16 +41,21 @@ import java.util.ArrayList;
 public class WinX13SpecSeparator {
 
     /*
-    nur fuer methode
-    @param spec collect the x13Specification for JD+
-    @param errors collect message by translating
-    @param period Period from WinX12, in JD+ it is given by the data
-    */
+     nur fuer methode
+     @param spec collect the x13Specification for JD+
+     @param errors collect message by translating
+     @param period Period from WinX12, in JD+ it is given by the data
+     */
     private X13Specification spec = new X13Specification();
     private ArrayList<String> errors = new ArrayList();
 
     //for period is no equivalence in JD+, this information is given in TSData
-    private Period period;// = Period.MONTH;
+//    private Period period;// = Period.MONTH;
+    private TsFrequency period;
+    //for loading data, equivalence is in TsData
+    private Day tsStart;
+    private TsData tsData = null;
+    private String tsName;
 
     public WinX13SpecSeparator() {
         setDefaults();
@@ -54,6 +69,10 @@ public class WinX13SpecSeparator {
         X13Document x13 = new X13Document();
         x13.setSpecification(spec);
         return x13;
+    }
+
+    public Ts getTs() {
+        return TsFactory.instance.createTs(tsName, null, tsData);
     }
 
     public void buildSpec(String winX13Text) {
@@ -348,6 +367,7 @@ public class WinX13SpecSeparator {
 
     private Day calcDay(SpecificationPart partName, String day) {
 
+        //pruefe auf period!!!
         String[] split = day.split("\\.");
         int year = Integer.parseInt(split[0].trim());
 
@@ -457,9 +477,98 @@ public class WinX13SpecSeparator {
         }
     }
 
+    public void read_data(SpecificationPart partName, String content) {
+
+        if (tsStart == null) {
+            errors.add(partName + ": There is no start date. Data are not loaded.");
+            return;
+//                    tsStart = new Day(1970, Month.January, 0);
+        }
+        if (period == null) {
+            errors.add(partName + ": There is no period. Data are not loaded.");
+            return;
+        }
+        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        String[] split = content.split("\\s+");
+
+        double[] values = new double[split.length];
+        for (int i = 0; i < split.length; i++) {
+            values[i] = Double.parseDouble(split[i]);
+        }
+
+        switch (partName) {
+            case SERIES:
+                tsData = new TsData(new TsPeriod(period, tsStart), values, false);
+                break;
+            case REGRESSION: //noch nix, regression braucht auch start
+//                break;
+            default: //Fehler
+                errors.add(partName + ": To load data is not implemented");
+                break;
+        }
+
+    }
+
     public void read_file(SpecificationPart partName, String content) {
 
-        errors.add(partName + ": To load data is not possible");
+        if (tsStart == null) {
+            errors.add(partName + ": There is no start date. Data are not loaded.");
+            return;
+//                    tsStart = new Day(1970, Month.January, 0);
+        }
+        if (period == null) {
+            errors.add(partName + ": There is no period. Data are not loaded.");
+            return;
+        }
+
+        content = content.replaceAll(";", "").replaceAll("'", "").trim();
+        ArrayList<String> v = new ArrayList();
+        double[] values = null;
+
+        if (content.endsWith(".ser")) {
+            File file = new File(content);
+
+            try {
+                FileReader f = new FileReader(file);
+
+                try (BufferedReader br = new BufferedReader(f)) {
+                    String zeile;
+                    while ((zeile = br.readLine()) != null) {
+                        v.add(zeile);
+                    }
+                    values = new double[v.size()];
+
+                    for (int i = 0; i < v.size(); i++) {
+                        values[i] = Double.parseDouble(v.get(i));
+                    }
+                    if (partName == SpecificationPart.SERIES) {
+                        tsData = new TsData(new TsPeriod(period, tsStart), values, false);
+                    } else {
+                        errors.add(partName + ": To load data is not possible");
+                    }
+                }
+
+            } catch (FileNotFoundException ex) {
+                errors.add(partName + ": File " + content + " not found");
+            } catch (IOException ex) {
+                errors.add(partName + ": Error loading file");
+            }
+
+//            switch (partName) {
+//                case SERIES:
+//                    
+//                    break;
+//                case REGRESSION:
+////                break;
+//                default: //Fehler
+//                    errors.add(partName + ": To load  data from a file is not implemented");
+//
+//                    break;
+//            }
+        } else if (content.endsWith(".dat")) {
+            errors.add(partName + ": Loading from .dat file is not possible");
+        }
+
     }
 
     public void read_function(SpecificationPart partName, String content) {
@@ -618,12 +727,10 @@ public class WinX13SpecSeparator {
 //            //rounded down when result is no integer, parse in integer
 //            int div = forecast / period.value * (-1);
 //            spec.getX11Specification().setForecastHorizon(div);
-
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong format for MAXLEAD");
         }
-        
-        
+
     }
 
     public void read_method(SpecificationPart partName, String content) {
@@ -739,8 +846,8 @@ public class WinX13SpecSeparator {
                 if (match.length == 2) {
                     sarima = true;
                     if (period != null) {
-                        if (!match[1].trim().equals(period.value + "")) {
-                            errors.add(partName+": Periods are not conform.");
+                        if (!match[1].trim().equals(period.intValue() + "")) {
+                            errors.add(partName + ": Periods are not conform.");
                         } //else all right
                     } else {
                         read_period(partName, match[1]);
@@ -869,21 +976,35 @@ public class WinX13SpecSeparator {
 
     }
 
+    public void read_name(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+        switch (partName) {
+            case SERIES:
+                tsName = content;
+                break;
+            case REGRESSION:
+            default:
+                errors.add(partName + ": not possible to name the data");
+                break;
+        }
+    }
+
     public void read_period(SpecificationPart partName, String content) {
 
-        content = content.trim();
+        content = content.replaceAll(";", "").trim();
         try {
             int p = Integer.parseInt(content);
             switch (p) {
                 case 12:
-                    period = Period.MONTH;
+                    period = TsFrequency.Monthly;
                     break;
                 case 4:
-                    period = Period.QUARTER;
+                    period = TsFrequency.Quarterly;
                     break;
                 default:
                     errors.add(partName + ": Period " + p + " are not possible. Set to default 12");
-                    period = Period.MONTH;
+                    period = TsFrequency.Monthly;
                     break;
             }
         } catch (NumberFormatException e) {
@@ -969,10 +1090,10 @@ public class WinX13SpecSeparator {
                 }
             }
         }
-        if (tmp.size() == 1 || tmp.size() == period.value) {
+        if (tmp.size() == 1 || tmp.size() == period.intValue()) {
             spec.getX11Specification().setSeasonalFilters((SeasonalFilterOption[]) tmp.toArray(new SeasonalFilterOption[tmp.size()]));
-        }else{
-            errors.add(partName+": Periods are not conform. Sesonal filter is set to "+tmp.get(0));
+        } else {
+            errors.add(partName + ": Periods are not conform. Sesonal filter is set to " + tmp.get(0));
             spec.getX11Specification().setSeasonalFilter(tmp.get(0));
         }
     }
@@ -1070,6 +1191,23 @@ public class WinX13SpecSeparator {
             //Fehler
             errors.add((String) (partName == SpecificationPart.ESTIMATE ? SpecificationPart.SERIES : partName + ": Wrong format for span"));
         }
+    }
+
+    public void read_start(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+
+        switch (partName) {
+            case SERIES:
+                tsStart = calcDay(partName, content);
+                break;
+            case REGRESSION: //auch eine variable anlegen
+            // break;
+            default:
+                errors.add(partName + ": start argument is not implemented");
+                break;
+        }
+
     }
 
     public void read_tcrate(SpecificationPart partName, String content) {
@@ -1182,9 +1320,6 @@ public class WinX13SpecSeparator {
     public void read_format(SpecificationPart partName, String content) {
     }
 
-    public void read_name(SpecificationPart partName, String content) {
-    }
-
     public void read_precision(SpecificationPart partName, String content) {
     }
 
@@ -1195,9 +1330,6 @@ public class WinX13SpecSeparator {
     }
 
     public void read_savelog(SpecificationPart partName, String content) {
-    }
-
-    public void read_start(SpecificationPart partName, String content) {
     }
 
     public void read_title(SpecificationPart partName, String content) {
