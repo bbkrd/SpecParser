@@ -368,83 +368,109 @@ public class WinX13SpecSeparator {
     private Day calcDay(SpecificationPart partName, String day) {
 
         //pruefe auf period!!!
+        if (period == null) {
+            //check number of numeric character/or letters
+            //      1 -> quarterly
+            //      2 -> monthly
+            //      3 -> monthly ()
+
+            switch (day.length()) {
+                case 1:
+                    period = TsFrequency.Quarterly;
+                    break;
+                case 2:
+                case 3:
+                    period = TsFrequency.Monthly;
+                    break;
+                default:
+                    errors.add(partName + ": Please set a period for your data");
+                    return null;
+            }
+        }
+
         String[] split = day.split("\\.");
         int year = Integer.parseInt(split[0].trim());
 
         Day erg = null;
-        switch (split[1].trim().toUpperCase()) {
-            case "JAN":
-            case "01":
-                erg = new Day(year, Month.January, 0);
-                break;
-            case "FEB":
-            case "02":
-                erg = new Day(year, Month.February, 0);
-                break;
-            case "MAR":
-            case "03":
-                erg = new Day(year, Month.March, 0);
-                break;
-            case "APR":
-            case "04":
-                erg = new Day(year, Month.April, 0);
-                break;
-            case "MAY":
-            case "05":
-                erg = new Day(year, Month.May, 0);
-                break;
-            case "JUN":
-            case "06":
-                erg = new Day(year, Month.June, 0);
-                break;
-            case "JUL":
-            case "07":
-                erg = new Day(year, Month.July, 0);
-                break;
-            case "AUG":
-            case "08":
-                erg = new Day(year, Month.August, 0);
-                break;
-            case "SEP":
-            case "09":
-                erg = new Day(year, Month.September, 0);
-                break;
-            case "OCT":
-            case "10":
-                erg = new Day(year, Month.October, 0);
-                break;
-            case "NOV":
-            case "11":
-                erg = new Day(year, Month.November, 0);
-                break;
-            case "DEC":
-            case "12":
-                erg = new Day(year, Month.December, 0);
-                break;
-            default:
-                try {
-                    int quarter = Integer.parseInt(split[1].trim());
-                    if (quarter == 1) {
-                        erg = new Day(year, Month.January, 0);
-                    } else if (quarter == 2) {
-                        erg = new Day(year, Month.April, 0);
-                    } else if (quarter == 3) {
-                        erg = new Day(year, Month.July, 0);
-                    } else if (quarter == 4) {
-                        erg = new Day(year, Month.October, 0);
-                    } else {
-                        errors.add(partName + ": Date format is not supported");
-                    }
-                } catch (NumberFormatException e) {
-                    errors.add(partName + ": Wrong format for date");
-                }
-                break;
-        }
 
-        return erg;
+        if (period == TsFrequency.Monthly) {
+            switch (split[1].trim().toUpperCase()) {
+                case "JAN":
+                case "01":
+                    erg = new Day(year, Month.January, 0);
+                    break;
+                case "FEB":
+                case "02":
+                    erg = new Day(year, Month.February, 0);
+                    break;
+                case "MAR":
+                case "03":
+                    erg = new Day(year, Month.March, 0);
+                    break;
+                case "APR":
+                case "04":
+                    erg = new Day(year, Month.April, 0);
+                    break;
+                case "MAY":
+                case "05":
+                    erg = new Day(year, Month.May, 0);
+                    break;
+                case "JUN":
+                case "06":
+                    erg = new Day(year, Month.June, 0);
+                    break;
+                case "JUL":
+                case "07":
+                    erg = new Day(year, Month.July, 0);
+                    break;
+                case "AUG":
+                case "08":
+                    erg = new Day(year, Month.August, 0);
+                    break;
+                case "SEP":
+                case "09":
+                    erg = new Day(year, Month.September, 0);
+                    break;
+                case "OCT":
+                case "10":
+                    erg = new Day(year, Month.October, 0);
+                    break;
+                case "NOV":
+                case "11":
+                    erg = new Day(year, Month.November, 0);
+                    break;
+                case "DEC":
+                case "12":
+                    erg = new Day(year, Month.December, 0);
+                    break;
+                default:
+                    break;
+            }
+        }else{
+            //Quarterly
+        try {
+            int quarter = Integer.parseInt(split[1].trim());
+            if (quarter == 1) {
+                erg = new Day(year, Month.January, 0);
+            } else if (quarter == 2) {
+                erg = new Day(year, Month.April, 0);
+            } else if (quarter == 3) {
+                erg = new Day(year, Month.July, 0);
+            } else if (quarter == 4) {
+                erg = new Day(year, Month.October, 0);
+            } else {
+                errors.add(partName + ": Date format is not supported");
+            }
+        } catch (NumberFormatException e) {
+            errors.add(partName + ": Wrong format for date");
+        }
+        
     }
 
-    public void read_checkmu(SpecificationPart partName, String content) {
+    return erg;
+}
+
+public void read_checkmu(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toUpperCase();
 
@@ -806,14 +832,6 @@ public class WinX13SpecSeparator {
          */
         spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
 
-////        0. set no model
-//        spec.getRegArimaSpecification().getArima().setP(0);
-//        spec.getRegArimaSpecification().getArima().setD(0);
-//        spec.getRegArimaSpecification().getArima().setQ(0);
-//
-//        spec.getRegArimaSpecification().getArima().setBP(0);
-//        spec.getRegArimaSpecification().getArima().setBD(0);
-//        spec.getRegArimaSpecification().getArima().setBQ(0);
         //1. Split on ")(" with or without spaces
         content = content.replaceAll(";", "").trim();
         //invalid format for ARIMA model: (...)(...)3(...)
