@@ -62,8 +62,6 @@ public class SingleSpec {
                 window.open();
                 window.requestActive();
             }
-            
-            
         }
     }
 

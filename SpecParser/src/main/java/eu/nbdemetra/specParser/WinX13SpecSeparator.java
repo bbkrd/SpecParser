@@ -30,9 +30,16 @@ import java.util.ArrayList;
  */
 public class WinX13SpecSeparator {
 
+    /*
+    nur fuer methode
+    @param spec collect the x13Specification for JD+
+    @param errors collect message by translating
+    @param period Period from WinX12, in JD+ it is given by the data
+    */
     private X13Specification spec = new X13Specification();
     private ArrayList<String> errors = new ArrayList();
 
+    //for period is no equivalence in JD+, this information is given in TSData
     private Period period;// = Period.MONTH;
 
     public WinX13SpecSeparator() {
@@ -117,12 +124,12 @@ public class WinX13SpecSeparator {
                             m = this.getClass().getMethod(method.toString().toLowerCase(), SpecificationPart.class, String.class);
                             m.invoke(this, specPartName, lineSplitted[1]);
                         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-                            errors.add(specPartName.name() + ": No support for " + lineSplitted[0]);
+                            errors.add(specPartName.name() + ": No support for " + lineSplitted[0].toUpperCase());
                         }
                     }
                 }
             } catch (IllegalArgumentException ex) {
-                errors.add("No support for " + specPartSplitted[0]);
+                errors.add("No support for " + specPartSplitted[0].toUpperCase());
             }
         }
     }
@@ -602,18 +609,21 @@ public class WinX13SpecSeparator {
 
         try {
             int forecast = Integer.parseInt(content);
+            spec.getX11Specification().setForecastHorizon(forecast);
 
-            if (forecast % period.value != 0) {
-                errors.add(partName + ": In JD+ only integers for forecasts horizon allowed. Please correct this manually in the JD+ specification");
-            }
-
-            //rounded down when result is no integer, parse in integer
-            int div = forecast / period.value * (-1);
-            spec.getX11Specification().setForecastHorizon(div);
+//            if (forecast % period.value != 0) {
+//                errors.add(partName + ": In JD+ only integers for forecasts horizon allowed. Please correct this manually in the JD+ specification");
+//            }
+//
+//            //rounded down when result is no integer, parse in integer
+//            int div = forecast / period.value * (-1);
+//            spec.getX11Specification().setForecastHorizon(div);
 
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong format for MAXLEAD");
         }
+        
+        
     }
 
     public void read_method(SpecificationPart partName, String content) {
