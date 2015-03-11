@@ -294,14 +294,18 @@ public class WinX13SpecSeparator {
 //        4. Check there are enough assigned values
         int assigned = tmp.length;
         int required = 0;
-        for (Parameter p : phi) {
-            if (p.getValue() == -0.1) {
-                required++;
+        if (phi != null) {
+            for (Parameter p : phi) {
+                if (p.getValue() == -0.1) {
+                    required++;
+                }
             }
         }
-        for (Parameter p : bPhi) {
-            if (p.getValue() == -0.1) {
-                required++;
+        if (bPhi != null) {
+            for (Parameter p : bPhi) {
+                if (p.getValue() == -0.1) {
+                    required++;
+                }
             }
         }
         if (assigned == required) {
@@ -724,14 +728,18 @@ public class WinX13SpecSeparator {
 //         4. Check there are enough assigned values
         int assigned = tmp.length;
         int required = 0;
-        for (Parameter p : theta) {
-            if (p.getValue() == -0.1) {
-                required++;
+        if (theta != null) {
+            for (Parameter p : theta) {
+                if (p.getValue() == -0.1) {
+                    required++;
+                }
             }
         }
-        for (Parameter p : bTheta) {
-            if (p.getValue() == -0.1) {
-                required++;
+        if (bTheta != null) {
+            for (Parameter p : bTheta) {
+                if (p.getValue() == -0.1) {
+                    required++;
+                }
             }
         }
         if (assigned == required) {
@@ -778,8 +786,7 @@ public class WinX13SpecSeparator {
                 }
             }
         } else {
-            errors.add(partName + ": The number of values for AR is not conform to the model.");
-
+            errors.add(partName + ": The number of values for MA is not conform to the model.");
         }
     }
 
