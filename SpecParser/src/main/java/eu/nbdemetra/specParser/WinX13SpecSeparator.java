@@ -53,9 +53,9 @@ public class WinX13SpecSeparator {
 //    private Period period;// = Period.MONTH;
     private TsFrequency period;
     //for loading data, equivalence is in TsData
-    private Day tsStart;
+    private Day tsStart = null;
     private TsData tsData = null;
-    private String tsName;
+    private String tsName = null;
 
     public WinX13SpecSeparator() {
         setDefaults();
@@ -291,46 +291,64 @@ public class WinX13SpecSeparator {
         int counter = 0;
         double value;
 
-//        4. Set assigned parameters on the correct position in the vector
-        if (phi != null) {
-            for (Parameter p : phi) {
-                if (p.getValue() == -0.1) {
-                    if (!tmp[counter].equals(";")) {
-                        if (tmp[counter].contains("f")) {
-                            p.setType(ParameterType.Fixed);
-                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
-                        } else {
-                            p.setType(ParameterType.Initial);
-                        }
-                        value = Double.parseDouble(tmp[counter]) * -1.0;
-                    } else {
-                        value = -0.1;
-                        p.setType(ParameterType.Undefined);
-                    }
-                    p.setValue(value);
-                    counter++;
-                }
+//        4. Check there are enough assigned values
+        int assigned = tmp.length;
+        int required = 0;
+        for (Parameter p : phi) {
+            if (p.getValue() == -0.1) {
+                required++;
             }
         }
-        if (bPhi != null) {
-            for (Parameter p : bPhi) {
-                if (p.getValue() == -0.1) {
-                    if (!tmp[counter].equals(";")) {
-                        if (tmp[counter].contains("f")) {
-                            p.setType(ParameterType.Fixed);
-                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+        for (Parameter p : bPhi) {
+            if (p.getValue() == -0.1) {
+                required++;
+            }
+        }
+        if (assigned == required) {
+
+//        5. Set assigned parameters on the correct position in the vector
+            if (phi != null) {
+                for (Parameter p : phi) {
+                    if (p.getValue() == -0.1) {
+                        if (!tmp[counter].equals(";")) {
+                            if (tmp[counter].contains("f")) {
+                                p.setType(ParameterType.Fixed);
+                                tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                            } else {
+                                p.setType(ParameterType.Initial);
+                            }
+                            value = Double.parseDouble(tmp[counter]) * -1.0;
                         } else {
-                            p.setType(ParameterType.Initial);
+                            value = -0.1;
+                            p.setType(ParameterType.Undefined);
                         }
-                        value = Double.parseDouble(tmp[counter]) * -1.0;
-                    } else {
-                        value = -0.1;
-                        p.setType(ParameterType.Undefined);
+                        p.setValue(value);
+                        counter++;
                     }
-                    p.setValue(value);
-                    counter++;
                 }
             }
+            if (bPhi != null) {
+                for (Parameter p : bPhi) {
+                    if (p.getValue() == -0.1) {
+                        if (!tmp[counter].equals(";")) {
+                            if (tmp[counter].contains("f")) {
+                                p.setType(ParameterType.Fixed);
+                                tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("f"));
+                            } else {
+                                p.setType(ParameterType.Initial);
+                            }
+                            value = Double.parseDouble(tmp[counter]) * -1.0;
+                        } else {
+                            value = -0.1;
+                            p.setType(ParameterType.Undefined);
+                        }
+                        p.setValue(value);
+                        counter++;
+                    }
+                }
+            }
+        } else {
+            errors.add(partName + ": The number of values for AR is not conform to the model.");
         }
     }
 
@@ -367,31 +385,34 @@ public class WinX13SpecSeparator {
 
     private Day calcDay(SpecificationPart partName, String day) {
 
-        //pruefe auf period!!!
+        String[] split = day.split("\\.");
         if (period == null) {
             //check number of numeric character/or letters
             //      1 -> quarterly
             //      2 -> monthly
             //      3 -> monthly ()
 
-            switch (day.length()) {
+            switch (split[1].length()) {
                 case 1:
-                    period = TsFrequency.Quarterly;
+                    if (split[1].matches("[1234]")) {
+                        period = TsFrequency.Quarterly;
+                    } else {
+                        errors.add(partName + ": Please check your format for the period");
+                    }
                     break;
                 case 2:
                 case 3:
                     period = TsFrequency.Monthly;
                     break;
                 default:
-                    errors.add(partName + ": Please set a period for your data");
-                    return null;
+                    errors.add(partName + ": Please set a period for your data.");
+                    break;
             }
         }
 
-        String[] split = day.split("\\.");
         int year = Integer.parseInt(split[0].trim());
 
-        Day erg = null;
+        Day erg = new Day(1970, Month.January, 0);
 
         if (period == TsFrequency.Monthly) {
             switch (split[1].trim().toUpperCase()) {
@@ -446,31 +467,34 @@ public class WinX13SpecSeparator {
                 default:
                     break;
             }
-        }else{
-            //Quarterly
-        try {
-            int quarter = Integer.parseInt(split[1].trim());
-            if (quarter == 1) {
-                erg = new Day(year, Month.January, 0);
-            } else if (quarter == 2) {
-                erg = new Day(year, Month.April, 0);
-            } else if (quarter == 3) {
-                erg = new Day(year, Month.July, 0);
-            } else if (quarter == 4) {
-                erg = new Day(year, Month.October, 0);
+        } else {
+            if (period == TsFrequency.Quarterly) {
+                //Quarterly
+                try {
+                    int quarter = Integer.parseInt(split[1].trim());
+                    if (quarter == 1) {
+                        erg = new Day(year, Month.January, 0);
+                    } else if (quarter == 2) {
+                        erg = new Day(year, Month.April, 0);
+                    } else if (quarter == 3) {
+                        erg = new Day(year, Month.July, 0);
+                    } else if (quarter == 4) {
+                        erg = new Day(year, Month.October, 0);
+                    } else {
+                        errors.add(partName + ": Date format is not supported");
+                    }
+                } catch (NumberFormatException e) {
+                    errors.add(partName + ": Wrong format for date");
+                }
             } else {
-                errors.add(partName + ": Date format is not supported");
+                errors.add(partName + ": Start date is set to 1970/01/01");
             }
-        } catch (NumberFormatException e) {
-            errors.add(partName + ": Wrong format for date");
         }
-        
+
+        return erg;
     }
 
-    return erg;
-}
-
-public void read_checkmu(SpecificationPart partName, String content) {
+    public void read_checkmu(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toUpperCase();
 
@@ -547,11 +571,11 @@ public void read_checkmu(SpecificationPart partName, String content) {
             return;
         }
 
-        content = content.replaceAll(";", "").replaceAll("'", "").trim();
+        content = content.replaceAll("[;'\"]", "").trim();
         ArrayList<String> v = new ArrayList();
         double[] values = null;
 
-        if (content.endsWith(".ser")) {
+        if (content.toLowerCase().endsWith(".ser")) {
             File file = new File(content);
 
             try {
@@ -591,8 +615,10 @@ public void read_checkmu(SpecificationPart partName, String content) {
 //
 //                    break;
 //            }
-        } else if (content.endsWith(".dat")) {
+        } else if (content.toLowerCase().endsWith(".dat")) {
             errors.add(partName + ": Loading from .dat file is not possible");
+        } else {
+            errors.add(partName + ": Loading data from file " + content + " is not possible");
         }
 
     }
@@ -695,46 +721,65 @@ public void read_checkmu(SpecificationPart partName, String content) {
         int counter = 0;
         double value;
 
-//        4. Set assigned parameters on the correct position in the vector
-        if (theta != null) {
-            for (Parameter q : theta) {
-                if (q.getValue() == -0.1) {
-                    if (!tmp[counter].equals(";")) {
-                        if (tmp[counter].contains("F")) {
-                            q.setType(ParameterType.Fixed);
-                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("F"));
-                        } else {
-                            q.setType(ParameterType.Initial);
-                        }
-                        value = Double.parseDouble(tmp[counter]) * -1.0;
-                    } else {
-                        value = -0.1;
-                        q.setType(ParameterType.Undefined);
-                    }
-                    q.setValue(value);
-                    counter++;
-                }
+//         4. Check there are enough assigned values
+        int assigned = tmp.length;
+        int required = 0;
+        for (Parameter p : theta) {
+            if (p.getValue() == -0.1) {
+                required++;
             }
         }
-        if (bTheta != null) {
-            for (Parameter q : bTheta) {
-                if (q.getValue() == -0.1) {
-                    if (!tmp[counter].equals(";")) {
-                        if (tmp[counter].contains("F")) {
-                            q.setType(ParameterType.Fixed);
-                            tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("F"));
+        for (Parameter p : bTheta) {
+            if (p.getValue() == -0.1) {
+                required++;
+            }
+        }
+        if (assigned == required) {
+
+//        5. Set assigned parameters on the correct position in the vector
+            if (theta != null) {
+                for (Parameter q : theta) {
+                    if (q.getValue() == -0.1) {
+                        if (!tmp[counter].equals(";")) {
+                            if (tmp[counter].contains("F")) {
+                                q.setType(ParameterType.Fixed);
+                                tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("F"));
+                            } else {
+                                q.setType(ParameterType.Initial);
+                            }
+                            value = Double.parseDouble(tmp[counter]) * -1.0;
                         } else {
-                            q.setType(ParameterType.Initial);
+                            value = -0.1;
+                            q.setType(ParameterType.Undefined);
                         }
-                        value = Double.parseDouble(tmp[counter]) * -1.0;
-                    } else {
-                        value = -0.1;
-                        q.setType(ParameterType.Undefined);
+                        q.setValue(value);
+                        counter++;
                     }
-                    q.setValue(value);
-                    counter++;
                 }
             }
+            if (bTheta != null) {
+                for (Parameter q : bTheta) {
+                    if (q.getValue() == -0.1) {
+                        if (!tmp[counter].equals(";")) {
+                            if (tmp[counter].contains("F")) {
+                                q.setType(ParameterType.Fixed);
+                                tmp[counter] = tmp[counter].substring(0, tmp[counter].indexOf("F"));
+                            } else {
+                                q.setType(ParameterType.Initial);
+                            }
+                            value = Double.parseDouble(tmp[counter]) * -1.0;
+                        } else {
+                            value = -0.1;
+                            q.setType(ParameterType.Undefined);
+                        }
+                        q.setValue(value);
+                        counter++;
+                    }
+                }
+            }
+        } else {
+            errors.add(partName + ": The number of values for AR is not conform to the model.");
+
         }
     }
 
