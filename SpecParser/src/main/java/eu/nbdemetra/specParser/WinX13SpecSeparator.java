@@ -19,6 +19,7 @@ import ec.tstoolkit.modelling.arima.x13.X13Exception;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.Month;
 import ec.tstoolkit.timeseries.PeriodSelectorType;
+import ec.tstoolkit.timeseries.TsAggregationType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.regression.OutlierType;
@@ -51,9 +52,9 @@ public class WinX13SpecSeparator {
 
     //for period is no equivalence in JD+, this information is given in TSData
 //    private Period period;// = Period.MONTH;
-    private TsFrequency period;
+    private TsFrequency period = TsFrequency.Monthly;
     //for loading data, equivalence is in TsData
-    private Day tsStart = null;
+    private Day tsStart = new Day(1970, Month.January, 0);
     private TsData tsData = null;
     private String tsName = null;
 
@@ -390,111 +391,98 @@ public class WinX13SpecSeparator {
     private Day calcDay(SpecificationPart partName, String day) {
 
         String[] split = day.split("\\.");
-        if (period == null) {
-            //check number of numeric character/or letters
-            //      1 -> quarterly
-            //      2 -> monthly
-            //      3 -> monthly ()
-
-            switch (split[1].length()) {
-                case 1:
-                    if (split[1].matches("[1234]")) {
-                        period = TsFrequency.Quarterly;
-                    } else {
-                        errors.add(partName + ": Please check your format for the period");
-                    }
-                    break;
-                case 2:
-                case 3:
-                    period = TsFrequency.Monthly;
-                    break;
-                default:
-                    errors.add(partName + ": Please set a period for your data.");
-                    break;
-            }
-        }
 
         int year = Integer.parseInt(split[0].trim());
-
         Day erg = new Day(1970, Month.January, 0);
 
-        if (period == TsFrequency.Monthly) {
-            switch (split[1].trim().toUpperCase()) {
-                case "JAN":
-                case "01":
-                    erg = new Day(year, Month.January, 0);
-                    break;
-                case "FEB":
-                case "02":
-                    erg = new Day(year, Month.February, 0);
-                    break;
-                case "MAR":
-                case "03":
-                    erg = new Day(year, Month.March, 0);
-                    break;
-                case "APR":
-                case "04":
-                    erg = new Day(year, Month.April, 0);
-                    break;
-                case "MAY":
-                case "05":
-                    erg = new Day(year, Month.May, 0);
-                    break;
-                case "JUN":
-                case "06":
-                    erg = new Day(year, Month.June, 0);
-                    break;
-                case "JUL":
-                case "07":
-                    erg = new Day(year, Month.July, 0);
-                    break;
-                case "AUG":
-                case "08":
-                    erg = new Day(year, Month.August, 0);
-                    break;
-                case "SEP":
-                case "09":
-                    erg = new Day(year, Month.September, 0);
-                    break;
-                case "OCT":
-                case "10":
-                    erg = new Day(year, Month.October, 0);
-                    break;
-                case "NOV":
-                case "11":
-                    erg = new Day(year, Month.November, 0);
-                    break;
-                case "DEC":
-                case "12":
-                    erg = new Day(year, Month.December, 0);
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            if (period == TsFrequency.Quarterly) {
-                //Quarterly
-                try {
-                    int quarter = Integer.parseInt(split[1].trim());
-                    if (quarter == 1) {
+        switch (period) {
+            case Monthly:
+                switch (split[1].trim().toUpperCase()) {
+                    case "JAN":
+                    case "01":
+                    case "1":
                         erg = new Day(year, Month.January, 0);
-                    } else if (quarter == 2) {
+                        break;
+                    case "FEB":
+                    case "02":
+                    case "2":
+                        erg = new Day(year, Month.February, 0);
+                        break;
+                    case "MAR":
+                    case "03":
+                    case "3":
+                        erg = new Day(year, Month.March, 0);
+                        break;
+                    case "APR":
+                    case "04":
+                    case "4":
                         erg = new Day(year, Month.April, 0);
-                    } else if (quarter == 3) {
+                        break;
+                    case "MAY":
+                    case "05":
+                    case "5":
+                        erg = new Day(year, Month.May, 0);
+                        break;
+                    case "JUN":
+                    case "06":
+                    case "6":
+                        erg = new Day(year, Month.June, 0);
+                        break;
+                    case "JUL":
+                    case "07":
+                    case "7":
                         erg = new Day(year, Month.July, 0);
-                    } else if (quarter == 4) {
+                        break;
+                    case "AUG":
+                    case "08":
+                    case "8":
+                        erg = new Day(year, Month.August, 0);
+                        break;
+                    case "SEP":
+                    case "09":
+                    case "9":
+                        erg = new Day(year, Month.September, 0);
+                        break;
+                    case "OCT":
+                    case "10":
                         erg = new Day(year, Month.October, 0);
-                    } else {
-                        errors.add(partName + ": Date format is not supported");
-                    }
-                } catch (NumberFormatException e) {
-                    errors.add(partName + ": Wrong format for date");
+                        break;
+                    case "NOV":
+                    case "11":
+                        erg = new Day(year, Month.November, 0);
+                        break;
+                    case "DEC":
+                    case "12":
+                        erg = new Day(year, Month.December, 0);
+                        break;
+                    default:
+                        errors.add(partName + ": date format is not correct");
+                        break;
                 }
-            } else {
-                errors.add(partName + ": Start date is set to 1970/01/01");
-            }
+                break;
+            case Quarterly:
+                switch (split[1].trim().toUpperCase()) {
+                    case "01":
+                    case "1":
+                        erg = new Day(year, Month.January, 0);
+                        break;
+                    case "02":
+                    case "2":
+                        erg = new Day(year, Month.April, 0);
+                        break;
+                    case "03":
+                    case "3":
+                        erg = new Day(year, Month.July, 0);
+                        break;
+                    case "04":
+                    case "4":
+                        erg = new Day(year, Month.October, 0);
+                        break;
+                    default:
+                        errors.add(partName + ": Date format is not correct");
+                        break;
+                }
         }
-
         return erg;
     }
 
@@ -533,15 +521,6 @@ public class WinX13SpecSeparator {
 
     public void read_data(SpecificationPart partName, String content) {
 
-        if (tsStart == null) {
-            errors.add(partName + ": There is no start date. Data are not loaded.");
-            return;
-//                    tsStart = new Day(1970, Month.January, 0);
-        }
-        if (period == null) {
-            errors.add(partName + ": There is no period. Data are not loaded.");
-            return;
-        }
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] split = content.split("\\s+");
 
@@ -564,16 +543,6 @@ public class WinX13SpecSeparator {
     }
 
     public void read_file(SpecificationPart partName, String content) {
-
-        if (tsStart == null) {
-            errors.add(partName + ": There is no start date. Data are not loaded.");
-            return;
-//                    tsStart = new Day(1970, Month.January, 0);
-        }
-        if (period == null) {
-            errors.add(partName + ": There is no period. Data are not loaded.");
-            return;
-        }
 
         content = content.replaceAll("[;'\"]", "").trim();
         ArrayList<String> v = new ArrayList();
@@ -1067,14 +1036,47 @@ public class WinX13SpecSeparator {
             int p = Integer.parseInt(content);
             switch (p) {
                 case 12:
-                    period = TsFrequency.Monthly;
+                    if (period != TsFrequency.Monthly) {
+                        period = TsFrequency.Monthly;
+                    }
                     break;
                 case 4:
+                    //change period
                     period = TsFrequency.Quarterly;
+
+                    //change start date
+                    tsStart = toQuarterDay(tsStart);
+
+                    //change data object
+                    if (tsData != null) {
+                        tsData = new TsData(new TsPeriod(period, tsStart), tsData.getValues().internalStorage(), false);
+                    }
+
+                    TsPeriodSelector sel;
+                    if (spec.getRegArimaSpecification().getBasic() != null && spec.getRegArimaSpecification().getBasic().getSpan() != null) {
+                        sel = spec.getRegArimaSpecification().getBasic().getSpan();
+                        if (sel.getD0() != null) {
+                            sel.setD0(toQuarterDay(sel.getD0()));
+                        }
+                        if (sel.getD1() != null) {
+                            sel.setD1(toQuarterDay(sel.getD1()));
+                        }
+                        spec.getRegArimaSpecification().getBasic().setSpan(sel);
+                    }
+                    if (spec.getRegArimaSpecification().getEstimate() != null && spec.getRegArimaSpecification().getEstimate().getSpan() != null) {
+                        sel = spec.getRegArimaSpecification().getEstimate().getSpan();
+                        if (sel.getD0() != null) {
+                            sel.setD0(toQuarterDay(sel.getD0()));
+                        }
+                        if (sel.getD1() != null) {
+                            sel.setD1(toQuarterDay(sel.getD1()));
+                        }
+                        spec.getRegArimaSpecification().getEstimate().setSpan(sel);
+                    }
+
                     break;
                 default:
                     errors.add(partName + ": Period " + p + " are not possible. Set to default 12");
-                    period = TsFrequency.Monthly;
                     break;
             }
         } catch (NumberFormatException e) {
@@ -1303,6 +1305,50 @@ public class WinX13SpecSeparator {
         } catch (X13Exception e) {
             errors.add(e.getMessage());
         }
+    }
+
+    private Day toQuarterDay(Day month) {
+
+//        Day quater;
+        //   I: 0/3, 1/3, 2/3     
+        //  II: 3/3, 4/3, 5/3       
+        // III: 6/3, 7/3, 8/3      
+        //  IV: 9/3, 10/3, 11/3   
+        int quarter = month.getMonth();
+        Day erg;
+        switch (quarter) {
+            case 0:
+                erg = new Day(month.getYear(), Month.January, 0);
+                break;
+            case 1:
+                erg = new Day(month.getYear(), Month.April, 0);
+                break;
+            case 2:
+                erg = new Day(month.getYear(), Month.July, 0);
+                break;
+            case 3:
+                erg = new Day(month.getYear(), Month.October, 0);
+                break;
+            default:
+                int q = quarter / 3;
+                switch (q) {
+
+                    case 1:
+                        erg = new Day(month.getYear(), Month.April, 0);
+                        break;
+                    case 2:
+                        erg = new Day(month.getYear(), Month.July, 0);
+                        break;
+                    case 3:
+                        erg = new Day(month.getYear(), Month.October, 0);
+                        break;
+                    default:
+                        erg = month;
+                        break;
+                }
+                break;
+        }
+        return erg;
     }
 
     public void read_trendma(SpecificationPart partName, String content) {
