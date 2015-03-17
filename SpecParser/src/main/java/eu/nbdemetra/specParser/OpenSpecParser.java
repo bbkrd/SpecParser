@@ -63,7 +63,8 @@ public class OpenSpecParser implements ActionListener {
             //vllt Factory
 //            MultiSpec m = new MultiSpec(w);
 //            w=m.getWorkspace();
-            JOptionPane.showInputDialog(new ImageIcon("C:/Users/S4504GN/Downloads/baustelle.gif"));
+//            JOptionPane.showInputDialog(new ImageIcon("\\baustelle.gif"));
+            JOptionPane.showMessageDialog(null, "I work on it");
 
         } else {
             JOptionPane.showInputDialog(null, "nix");

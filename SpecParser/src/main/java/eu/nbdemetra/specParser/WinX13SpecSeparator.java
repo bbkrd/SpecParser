@@ -1052,6 +1052,7 @@ public class WinX13SpecSeparator {
                         tsData = new TsData(new TsPeriod(period, tsStart), tsData.getValues().internalStorage(), false);
                     }
 
+                    //change span
                     TsPeriodSelector sel;
                     if (spec.getRegArimaSpecification().getBasic() != null && spec.getRegArimaSpecification().getBasic().getSpan() != null) {
                         sel = spec.getRegArimaSpecification().getBasic().getSpan();
@@ -1063,6 +1064,7 @@ public class WinX13SpecSeparator {
                         }
                         spec.getRegArimaSpecification().getBasic().setSpan(sel);
                     }
+                    //change modelspan
                     if (spec.getRegArimaSpecification().getEstimate() != null && spec.getRegArimaSpecification().getEstimate().getSpan() != null) {
                         sel = spec.getRegArimaSpecification().getEstimate().getSpan();
                         if (sel.getD0() != null) {
@@ -1309,30 +1311,38 @@ public class WinX13SpecSeparator {
 
     private Day toQuarterDay(Day month) {
 
-//        Day quater;
-        //   I: 0/3, 1/3, 2/3     
-        //  II: 3/3, 4/3, 5/3       
-        // III: 6/3, 7/3, 8/3      
-        //  IV: 9/3, 10/3, 11/3   
         int quarter = month.getMonth();
         Day erg;
+        
         switch (quarter) {
+            //Recalculation from month to quarter
+            //i.e. the third quarter is defined, calculate to march and than to the beginning of the third quarter
+            //1970.3 -> 1970-03-01 -> month=2 -> 1970-07-01
             case 0:
+                //yyyy.1
                 erg = new Day(month.getYear(), Month.January, 0);
                 break;
             case 1:
+                //yyyy.2
                 erg = new Day(month.getYear(), Month.April, 0);
                 break;
             case 2:
+                //yyyy.3
                 erg = new Day(month.getYear(), Month.July, 0);
                 break;
             case 3:
+                //yyyy.4
                 erg = new Day(month.getYear(), Month.October, 0);
                 break;
             default:
+                // If there are months greater than 3.
+                // Here you calculate in which quarter the month belongs.
                 int q = quarter / 3;
+                    //   I: This quarter is processed in the first switch 
+                    //  II: 3/3, 4/3, 5/3       
+                    // III: 6/3, 7/3, 8/3      
+                    //  IV: 9/3, 10/3, 11/3  
                 switch (q) {
-
                     case 1:
                         erg = new Day(month.getYear(), Month.April, 0);
                         break;

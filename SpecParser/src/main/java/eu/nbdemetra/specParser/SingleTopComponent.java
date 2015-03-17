@@ -133,7 +133,8 @@ public final class SingleTopComponent extends TopComponent {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                JOptionPane.showInputDialog(new ImageIcon("C:/Users/S4504GN/Downloads/baustelle.gif"));
+                JOptionPane.showMessageDialog(null, "I work on it");
+//                JOptionPane.showInputDialog(new ImageIcon("C:/Users/S4504GN/Downloads/baustelle.gif"));
             }
         });
         //Button for refresh JD+Spec from WinX13Spec
