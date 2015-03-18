@@ -6,10 +6,9 @@
 package eu.nbdemetra.specParser;
 
 import ec.nbdemetra.ws.WorkspaceItem;
-import ec.tss.Ts;
-import ec.tss.TsFactory;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
+import ec.tstoolkit.utilities.Id;
 
 /**
  *
@@ -68,6 +67,10 @@ public class SpecCollector {
 
     public void setName(String name) {
         ws.setDisplayName(name);
+    }
+
+    public Id getWorkspaceItemID() {
+        return ws.getId();
     }
 
     public void translate(TranslationTo_Type type) {

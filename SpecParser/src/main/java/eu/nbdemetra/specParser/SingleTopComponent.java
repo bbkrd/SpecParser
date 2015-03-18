@@ -14,8 +14,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -215,6 +213,7 @@ public final class SingleTopComponent extends TopComponent {
 
     @Override
     public void componentClosed() {
+        SingleSpec.deleteWindow(specViewer.getSpecCollector().getWorkspaceItemID());
         open = false;
     }
 
