@@ -7,9 +7,7 @@ package eu.nbdemetra.specParser;
 
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.SaItem;
-import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
-import ec.tstoolkit.utilities.Id;
 import java.util.HashMap;
 
 /**
@@ -21,42 +19,34 @@ public class SingleSpec {
     private SpecCollector spec;
     private SaItem item;
     private SingleTopComponent window;
-    private static HashMap<Id, SingleTopComponent> activeWindows = new HashMap();
-    private Id id;
+    private static HashMap<String, SingleTopComponent> activeWindows = new HashMap();
+    private String id;
     private String displayName;
 
 
-    /*Constructor for MultiDocument Spec windows*/
-    public SingleSpec(SaItem item, WorkspaceItem w) {
-        this.item = item;
-//        this.ws = w;
-        spec = new SpecCollector(w);
-        spec.setJDSpec(item.toDocument());
-    }
-
-    /*Constructor for SingleDocuments*/
     public SingleSpec(WorkspaceItem w) {
 
-        if (!activeWindows.containsKey(w.getId())) {
-            this.spec = new SpecCollector(w);
-            this.id = w.getId();
-            this.displayName = w.getDisplayName();
-            window = new SingleTopComponent();
-            window.setName("SpecParser for " + this.displayName);
+        if (w.getElement() instanceof X13Document) {
+            if (!activeWindows.containsKey(w.getId()+"")) {
 
-            window.setSpecView(spec);
+                window = new SingleTopComponent();
+                this.id = w.getId()+"";
+                window.setId(id);
+
+                this.spec = new SpecCollector(w);
+                window.setSpecView(spec);
+
+                activeWindows.put(id, window);
+            } else {
+                window = activeWindows.get(id);
+            }
+            displayName = w.getDisplayName();
+            window.setName("SpecParser for " + displayName);
+
             window.open();
             window.requestActive();
-
-            activeWindows.put(this.id, window);
-            window.setSpecView(spec);
         } else {
-
-            window = activeWindows.get(w.getId());
-
-            window.setName("SpecParser for " + w.getDisplayName());
-
-            window.requestActive();
+            spec = new SpecCollector(w);
         }
     }
 
@@ -68,7 +58,7 @@ public class SingleSpec {
         return item;
     }
 
-    public Id getId() {
+    public String getId() {
         return id;
     }
 
@@ -80,7 +70,7 @@ public class SingleSpec {
         }
     }
 
-    protected static void deleteWindow(Id id) {
+    protected static void deleteWindow(String id) {
         activeWindows.remove(id);
     }
 }

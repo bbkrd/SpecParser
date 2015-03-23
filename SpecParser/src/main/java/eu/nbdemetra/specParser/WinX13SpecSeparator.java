@@ -19,7 +19,6 @@ import ec.tstoolkit.modelling.arima.x13.X13Exception;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.Month;
 import ec.tstoolkit.timeseries.PeriodSelectorType;
-import ec.tstoolkit.timeseries.TsAggregationType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.regression.OutlierType;
@@ -71,6 +70,7 @@ public class WinX13SpecSeparator {
         x13.setSpecification(spec);
         return x13;
     }
+   
 
     public Ts getTs() {
         return TsFactory.instance.createTs(tsName, null, tsData);

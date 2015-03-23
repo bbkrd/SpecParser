@@ -49,14 +49,13 @@ import org.openide.util.NbBundle.Messages;
 })
 public final class SingleTopComponent extends TopComponent {
 
-    private boolean open;
+    private String id;
 
     public SingleTopComponent() {
 
         initComponents();
         setName(Bundle.CTL_SingleSpecWindowTopComponent());
         setToolTipText(Bundle.HINT_SingleSpecWindowTopComponent());
-        open = true;
 
         //Button for save WinX13 Spec to file ends with .spc
         JButton load = new JButton(new AbstractAction("Load WinX12Spec") {
@@ -95,9 +94,10 @@ public final class SingleTopComponent extends TopComponent {
                     } catch (IOException ex) {
                         Exceptions.printStackTrace(ex);
                     }
-                }else if (state == JFileChooser.CANCEL_OPTION){
-                    JOptionPane.showMessageDialog(null, "File istn't loaded");
                 }
+//                else if (state == JFileChooser.CANCEL_OPTION){
+//                    JOptionPane.showMessageDialog(null, "File isn't loaded");
+//                }
             }
         });
         JButton save = new JButton(new AbstractAction("Save WinX12Spec") {
@@ -121,9 +121,10 @@ public final class SingleTopComponent extends TopComponent {
                     } catch (IOException ex) {
                         Exceptions.printStackTrace(ex);
                     }
-                } else if (result == JFileChooser.CANCEL_OPTION) {
-                    JOptionPane.showMessageDialog(null, "File isn't saved");
                 }
+//                else if (result == JFileChooser.CANCEL_OPTION) {
+//                    JOptionPane.showMessageDialog(null, "File isn't saved");
+//                }
             }
         });
         //Button for refresh winX13Spec from JD+ Spec
@@ -144,38 +145,43 @@ public final class SingleTopComponent extends TopComponent {
                 SpecCollector sp = specViewer.getSpecCollector();
                 sp.setWinX13Spec(specViewer.getWinX13Text());
                 sp.translate(TranslationTo_Type.JDSpec);
-                specViewer.refresh(sp);
+                specViewer = specViewer.refresh(sp);
             }
         });
 
-//        save.setBorderPainted(true);
-//        save.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-//        load.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         load.setBackground(Color.LIGHT_GRAY);
-//        save.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         save.setBackground(Color.LIGHT_GRAY);
-//        refreshX13.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         refreshX13.setBackground(Color.LIGHT_GRAY);
-//        refreshJD.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         refreshJD.setBackground(Color.LIGHT_GRAY);
 
-        toolBar.add(load, 0);
-        toolBar.add(new JButton(), 1);
-        toolBar.add(save, 2);
-        toolBar.add(new JButton(), 3);
-        toolBar.add(refreshX13, 4);
-        toolBar.add(new JButton(), 5);
-        toolBar.add(refreshJD, 6);
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
+        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
+
+        toolBar.add(load);
+        toolBar.add(filler1);
+        toolBar.add(save);
+        toolBar.add(filler2);
+        toolBar.add(refreshX13);
+        toolBar.add(filler3);
+        toolBar.add(refreshJD);
 
     }
 
     public void setSpecView(SpecCollector spec) {
 
         specViewer = SpecViewer.create(spec);
-
-        //Button for load Winx13 Spec from file
+        specViewer = specViewer.refresh(spec);
         add(specViewer);
         specViewer.refreshHeader();
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
     }
 
     /**
@@ -203,22 +209,15 @@ public final class SingleTopComponent extends TopComponent {
         return specViewer;
     }
 
-//    public void refreshSpecCollector() {
-//
-//    }
     @Override
     public void componentOpened() {
-        open = true;
     }
 
     @Override
     public void componentClosed() {
-        SingleSpec.deleteWindow(specViewer.getSpecCollector().getWorkspaceItemID());
-        open = false;
-    }
-
-    public boolean isOpen() {
-        return open;
+        //Fallunterscheidung drueber nachdenken ???
+        SingleSpec.deleteWindow(id);
+        MultiTopComponent.deleteWindow(id);
     }
 
     void writeProperties(java.util.Properties p) {

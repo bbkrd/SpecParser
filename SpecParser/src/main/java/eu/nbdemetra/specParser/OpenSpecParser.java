@@ -14,7 +14,6 @@ import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.utilities.IModifiable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -61,13 +60,13 @@ public class OpenSpecParser implements ActionListener {
         } else if (w.getElement() instanceof MultiProcessingDocument) {
 
             //vllt Factory
-//            MultiSpec m = new MultiSpec(w);
+            MultiSpec m = new MultiSpec(w);
 //            w=m.getWorkspace();
-//            JOptionPane.showInputDialog(new ImageIcon("\\baustelle.gif"));
-            JOptionPane.showMessageDialog(null, "I work on it");
+
+//            JOptionPane.showMessageDialog(null, "I work on it");
 
         } else {
-            JOptionPane.showInputDialog(null, "nix");
+            JOptionPane.showMessageDialog(null, "nix");
         }
     }
 

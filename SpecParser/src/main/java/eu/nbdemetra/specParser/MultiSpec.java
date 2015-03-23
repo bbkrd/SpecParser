@@ -24,49 +24,42 @@ public class MultiSpec {
      *   id              -   identification for singel open documents 
      */
     private static HashMap<Id, MultiTopComponent> activeWindows = new HashMap();
-    private ArrayList<SingleSpec> singleSpecList = new ArrayList();
-//    private MultiTopComponent window;
+    private ArrayList<SpecCollector> specList = new ArrayList();
     private Id id;
-    private WorkspaceItem ws;
 
     public MultiSpec(WorkspaceItem ws) {
 
-        //TODO: 
-        //      Transformation der einzelnen SingleSpecs
-        //      Liste pflegen mit warnings für MyCellRender im window uebergeben
         MultiTopComponent window;
+        
         if (!activeWindows.containsKey(ws.getId())) {
-            this.ws = ws;
+            
             this.id = ws.getId();
             window = new MultiTopComponent(ws);
             window.setName("SpecParser for " + ws.getDisplayName());
 
-            SingleSpec single;
+            SpecCollector specCollector;
+            int counter = 0;
+            
             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
                 if (!item.getEstimationMethod().name.contains("tramo")) {
-                    single = new SingleSpec(item, ws);
-                    singleSpecList.add(single);
+                    specCollector = new SpecCollector(ws, counter);
+                    specList.add(specCollector);
+                    counter++;
                 }
             }
 
-            window.setSingleSpecList(singleSpecList);
+            window.setSpecArray(specList.toArray(new SpecCollector[0]));
             window.open();
             window.requestActive();
 
             activeWindows.put(this.id, window);
         } else {
             window = activeWindows.get(ws.getId());
-            if (window.isOpen()) {
-                window.requestActive();
-            } else {
-                window.open();
-                window.requestActive();
-            }
+            window.requestActive();
         }
-        this.ws=activeWindows.get(this.ws.getId()).getWs();
     }
-    
-//    public WorkspaceItem getWorkspace(){
-//        return ws;
-//    }
+
+    protected static void deleteWindow(Id id) {
+        activeWindows.remove(id);
+    }
 }
