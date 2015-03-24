@@ -546,7 +546,7 @@ public class WinX13SpecSeparator {
 
         content = content.replaceAll("[;'\"]", "").trim();
         ArrayList<String> v = new ArrayList();
-        double[] values = null;
+        double[] values;
 
         if (content.toLowerCase().endsWith(".ser")) {
             File file = new File(content);
@@ -576,24 +576,60 @@ public class WinX13SpecSeparator {
             } catch (IOException ex) {
                 errors.add(partName + ": Error loading file");
             }
-
-//            switch (partName) {
-//                case SERIES:
-//                    
-//                    break;
-//                case REGRESSION:
-////                break;
-//                default: //Fehler
-//                    errors.add(partName + ": To load  data from a file is not implemented");
-//
-//                    break;
-//            }
         } else if (content.toLowerCase().endsWith(".dat")) {
-            errors.add(partName + ": Loading from .dat file is not possible");
+
+            File file = new File(content);
+
+            try {
+                FileReader f = new FileReader(file);
+
+                try (BufferedReader br = new BufferedReader(f)) {
+                    String zeile;
+                    String [] split;
+                    int periode=0;
+                    int year = 10000;
+                    while ((zeile = br.readLine()) != null) {
+                        split=zeile.split("\\s+");
+                        if(year>Integer.parseInt(split[0])){
+                            year=Integer.parseInt(split[0]);
+                            tsStart=calcDay(partName, split[0]+"."+split[1]);
+                        }
+                        //calculate max period
+                        if(periode < Integer.parseInt(split[1])){
+                            periode=Integer.parseInt(split[1]);
+                        }
+                        //collect values
+                        v.add(split[2]);
+                    }
+                    //set period, when it is not Monthly data
+                    if(periode<=4){
+                        period=TsFrequency.Quarterly;
+                    }
+
+                    //calculate values
+                    values = new double[v.size()];
+                    for (int i = 0; i < v.size(); i++) {
+                        values[i] = Double.parseDouble(v.get(i));
+                    }
+                    
+                    if (partName == SpecificationPart.SERIES) {
+                        tsData = new TsData(new TsPeriod(period, tsStart), values, false);
+                    } else {
+                        errors.add(partName + ": To load data is not possible");
+                    }
+                }catch (ArrayIndexOutOfBoundsException e){
+                    errors.add(partName+": Format of dat-file is not correct ");
+                }
+
+            } catch (FileNotFoundException ex) {
+                errors.add(partName + ": File " + content + " not found");
+            } catch (IOException ex) {
+                errors.add(partName + ": Error loading file");
+            }
+            
         } else {
             errors.add(partName + ": Loading data from file " + content + " is not possible");
         }
-
     }
 
     public void read_function(SpecificationPart partName, String content) {

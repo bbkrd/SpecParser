@@ -67,10 +67,11 @@ public final class MultiTopComponent extends TopComponent {
      *      displayName     -   name of multi document
      */
     private SpecCollector[] spec_array;
-    private static Map<String, SingleTopComponent> activeWindows = new HashMap();
+    private static Map<String, SingleTopComponent> activeSingleWindows = new HashMap();
 
 //    private String displayName;
     private WorkspaceItem ws;
+//    private String id;
 
     public MultiTopComponent() {
 
@@ -82,6 +83,7 @@ public final class MultiTopComponent extends TopComponent {
     public MultiTopComponent(WorkspaceItem w) {
 
         ws = w;
+//        id=w.getId()+"";
 //        this.displayName = w.getDisplayName();
         initComponents();
         setToolTipText(Bundle.HINT_MultiDocSpecWindowTopComponent());
@@ -227,16 +229,16 @@ public final class MultiTopComponent extends TopComponent {
 //            int index = singleSpecList.indexOf(s);
 
                 //check for window of selected item in map activeWindows 
-                if (!activeWindows.containsKey(specList.getSelectedIndex() + "")) {
+                if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
                     window = new SingleTopComponent();
                     window.setSpecView(s);
                     window.setDisplayName(s.getName());
                     window.setId(specList.getSelectedIndex() + "");
                     window.open();
                     window.requestActive();
-                    activeWindows.put(specList.getSelectedIndex() + "", window);
+                    activeSingleWindows.put(specList.getSelectedIndex() + "", window);
                 } else {
-                    window = activeWindows.get(specList.getSelectedIndex() + "");
+                    window = activeSingleWindows.get(specList.getSelectedIndex() + "");
                     window.setSpecView(s);
                     window.open();
                     window.requestActive();
@@ -387,7 +389,7 @@ public final class MultiTopComponent extends TopComponent {
     }
 
     protected static void deleteWindow(String id) {
-        activeWindows.remove(id);
+        activeSingleWindows.remove(id);
     }
 
     void writeProperties(java.util.Properties p) {

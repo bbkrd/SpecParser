@@ -6,7 +6,6 @@
 package eu.nbdemetra.specParser;
 
 import ec.nbdemetra.ws.WorkspaceItem;
-import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.X13Document;
 import java.util.HashMap;
 
@@ -16,46 +15,35 @@ import java.util.HashMap;
  */
 public class SingleSpec {
 
-    private SpecCollector spec;
-    private SaItem item;
+//    private SpecCollector spec;
     private SingleTopComponent window;
-    private static HashMap<String, SingleTopComponent> activeWindows = new HashMap();
+    private static HashMap<String, SingleTopComponent> activeSingleWindows = new HashMap();
     private String id;
     private String displayName;
-
 
     public SingleSpec(WorkspaceItem w) {
 
         if (w.getElement() instanceof X13Document) {
-            if (!activeWindows.containsKey(w.getId()+"")) {
+            if (!activeSingleWindows.containsKey(w.getId() + "")) {
 
                 window = new SingleTopComponent();
-                this.id = w.getId()+"";
+                this.id = w.getId() + "";
                 window.setId(id);
 
-                this.spec = new SpecCollector(w);
+                SpecCollector spec = new SpecCollector(w);
                 window.setSpecView(spec);
 
-                activeWindows.put(id, window);
+                activeSingleWindows.put(id, window);
             } else {
-                window = activeWindows.get(id);
+                window = activeSingleWindows.get(id);
             }
             displayName = w.getDisplayName();
             window.setName("SpecParser for " + displayName);
 
             window.open();
             window.requestActive();
-        } else {
-            spec = new SpecCollector(w);
+
         }
-    }
-
-    public SpecCollector getSpecCollector() {
-        return spec;
-    }
-
-    public SaItem getSaItem() {
-        return item;
     }
 
     public String getId() {
@@ -63,14 +51,14 @@ public class SingleSpec {
     }
 
     public SingleTopComponent getActiveWindow() {
-        if (activeWindows.containsKey(id)) {
-            return activeWindows.get(id);
+        if (activeSingleWindows.containsKey(id)) {
+            return activeSingleWindows.get(id);
         } else {
             return null;
         }
     }
 
     protected static void deleteWindow(String id) {
-        activeWindows.remove(id);
+        activeSingleWindows.remove(id);
     }
 }

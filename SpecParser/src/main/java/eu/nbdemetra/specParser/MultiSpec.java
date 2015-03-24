@@ -23,23 +23,23 @@ public class MultiSpec {
      *   singleSpecList  -   for the single documents/specs in the multidocument
      *   id              -   identification for singel open documents 
      */
-    private static HashMap<Id, MultiTopComponent> activeWindows = new HashMap();
+    private static HashMap<Id, MultiTopComponent> activeMultiWindows = new HashMap();
     private ArrayList<SpecCollector> specList = new ArrayList();
     private Id id;
 
     public MultiSpec(WorkspaceItem ws) {
 
         MultiTopComponent window;
-        
-        if (!activeWindows.containsKey(ws.getId())) {
-            
+
+        if (!activeMultiWindows.containsKey(ws.getId())) {
+
             this.id = ws.getId();
             window = new MultiTopComponent(ws);
             window.setName("SpecParser for " + ws.getDisplayName());
 
             SpecCollector specCollector;
             int counter = 0;
-            
+
             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
                 if (!item.getEstimationMethod().name.contains("tramo")) {
                     specCollector = new SpecCollector(ws, counter);
@@ -52,14 +52,14 @@ public class MultiSpec {
             window.open();
             window.requestActive();
 
-            activeWindows.put(this.id, window);
+            activeMultiWindows.put(this.id, window);
         } else {
-            window = activeWindows.get(ws.getId());
+            window = activeMultiWindows.get(ws.getId());
             window.requestActive();
         }
     }
 
     protected static void deleteWindow(Id id) {
-        activeWindows.remove(id);
+        activeMultiWindows.remove(id);
     }
 }
