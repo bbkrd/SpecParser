@@ -3,10 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nbdemetra.specParser;
+package Administration;
 
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.documents.X13Document;
+import eu.nbdemetra.specParser.SingleTopComponent;
+import Logic.SpecCollector;
 import java.util.HashMap;
 
 /**
@@ -58,7 +60,7 @@ public class SingleSpec {
         }
     }
 
-    protected static void deleteWindow(String id) {
+    public static void deleteWindow(String id) {
         activeSingleWindows.remove(id);
     }
 }

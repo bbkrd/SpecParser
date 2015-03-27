@@ -1,7 +1,8 @@
 package eu.nbdemetra.specParser;
 
-import eu.nbdemetra.specParser.WinX13SpecSeparator;
-import eu.nbdemetra.specParser.JDSpecSeparator;
+import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
+import Logic.WinX12SpecSeparator;
+import Logic.JDSpecSeparator;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x11.X11Specification;
@@ -29,7 +30,7 @@ public class NewClassTest {
 //    @Test
     public void testMethode(){
         
-        WinX13SpecSeparator jd = new WinX13SpecSeparator();
+        WinX12SpecSeparator jd = new WinX12SpecSeparator();
         jd.read_sigmalim(SpecificationPart.X11, "(, 2.5)");
         
     }
@@ -92,7 +93,7 @@ public class NewClassTest {
 ////            tmp=null;
 //        }
 
-        WinX13SpecSeparator jd = new WinX13SpecSeparator();      
+        WinX12SpecSeparator jd = new WinX12SpecSeparator();      
 //        jd.buildSpec(erg);
 //        jd.x11ToString();
  

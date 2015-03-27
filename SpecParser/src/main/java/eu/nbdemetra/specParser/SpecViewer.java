@@ -8,6 +8,7 @@ package eu.nbdemetra.specParser;
 import ec.tss.documents.TsDocument;
 import ec.tss.sa.documents.X13Document;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer;
+import Logic.SpecCollector;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
@@ -20,7 +21,7 @@ import javax.swing.JTextArea;
  */
 public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
-    private JTextArea winX13Text;
+    private JTextArea winX12Text;
     private JTextArea errormessage;
     private JScrollPane scrollText;
     private JScrollPane scrollError;
@@ -42,15 +43,15 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 //        doc =  spec.getJDSpec();
         setSpecificationsVisible(true);
 
-        winX13Text = new JTextArea();
+        winX12Text = new JTextArea();
         errormessage = new JTextArea();
 
         errormessage.setFocusable(false);
 
-        winX13Text.setText("empty");
+        winX12Text.setText("empty");
         errormessage.setText("error messages");
 
-        scrollText = new JScrollPane(winX13Text);
+        scrollText = new JScrollPane(winX12Text);
         scrollError = new JScrollPane(errormessage);
 
         split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollText, scrollError);
@@ -70,13 +71,13 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
     public String getWinX13Text() {
 
-        return winX13Text.getText();
+        return winX12Text.getText();
     }
 
     public SpecViewer refresh(SpecCollector spec) {
 
         this.spec = spec;
-        winX13Text.setText(this.spec.getWinX13Spec());
+        winX12Text.setText(this.spec.getWinX13Spec());
         errormessage.setText("ERRORS\n"
                 + "******\n");
         for (String a : this.spec.getErrors()) {

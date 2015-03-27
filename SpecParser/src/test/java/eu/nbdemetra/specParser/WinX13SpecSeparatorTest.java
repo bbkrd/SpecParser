@@ -5,6 +5,8 @@
  */
 package eu.nbdemetra.specParser;
 
+import Logic.WinX12SpecSeparator;
+import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x13.X13Specification;
@@ -26,7 +28,7 @@ public class WinX13SpecSeparatorTest {
 
         String winX13Text = "x11 {sigmalim = (1.6\n 2.1)}";
 
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.buildSpec(winX13Text);
         System.out.println("Fehlerliste: ");
         for (String error : sep.getErrorList()) {
@@ -41,7 +43,7 @@ public class WinX13SpecSeparatorTest {
         double upperSigma = 2.5;
 
         String winX13Text = " ( " + lowerSigma + "   " + upperSigma + " ) ;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_sigmalim(SpecificationPart.X11, winX13Text);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -56,7 +58,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_mode() {
 
         String winX13Text = " mult;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_mode(SpecificationPart.X11, winX13Text);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -77,7 +79,7 @@ public class WinX13SpecSeparatorTest {
         }
         sb.append(")");
         String winX13Text = sb.toString();
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_seasonalma(SpecificationPart.X11, winX13Text);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -93,7 +95,7 @@ public class WinX13SpecSeparatorTest {
         int trend = 13;
 
         String winX13Text = " " + trend + ";";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_trendma(SpecificationPart.X11, winX13Text);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -109,7 +111,7 @@ public class WinX13SpecSeparatorTest {
         String model = " (2,1,[3])(1 1 1);";
         String ar = "(, 0.7f,);";
         String ma = "(0.2f,);";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_model(SpecificationPart.ARIMA, model);
         sep.read_ar(SpecificationPart.ARIMA, ar);
         sep.read_ma(SpecificationPart.ARIMA, ma);
@@ -145,7 +147,7 @@ public class WinX13SpecSeparatorTest {
 //    @Test
     public void teste_acceptdefault() {
         String s = "no";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_acceptdefault(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -166,7 +168,7 @@ public class WinX13SpecSeparatorTest {
 //    @Test
     public void teste_checkmu() {
         String s = "no";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_checkmu(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -187,7 +189,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_mixed() {
 
         String s = " no;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_mixed(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -209,7 +211,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_ljungboxlimit() {
 
         String s = " 0.95;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_ljungboxlimit(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -223,7 +225,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_armalimit() {
 
         String s = " 0.95;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_armalimit(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -236,7 +238,7 @@ public class WinX13SpecSeparatorTest {
 //    @Test
     public void teste_balanced() {
         String s = "no";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_balanced(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -256,7 +258,7 @@ public class WinX13SpecSeparatorTest {
 //    @Test
     public void teste_bhrinitial() {
         String s = "no";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_hrinitial(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -278,7 +280,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_reducecv() {
 
         String s = " 0.06;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_reducecv(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -291,7 +293,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_urfinal() {
 
         String s = "1;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_urfinal(SpecificationPart.AUTOMDL, s);
         X13Specification erg = sep.getResult().getSpecification();
 
@@ -305,7 +307,7 @@ public class WinX13SpecSeparatorTest {
     public void teste_tol() {
 
         String s = "1e-5;";
-        WinX13SpecSeparator sep = new WinX13SpecSeparator();
+        WinX12SpecSeparator sep = new WinX12SpecSeparator();
         sep.read_tol(SpecificationPart.ESTIMATE, s);
         X13Specification erg = sep.getResult().getSpecification();
 

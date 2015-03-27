@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package eu.nbdemetra.specParser;
+package eu.nbdemetra.specParser.Miscellaneous;
 
 import java.io.File;
 import javax.swing.filechooser.FileFilter;

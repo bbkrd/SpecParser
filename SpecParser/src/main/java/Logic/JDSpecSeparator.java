@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package eu.nbdemetra.specParser;
+package Logic;
 
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.benchmarking.SaBenchmarkingSpec;

@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nbdemetra.specParser;
+package Logic;
 
+import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.satoolkit.ISaSpecification;
@@ -34,7 +35,7 @@ public class SpecCollector {
     private String[] errors;
     private WorkspaceItem ws;
     private int index; //only for Multi documents
-    
+
 
     /*Constructor for Single Documents*/
     public SpecCollector(WorkspaceItem w) {
@@ -63,7 +64,6 @@ public class SpecCollector {
     public String getWinX13Spec() {
         return winX12SpecText;
     }
-
 
     public void setJDSpec(SaDocument x13) {
         this.jdSpec = x13;
@@ -108,11 +108,11 @@ public class SpecCollector {
 
         if (type == TranslationTo_Type.JDSpec) {
             // Translation from WinX13Spec to JDemetra+Spec
-            WinX13SpecSeparator separator = new WinX13SpecSeparator();
+            WinX12SpecSeparator separator = new WinX12SpecSeparator();
             separator.buildSpec(winX12SpecText);
             jdSpec = separator.getResult();
             ts = separator.getTs();
-            
+
             if (ws != null) {
                 if (ws.getElement() instanceof X13Document) {
                     ws.setElement(jdSpec);
@@ -120,10 +120,12 @@ public class SpecCollector {
                         ((X13Document) ws.getElement()).setInput(ts);
                     }
                 } else {
-                    if (((MultiProcessingDocument) ws.getElement()).getCurrent().size()-1>=index) {
+                    if (((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1 >= index) {
                         ((MultiProcessingDocument) ws.getElement()).getCurrent().replace(((MultiProcessingDocument) ws.getElement()).getCurrent().get(index), new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
                     } else {
-                        ((MultiProcessingDocument) ws.getElement()).getCurrent().add(index, new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
+//                        ((MultiProcessingDocument) ws.getElement()).getCurrent().add(index, new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
+                        ((MultiProcessingDocument) ws.getElement()).getCurrent().add(new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
+                        index = ((MultiProcessingDocument) ws.getElement()).getCurrent().size()-1;
                     }
                 }
             }

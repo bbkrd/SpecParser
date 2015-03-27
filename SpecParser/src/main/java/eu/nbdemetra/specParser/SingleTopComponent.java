@@ -5,6 +5,10 @@
  */
 package eu.nbdemetra.specParser;
 
+import Logic.SpecCollector;
+import Administration.SingleSpec;
+import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
+import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;

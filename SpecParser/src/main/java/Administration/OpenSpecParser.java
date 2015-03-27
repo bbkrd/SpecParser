@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nbdemetra.specParser;
+package Administration;
 
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.sa.MultiProcessingManager;

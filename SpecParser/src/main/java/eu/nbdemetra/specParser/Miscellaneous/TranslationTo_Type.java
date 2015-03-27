@@ -4,13 +4,13 @@
  * and open the template in the editor.
  */
 
-package eu.nbdemetra.specParser;
+package eu.nbdemetra.specParser.Miscellaneous;
 
 /**
  *
  * @author Nina Gonschorreck
  */
-enum TranslationTo_Type {
+public enum TranslationTo_Type {
 
-    WnX13Spec, JDSpec;
+    WnX12Spec, JDSpec;
 }

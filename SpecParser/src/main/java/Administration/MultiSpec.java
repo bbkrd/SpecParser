@@ -3,12 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nbdemetra.specParser;
+package Administration;
 
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.tss.sa.SaItem;
 import ec.tstoolkit.utilities.Id;
+import eu.nbdemetra.specParser.MultiTopComponent;
+import Logic.SpecCollector;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -48,7 +50,7 @@ public class MultiSpec {
                 }
             }
 
-            window.setSpecArray(specList.toArray(new SpecCollector[0]));
+            window.setSpecArray(specList);
             window.open();
             window.requestActive();
 
@@ -59,7 +61,7 @@ public class MultiSpec {
         }
     }
 
-    protected static void deleteWindow(Id id) {
+    public static void deleteWindow(Id id) {
         activeMultiWindows.remove(id);
     }
 }

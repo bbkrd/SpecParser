@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nbdemetra.specParser;
+package Logic;
 
+import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x13.X13Specification;
@@ -38,7 +39,7 @@ import java.util.ArrayList;
  *
  * @author Nina Gonschorreck
  */
-public class WinX13SpecSeparator {
+public class WinX12SpecSeparator {
 
     /*
      nur fuer methode
@@ -57,7 +58,7 @@ public class WinX13SpecSeparator {
     private TsData tsData = null;
     private String tsName = null;
 
-    public WinX13SpecSeparator() {
+    public WinX12SpecSeparator() {
         setDefaults();
     }
 
@@ -70,7 +71,6 @@ public class WinX13SpecSeparator {
         x13.setSpecification(spec);
         return x13;
     }
-   
 
     public Ts getTs() {
         return TsFactory.instance.createTs(tsName, null, tsData);
@@ -539,7 +539,10 @@ public class WinX13SpecSeparator {
                 errors.add(partName + ": To load data is not implemented");
                 break;
         }
+    }
 
+    public void read_format(SpecificationPart partName, String content) {
+        errors.add(partName + ": Format isn't supported");
     }
 
     public void read_file(SpecificationPart partName, String content) {
@@ -585,25 +588,26 @@ public class WinX13SpecSeparator {
 
                 try (BufferedReader br = new BufferedReader(f)) {
                     String zeile;
-                    String [] split;
-                    int periode=0;
+                    String[] split;
+                    int periode = 0;
                     int year = 10000;
+
                     while ((zeile = br.readLine()) != null) {
-                        split=zeile.split("\\s+");
-                        if(year>Integer.parseInt(split[0])){
-                            year=Integer.parseInt(split[0]);
-                            tsStart=calcDay(partName, split[0]+"."+split[1]);
+                        split = zeile.split("\\s+");
+                        if (year > Integer.parseInt(split[0])) {
+                            year = Integer.parseInt(split[0]);
+                            tsStart = calcDay(partName, split[0] + "." + split[1]);
                         }
                         //calculate max period
-                        if(periode < Integer.parseInt(split[1])){
-                            periode=Integer.parseInt(split[1]);
+                        if (periode < Integer.parseInt(split[1])) {
+                            periode = Integer.parseInt(split[1]);
                         }
                         //collect values
                         v.add(split[2]);
                     }
                     //set period, when it is not Monthly data
-                    if(periode<=4){
-                        period=TsFrequency.Quarterly;
+                    if (periode <= 4) {
+                        period = TsFrequency.Quarterly;
                     }
 
                     //calculate values
@@ -611,14 +615,14 @@ public class WinX13SpecSeparator {
                     for (int i = 0; i < v.size(); i++) {
                         values[i] = Double.parseDouble(v.get(i));
                     }
-                    
+
                     if (partName == SpecificationPart.SERIES) {
                         tsData = new TsData(new TsPeriod(period, tsStart), values, false);
                     } else {
                         errors.add(partName + ": To load data is not possible");
                     }
-                }catch (ArrayIndexOutOfBoundsException e){
-                    errors.add(partName+": Format of dat-file is not correct ");
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    errors.add(partName + ": Format of dat-file is not correct ");
                 }
 
             } catch (FileNotFoundException ex) {
@@ -626,7 +630,7 @@ public class WinX13SpecSeparator {
             } catch (IOException ex) {
                 errors.add(partName + ": Error loading file");
             }
-            
+
         } else {
             errors.add(partName + ": Loading data from file " + content + " is not possible");
         }
@@ -1349,7 +1353,7 @@ public class WinX13SpecSeparator {
 
         int quarter = month.getMonth();
         Day erg;
-        
+
         switch (quarter) {
             //Recalculation from month to quarter
             //i.e. the third quarter is defined, calculate to march and than to the beginning of the third quarter
@@ -1374,10 +1378,10 @@ public class WinX13SpecSeparator {
                 // If there are months greater than 3.
                 // Here you calculate in which quarter the month belongs.
                 int q = quarter / 3;
-                    //   I: This quarter is processed in the first switch 
-                    //  II: 3/3, 4/3, 5/3       
-                    // III: 6/3, 7/3, 8/3      
-                    //  IV: 9/3, 10/3, 11/3  
+                //   I: This quarter is processed in the first switch 
+                //  II: 3/3, 4/3, 5/3       
+                // III: 6/3, 7/3, 8/3      
+                //  IV: 9/3, 10/3, 11/3  
                 switch (q) {
                     case 1:
                         erg = new Day(month.getYear(), Month.April, 0);
@@ -1477,9 +1481,6 @@ public class WinX13SpecSeparator {
      *   argument is not supported, but it is not an error
      */
     public void read_decimals(SpecificationPart partName, String content) {
-    }
-
-    public void read_format(SpecificationPart partName, String content) {
     }
 
     public void read_precision(SpecificationPart partName, String content) {
