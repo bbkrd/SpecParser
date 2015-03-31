@@ -42,18 +42,15 @@ import java.util.ArrayList;
 public class WinX12SpecSeparator {
 
     /*
-     nur fuer methode
-     @param spec collect the x13Specification for JD+
-     @param errors collect message by translating
-     @param period Period from WinX12, in JD+ it is given by the data
+     spec   -   collect the x13Specification for JD+
+     errors -   collect message by translating
+     period -   Period from WinX12, in JD+ it is given by the data
      */
     private X13Specification spec = new X13Specification();
     private ArrayList<String> errors = new ArrayList();
 
-    //for period is no equivalence in JD+, this information is given in TSData
-//    private Period period;// = Period.MONTH;
+    //no equivalence in a JD+ spec item, this information is given in Ts
     private TsFrequency period = TsFrequency.Monthly;
-    //for loading data, equivalence is in TsData
     private Day tsStart = new Day(1970, Month.January, 0);
     private TsData tsData = null;
     private String tsName = null;
@@ -197,6 +194,158 @@ public class WinX12SpecSeparator {
         spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
         spec.getX11Specification().setSeasonal(false);
         spec.getX11Specification().setSigma(1.5, 2.5);
+    }
+
+    private Day calcDay(SpecificationPart partName, String day) {
+
+        String[] split = day.split("\\.");
+
+        int year = Integer.parseInt(split[0].trim());
+        Day erg = new Day(1970, Month.January, 0);
+
+        switch (period) {
+            case Monthly:
+                switch (split[1].trim().toUpperCase()) {
+                    case "JAN":
+                    case "01":
+                    case "1":
+                        erg = new Day(year, Month.January, 0);
+                        break;
+                    case "FEB":
+                    case "02":
+                    case "2":
+                        erg = new Day(year, Month.February, 0);
+                        break;
+                    case "MAR":
+                    case "03":
+                    case "3":
+                        erg = new Day(year, Month.March, 0);
+                        break;
+                    case "APR":
+                    case "04":
+                    case "4":
+                        erg = new Day(year, Month.April, 0);
+                        break;
+                    case "MAY":
+                    case "05":
+                    case "5":
+                        erg = new Day(year, Month.May, 0);
+                        break;
+                    case "JUN":
+                    case "06":
+                    case "6":
+                        erg = new Day(year, Month.June, 0);
+                        break;
+                    case "JUL":
+                    case "07":
+                    case "7":
+                        erg = new Day(year, Month.July, 0);
+                        break;
+                    case "AUG":
+                    case "08":
+                    case "8":
+                        erg = new Day(year, Month.August, 0);
+                        break;
+                    case "SEP":
+                    case "09":
+                    case "9":
+                        erg = new Day(year, Month.September, 0);
+                        break;
+                    case "OCT":
+                    case "10":
+                        erg = new Day(year, Month.October, 0);
+                        break;
+                    case "NOV":
+                    case "11":
+                        erg = new Day(year, Month.November, 0);
+                        break;
+                    case "DEC":
+                    case "12":
+                        erg = new Day(year, Month.December, 0);
+                        break;
+                    default:
+                        errors.add(partName + ": date format is not correct");
+                        break;
+                }
+                break;
+            case Quarterly:
+                switch (split[1].trim().toUpperCase()) {
+                    case "01":
+                    case "1":
+                        erg = new Day(year, Month.January, 0);
+                        break;
+                    case "02":
+                    case "2":
+                        erg = new Day(year, Month.April, 0);
+                        break;
+                    case "03":
+                    case "3":
+                        erg = new Day(year, Month.July, 0);
+                        break;
+                    case "04":
+                    case "4":
+                        erg = new Day(year, Month.October, 0);
+                        break;
+                    default:
+                        errors.add(partName + ": Date format is not correct");
+                        break;
+                }
+        }
+        return erg;
+    }
+
+    private Day toQuarterDay(Day month, String part, String detail) {
+
+        int quarter = month.getMonth();
+        Day erg;
+
+        switch (quarter) {
+            //Recalculation from month to quarter
+            //i.e. the third quarter is defined, calculate to march and than to the beginning of the third quarter
+            //1970.3 -> 1970-03-01 -> month=2 -> 1970-07-01
+            case 0:
+                //yyyy.1
+                erg = new Day(month.getYear(), Month.January, 0);
+                break;
+            case 1:
+                //yyyy.2
+                erg = new Day(month.getYear(), Month.April, 0);
+                break;
+            case 2:
+                //yyyy.3
+                erg = new Day(month.getYear(), Month.July, 0);
+                break;
+            case 3:
+                //yyyy.4
+                erg = new Day(month.getYear(), Month.October, 0);
+                break;
+            default:
+                errors.add(part + ": " + detail + " format is not valid");
+                erg = month;
+                // If there are months greater than 3.
+                // Here you calculate in which quarter the month belongs.
+//                int q = quarter / 3;
+//                //   I: This quarter is processed in the first switch 
+//                //  II: 3/3, 4/3, 5/3       
+//                // III: 6/3, 7/3, 8/3      
+//                //  IV: 9/3, 10/3, 11/3  
+//                switch (q) {
+//                    case 1:
+//                        erg = new Day(month.getYear(), Month.April, 0);
+//                        break;
+//                    case 2:
+//                        erg = new Day(month.getYear(), Month.July, 0);
+//                        break;
+//                    case 3:
+//                        erg = new Day(month.getYear(), Month.October, 0);
+//                        break;
+//                    default:
+//                        erg = month;
+//                        break;
+//                }
+                break;
+        }
+        return erg;
     }
 
     /* The following methods have to be public, 
@@ -388,104 +537,6 @@ public class WinX12SpecSeparator {
         }
     }
 
-    private Day calcDay(SpecificationPart partName, String day) {
-
-        String[] split = day.split("\\.");
-
-        int year = Integer.parseInt(split[0].trim());
-        Day erg = new Day(1970, Month.January, 0);
-
-        switch (period) {
-            case Monthly:
-                switch (split[1].trim().toUpperCase()) {
-                    case "JAN":
-                    case "01":
-                    case "1":
-                        erg = new Day(year, Month.January, 0);
-                        break;
-                    case "FEB":
-                    case "02":
-                    case "2":
-                        erg = new Day(year, Month.February, 0);
-                        break;
-                    case "MAR":
-                    case "03":
-                    case "3":
-                        erg = new Day(year, Month.March, 0);
-                        break;
-                    case "APR":
-                    case "04":
-                    case "4":
-                        erg = new Day(year, Month.April, 0);
-                        break;
-                    case "MAY":
-                    case "05":
-                    case "5":
-                        erg = new Day(year, Month.May, 0);
-                        break;
-                    case "JUN":
-                    case "06":
-                    case "6":
-                        erg = new Day(year, Month.June, 0);
-                        break;
-                    case "JUL":
-                    case "07":
-                    case "7":
-                        erg = new Day(year, Month.July, 0);
-                        break;
-                    case "AUG":
-                    case "08":
-                    case "8":
-                        erg = new Day(year, Month.August, 0);
-                        break;
-                    case "SEP":
-                    case "09":
-                    case "9":
-                        erg = new Day(year, Month.September, 0);
-                        break;
-                    case "OCT":
-                    case "10":
-                        erg = new Day(year, Month.October, 0);
-                        break;
-                    case "NOV":
-                    case "11":
-                        erg = new Day(year, Month.November, 0);
-                        break;
-                    case "DEC":
-                    case "12":
-                        erg = new Day(year, Month.December, 0);
-                        break;
-                    default:
-                        errors.add(partName + ": date format is not correct");
-                        break;
-                }
-                break;
-            case Quarterly:
-                switch (split[1].trim().toUpperCase()) {
-                    case "01":
-                    case "1":
-                        erg = new Day(year, Month.January, 0);
-                        break;
-                    case "02":
-                    case "2":
-                        erg = new Day(year, Month.April, 0);
-                        break;
-                    case "03":
-                    case "3":
-                        erg = new Day(year, Month.July, 0);
-                        break;
-                    case "04":
-                    case "4":
-                        erg = new Day(year, Month.October, 0);
-                        break;
-                    default:
-                        errors.add(partName + ": Date format is not correct");
-                        break;
-                }
-        }
-        return erg;
-    }
-
     public void read_checkmu(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toUpperCase();
@@ -533,8 +584,10 @@ public class WinX12SpecSeparator {
             case SERIES:
                 tsData = new TsData(new TsPeriod(period, tsStart), values, false);
                 break;
-            case REGRESSION: //noch nix, regression braucht auch start
-//                break;
+            case REGRESSION:
+                errors.add(partName + ": To load data for regression is not possible at the moment");
+                //noch nix, regression braucht auch start
+                break;
             default: //Fehler
                 errors.add(partName + ": To load data is not implemented");
                 break;
@@ -546,12 +599,17 @@ public class WinX12SpecSeparator {
     }
 
     public void read_file(SpecificationPart partName, String content) {
+        /*
+         Load data from a file
+         possible endings are .dat or .ser
+         */
 
         content = content.replaceAll("[;'\"]", "").trim();
         ArrayList<String> v = new ArrayList();
         double[] values;
 
         if (content.toLowerCase().endsWith(".ser")) {
+            /*SER*/
             File file = new File(content);
 
             try {
@@ -579,10 +637,10 @@ public class WinX12SpecSeparator {
             } catch (IOException ex) {
                 errors.add(partName + ": Error loading file");
             }
+
         } else if (content.toLowerCase().endsWith(".dat")) {
-
+            /*DAT*/
             File file = new File(content);
-
             try {
                 FileReader f = new FileReader(file);
 
@@ -590,7 +648,7 @@ public class WinX12SpecSeparator {
                     String zeile;
                     String[] split;
                     int periode = 0;
-                    int year = 10000;
+                    int year = 10000; //
 
                     while ((zeile = br.readLine()) != null) {
                         split = zeile.split("\\s+");
@@ -1085,7 +1143,7 @@ public class WinX12SpecSeparator {
                     period = TsFrequency.Quarterly;
 
                     //change start date
-                    tsStart = toQuarterDay(tsStart);
+                    tsStart = toQuarterDay(tsStart, "SERIES", "start date");
 
                     //change data object
                     if (tsData != null) {
@@ -1097,10 +1155,10 @@ public class WinX12SpecSeparator {
                     if (spec.getRegArimaSpecification().getBasic() != null && spec.getRegArimaSpecification().getBasic().getSpan() != null) {
                         sel = spec.getRegArimaSpecification().getBasic().getSpan();
                         if (sel.getD0() != null) {
-                            sel.setD0(toQuarterDay(sel.getD0()));
+                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "span start date"));
                         }
                         if (sel.getD1() != null) {
-                            sel.setD1(toQuarterDay(sel.getD1()));
+                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "span ending date"));
                         }
                         spec.getRegArimaSpecification().getBasic().setSpan(sel);
                     }
@@ -1108,10 +1166,10 @@ public class WinX12SpecSeparator {
                     if (spec.getRegArimaSpecification().getEstimate() != null && spec.getRegArimaSpecification().getEstimate().getSpan() != null) {
                         sel = spec.getRegArimaSpecification().getEstimate().getSpan();
                         if (sel.getD0() != null) {
-                            sel.setD0(toQuarterDay(sel.getD0()));
+                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "modelspan start date"));
                         }
                         if (sel.getD1() != null) {
-                            sel.setD1(toQuarterDay(sel.getD1()));
+                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "model span ending date"));
                         }
                         spec.getRegArimaSpecification().getEstimate().setSpan(sel);
                     }
@@ -1347,58 +1405,6 @@ public class WinX12SpecSeparator {
         } catch (X13Exception e) {
             errors.add(e.getMessage());
         }
-    }
-
-    private Day toQuarterDay(Day month) {
-
-        int quarter = month.getMonth();
-        Day erg;
-
-        switch (quarter) {
-            //Recalculation from month to quarter
-            //i.e. the third quarter is defined, calculate to march and than to the beginning of the third quarter
-            //1970.3 -> 1970-03-01 -> month=2 -> 1970-07-01
-            case 0:
-                //yyyy.1
-                erg = new Day(month.getYear(), Month.January, 0);
-                break;
-            case 1:
-                //yyyy.2
-                erg = new Day(month.getYear(), Month.April, 0);
-                break;
-            case 2:
-                //yyyy.3
-                erg = new Day(month.getYear(), Month.July, 0);
-                break;
-            case 3:
-                //yyyy.4
-                erg = new Day(month.getYear(), Month.October, 0);
-                break;
-            default:
-                // If there are months greater than 3.
-                // Here you calculate in which quarter the month belongs.
-                int q = quarter / 3;
-                //   I: This quarter is processed in the first switch 
-                //  II: 3/3, 4/3, 5/3       
-                // III: 6/3, 7/3, 8/3      
-                //  IV: 9/3, 10/3, 11/3  
-                switch (q) {
-                    case 1:
-                        erg = new Day(month.getYear(), Month.April, 0);
-                        break;
-                    case 2:
-                        erg = new Day(month.getYear(), Month.July, 0);
-                        break;
-                    case 3:
-                        erg = new Day(month.getYear(), Month.October, 0);
-                        break;
-                    default:
-                        erg = month;
-                        break;
-                }
-                break;
-        }
-        return erg;
     }
 
     public void read_trendma(SpecificationPart partName, String content) {
