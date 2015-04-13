@@ -48,6 +48,7 @@ public class WinX12SpecSeparator {
      */
     private X13Specification spec = new X13Specification();
     private ArrayList<String> errors = new ArrayList();
+    private ArrayList<String> messages = new ArrayList();
 
     //no equivalence in a JD+ spec item, this information is given in Ts
     private TsFrequency period = TsFrequency.Monthly;
@@ -61,6 +62,10 @@ public class WinX12SpecSeparator {
 
     public String[] getErrorList() {
         return errors.toArray(new String[errors.size()]);
+    }
+    
+    public String[] getMessageList() {
+        return messages.toArray(new String[messages.size()]);
     }
 
     public X13Document getResult() {
@@ -264,7 +269,7 @@ public class WinX12SpecSeparator {
                         erg = new Day(year, Month.December, 0);
                         break;
                     default:
-                        errors.add(partName + ": date format is not correct");
+                        errors.add(partName + ": Date format is not correct");
                         break;
                 }
                 break;
@@ -322,27 +327,6 @@ public class WinX12SpecSeparator {
             default:
                 errors.add(part + ": " + detail + " format is not valid");
                 erg = month;
-                // If there are months greater than 3.
-                // Here you calculate in which quarter the month belongs.
-//                int q = quarter / 3;
-//                //   I: This quarter is processed in the first switch 
-//                //  II: 3/3, 4/3, 5/3       
-//                // III: 6/3, 7/3, 8/3      
-//                //  IV: 9/3, 10/3, 11/3  
-//                switch (q) {
-//                    case 1:
-//                        erg = new Day(month.getYear(), Month.April, 0);
-//                        break;
-//                    case 2:
-//                        erg = new Day(month.getYear(), Month.July, 0);
-//                        break;
-//                    case 3:
-//                        erg = new Day(month.getYear(), Month.October, 0);
-//                        break;
-//                    default:
-//                        erg = month;
-//                        break;
-//                }
                 break;
         }
         return erg;

@@ -9,6 +9,7 @@ import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.satoolkit.ISaSpecification;
+import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
@@ -33,6 +34,7 @@ public class SpecCollector {
     private SaDocument jdSpec;
     private Ts ts;
     private String[] errors;
+    private String[] messages;
     private WorkspaceItem ws;
     private int index; //only for Multi documents
 
@@ -84,6 +86,13 @@ public class SpecCollector {
         }
         return errors;
     }
+    
+     public String[] getMessages() {
+        if (messages == null) {
+            messages = new String[]{};
+        }
+        return messages;
+    }
 
     public void setName(String name) {
         //fuer single document wichtig im ws
@@ -130,10 +139,13 @@ public class SpecCollector {
                 }
             }
             errors = separator.getErrorList();
+            messages = separator.getMessageList();
         } else {
             //Translation from JDemetra+Spec to WinX13Spec
-            JDSpecSeparator separator = new JDSpecSeparator();
-            //...
+            JDSpecSeparator separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ((X13Document) ws.getElement()).getInput());
+            winX12SpecText=separator.getResult();
+            errors = separator.getErrorList();
+            messages = separator.getMessageList();
         }
 
     }

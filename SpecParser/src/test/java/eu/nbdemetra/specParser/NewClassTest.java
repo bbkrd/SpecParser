@@ -48,9 +48,9 @@ public class NewClassTest {
         x11.setHendersonFilterLength(13);
 
         //test method writeX11
-        JDSpecSeparator winx13 = new JDSpecSeparator();
-        String erg = winx13.writeX11(x11);
-        System.out.println(erg);
+//        JDSpecSeparator winx13 = new JDSpecSeparator();
+//        String erg = winx13.writeX11(x11);
+//        System.out.println(erg);
     }
 
 //    @Test
@@ -67,15 +67,15 @@ public class NewClassTest {
         x11.setSeasonalFilters(seasonal);
         x11.setHendersonFilterLength(13);
 
-        JDSpecSeparator winx13 = new JDSpecSeparator();
-        String erg = winx13.writeX11(x11);
-        System.out.println(erg);
+//        JDSpecSeparator winx13 = new JDSpecSeparator();
+//        String erg = winx13.writeX11(x11);
+//        System.out.println(erg);
 
 //Rueckrichtung
-        StringBuilder sb = new StringBuilder(erg);
-        sb.append("Arima{\n}");
+//        StringBuilder sb = new StringBuilder(erg);
+//        sb.append("Arima{\n}");
 
-        erg = sb.toString();
+//        erg = sb.toString();
 
         // erste Teilung: Trennung der Teilspezifikationen
 //        String[] textSplit = erg.split("}");

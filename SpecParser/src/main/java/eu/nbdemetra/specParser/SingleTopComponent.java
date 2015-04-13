@@ -7,6 +7,7 @@ package eu.nbdemetra.specParser;
 
 import Logic.SpecCollector;
 import Administration.SingleSpec;
+import ec.tss.sa.documents.SaDocument;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
@@ -136,8 +137,12 @@ public final class SingleTopComponent extends TopComponent {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                JOptionPane.showMessageDialog(null, "I work on it");
-//                JOptionPane.showInputDialog(new ImageIcon("C:/Users/S4504GN/Downloads/baustelle.gif"));
+                SpecCollector sp = specViewer.getSpecCollector();
+                sp.setJDSpec((SaDocument) specViewer.getDocument());
+                sp.translate(TranslationTo_Type.WnX12Spec);
+                specViewer = specViewer.refresh(sp);
+                
+//                JOptionPane.showMessageDialog(null, "I work on it");
             }
         });
         //Button for refresh JD+Spec from WinX13Spec

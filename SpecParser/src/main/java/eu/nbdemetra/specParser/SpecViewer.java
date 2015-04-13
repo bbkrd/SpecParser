@@ -6,7 +6,6 @@
 package eu.nbdemetra.specParser;
 
 import ec.tss.documents.TsDocument;
-import ec.tss.sa.documents.X13Document;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import Logic.SpecCollector;
 import javax.swing.JScrollPane;
@@ -82,6 +81,11 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
                 + "******\n");
         for (String a : this.spec.getErrors()) {
             errormessage.append(a + "\n");
+        }
+        errormessage.append("\nMESSAGES\n"
+                + "********\n");
+        for(String a : this.spec.getMessages()){
+            errormessage.append(a+"\n");
         }
         
         setDocument(spec.getJDSpec());
