@@ -12,5 +12,5 @@ package eu.nbdemetra.specParser.Miscellaneous;
  */
 public enum TranslationTo_Type {
 
-    WnX12Spec, JDSpec;
+    WinX12Spec, JDSpec;
 }

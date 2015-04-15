@@ -76,7 +76,7 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
     public SpecViewer refresh(SpecCollector spec) {
 
         this.spec = spec;
-        winX12Text.setText(this.spec.getWinX13Spec());
+        winX12Text.setText(this.spec.getWinX12Spec());
         errormessage.setText("ERRORS\n"
                 + "******\n");
         for (String a : this.spec.getErrors()) {

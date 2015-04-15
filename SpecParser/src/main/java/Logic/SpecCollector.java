@@ -59,11 +59,11 @@ public class SpecCollector {
         }
     }
 
-    public void setWinX13Spec(String text) {
+    public void setWinX12Spec(String text) {
         this.winX12SpecText = text;
     }
 
-    public String getWinX13Spec() {
+    public String getWinX12Spec() {
         return winX12SpecText;
     }
 
@@ -86,8 +86,8 @@ public class SpecCollector {
         }
         return errors;
     }
-    
-     public String[] getMessages() {
+
+    public String[] getMessages() {
         if (messages == null) {
             messages = new String[]{};
         }
@@ -122,31 +122,46 @@ public class SpecCollector {
             jdSpec = separator.getResult();
             ts = separator.getTs();
 
-            if (ws != null) {
-                if (ws.getElement() instanceof X13Document) {
-                    ws.setElement(jdSpec);
-                    if (separator.getTs().getTsData() != null) {
-                        ((X13Document) ws.getElement()).setInput(ts);
-                    }
-                } else {
-                    if (((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1 >= index) {
-                        ((MultiProcessingDocument) ws.getElement()).getCurrent().replace(((MultiProcessingDocument) ws.getElement()).getCurrent().get(index), new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
-                    } else {
-//                        ((MultiProcessingDocument) ws.getElement()).getCurrent().add(index, new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
-                        ((MultiProcessingDocument) ws.getElement()).getCurrent().add(new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
-                        index = ((MultiProcessingDocument) ws.getElement()).getCurrent().size()-1;
-                    }
-                }
-            }
+            refreshWS();
+
             errors = separator.getErrorList();
             messages = separator.getMessageList();
         } else {
             //Translation from JDemetra+Spec to WinX13Spec
-            JDSpecSeparator separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ((X13Document) ws.getElement()).getInput());
-            winX12SpecText=separator.getResult();
+            JDSpecSeparator separator;
+
+            if (ws.getElement() instanceof X13Document) {
+                ts = ((X13Document) ws.getElement()).getInput();
+                separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts);
+            } else {
+                ts = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).getTs();
+                separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts);
+            }
+            separator.build();
+            winX12SpecText = separator.getResult();
+            refreshWS();
             errors = separator.getErrorList();
             messages = separator.getMessageList();
         }
 
+    }
+
+    private void refreshWS() {
+        if (ws != null) {
+            if (ws.getElement() instanceof X13Document) {
+                ws.setElement(jdSpec);
+                if (ts != null) {
+                    ((X13Document) ws.getElement()).setInput(ts);
+                }
+            } else {
+                if (((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1 >= index) {
+                    ((MultiProcessingDocument) ws.getElement()).getCurrent().replace(((MultiProcessingDocument) ws.getElement()).getCurrent().get(index), new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
+                } else {
+//                        ((MultiProcessingDocument) ws.getElement()).getCurrent().add(index, new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
+                    ((MultiProcessingDocument) ws.getElement()).getCurrent().add(new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
+                    index = ((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1;
+                }
+            }
+        }
     }
 }

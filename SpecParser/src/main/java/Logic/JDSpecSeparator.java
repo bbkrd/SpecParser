@@ -28,16 +28,28 @@ import java.util.TreeMap;
  */
 public class JDSpecSeparator {
 
+    /*
+     result      -   collect all arguments with values in a map with a specification part key, sort to ABC
+     spec        -   the specification to translate
+     ts          -   further information, which not in spec
+     errors      -   collect all errors, which appear where is no translation possible
+     messages    -   collect messages, which are not errors by translating
+     */
+    
+    private X13Specification spec;
+    private Ts ts;
     private TreeMap<SpecificationPart, TreeMap<String, String>> result = new TreeMap();
     private ArrayList<String> errors = new ArrayList();
     private ArrayList<String> messages = new ArrayList<String>();
-    private Ts ts;
-    private X13Specification spec;
 
+    /*Constructor*/
     public JDSpecSeparator(X13Specification x13, Ts ts) {
-
+//      get all information for translating 
         this.ts = ts;
         this.spec = x13;
+    }
+
+    public void build() {
 
         generateTs();
 
@@ -331,8 +343,12 @@ public class JDSpecSeparator {
                     switch (s.getType()) {
                         case AO:
                         case LS:
-                        case TC: types.append(s.getType()).append(" "); break;
-                        default: errors.add(SpecificationPart.OUTLIER+": No Translation for "+s.getType().name()); break;
+                        case TC:
+                            types.append(s.getType()).append(" ");
+                            break;
+                        default:
+                            errors.add(SpecificationPart.OUTLIER + ": No Translation for " + s.getType().name());
+                            break;
                     }
                 }
                 types.append(")");

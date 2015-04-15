@@ -289,7 +289,7 @@ public final class MultiTopComponent extends TopComponent {
                             spc_file.createNewFile();
                         }
                         try (FileWriter spc_fw = new FileWriter(spc_file)) {
-                            spc_fw.write(c.getWinX13Spec());
+                            spc_fw.write(c.getWinX12Spec());
                             spc_fw.close();
                             if (!spc_file.toString().endsWith(".spc")) {
                                 spc_file.renameTo(new File(mta_file.toString() + ".spc"));
@@ -336,7 +336,7 @@ public final class MultiTopComponent extends TopComponent {
                                 spc_file.createNewFile();
                             }
                             try (FileWriter spc_fw = new FileWriter(spc_file)) {
-                                spc_fw.write(c.getWinX13Spec());
+                                spc_fw.write(c.getWinX12Spec());
                                 spc_fw.close();
                                 if (!spc_file.toString().endsWith(".spc")) {
                                     spc_file.renameTo(new File(mta_file.toString() + ".spc"));
@@ -407,17 +407,16 @@ public final class MultiTopComponent extends TopComponent {
         }
     }//GEN-LAST:event_loadMtaFiles
 
-
     private void specListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_specListValueChanged
         // TODO add your handling code here:
         try {
             //transformation information by one click
             //name of the selected document
 //            singleSpecName.setText(spec_array[specList.getSelectedIndex()].getName());
-            singleSpecName.setText(specList.getSelectedIndex()+"    "+spec_array.get(specList.getSelectedIndex()).getName());
+            singleSpecName.setText(specList.getSelectedIndex()+1 + "    " + spec_array.get(specList.getSelectedIndex()).getName());
             //error list of the translated document
             String[] errors = spec_array.get(specList.getSelectedIndex()).getErrors();
-//                    spec_array[specList.getSelectedIndex()].getErrors();
+            String[] messages = spec_array.get(specList.getSelectedIndex()).getMessages();
             if (errors.length != 0) {
                 errorText.setText("ERRORS:\n"
                         + "******\n");
@@ -427,6 +426,15 @@ public final class MultiTopComponent extends TopComponent {
             } else {
                 errorText.setText("No errors");
             }
+            if (messages.length != 0) {
+                errorText.append("\nMESSAGES:\n"
+                        + "******\n");
+                for (String tmp : messages) {
+                    errorText.append(tmp + "\n");
+                }
+            } else {
+                errorText.append("\nNo messages");
+            }
         } catch (ArrayIndexOutOfBoundsException e) {
             //daneben geklickt
         }
@@ -434,28 +442,28 @@ public final class MultiTopComponent extends TopComponent {
 
     private void specListKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_specListKeyPressed
         // TODO add your handling code here:
-        
-        if(evt.getKeyCode() == KeyEvent.VK_ENTER){
+
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             SingleTopComponent window;
 
-                SpecCollector s = spec_array.get(specList.getSelectedIndex());
+            SpecCollector s = spec_array.get(specList.getSelectedIndex());
 //            int index = singleSpecList.indexOf(s);
 
-                //check for window of selected item in map activeWindows 
-                if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
-                    window = new SingleTopComponent();
-                    window.setSpecView(s);
-                    window.setDisplayName(s.getName());
-                    window.setId(specList.getSelectedIndex() + "");
-                    window.open();
-                    window.requestActive();
-                    activeSingleWindows.put(specList.getSelectedIndex() + "", window);
-                } else {
-                    window = activeSingleWindows.get(specList.getSelectedIndex() + "");
-                    window.setSpecView(s);
-                    window.open();
-                    window.requestActive();
-                }
+            //check for window of selected item in map activeWindows 
+            if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
+                window = new SingleTopComponent();
+                window.setSpecView(s);
+                window.setDisplayName(s.getName());
+                window.setId(specList.getSelectedIndex() + "");
+                window.open();
+                window.requestActive();
+                activeSingleWindows.put(specList.getSelectedIndex() + "", window);
+            } else {
+                window = activeSingleWindows.get(specList.getSelectedIndex() + "");
+                window.setSpecView(s);
+                window.open();
+                window.requestActive();
+            }
 
         }
     }//GEN-LAST:event_specListKeyPressed
@@ -524,7 +532,7 @@ public final class MultiTopComponent extends TopComponent {
                         }
 
                         SpecCollector spec = new SpecCollector(ws, object.getIndex());
-                        spec.setWinX13Spec(spec_StringBuilder.toString());
+                        spec.setWinX12Spec(spec_StringBuilder.toString());
                         spec.translate(TranslationTo_Type.JDSpec);
 
                         SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());

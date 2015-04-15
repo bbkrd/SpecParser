@@ -1412,7 +1412,7 @@ public class WinX12SpecSeparator {
 
         String s = content.replaceAll(";", "").trim();
 
-        s = s.replaceAll("\\(", "").replaceAll("\\)", "");
+        s = s.replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] split = s.split("\\s+");
 
 //            ArrayList<SingleOutlierSpec> value = new ArrayList();

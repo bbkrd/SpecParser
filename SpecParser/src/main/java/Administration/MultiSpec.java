@@ -11,6 +11,7 @@ import ec.tss.sa.SaItem;
 import ec.tstoolkit.utilities.Id;
 import eu.nbdemetra.specParser.MultiTopComponent;
 import Logic.SpecCollector;
+import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -45,9 +46,10 @@ public class MultiSpec {
             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
                 if (!item.getEstimationMethod().name.contains("tramo")) {
                     specCollector = new SpecCollector(ws, counter);
+                    specCollector.translate(TranslationTo_Type.WinX12Spec);
                     specList.add(specCollector);
-                    counter++;
                 }
+                counter++;
             }
 
             window.setSpecArray(specList);

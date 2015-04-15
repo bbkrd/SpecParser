@@ -21,7 +21,6 @@ import java.io.IOException;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.util.Exceptions;
@@ -89,7 +88,7 @@ public final class SingleTopComponent extends TopComponent {
                         }
 
                         SpecCollector sp = specViewer.getSpecCollector();
-                        sp.setWinX13Spec(s.toString());
+                        sp.setWinX12Spec(s.toString());
                         sp.translate(TranslationTo_Type.JDSpec);
                         sp.setName(file.getName());
                         specViewer.refresh(sp);
@@ -118,7 +117,7 @@ public final class SingleTopComponent extends TopComponent {
                     try {
                         File file = chooser.getSelectedFile();
                         try (FileWriter fw = new FileWriter(file)) {
-                            fw.write(specViewer.getSpecCollector().getWinX13Spec());
+                            fw.write(specViewer.getSpecCollector().getWinX12Spec());
                         }
                         if (!file.toString().endsWith(".spc")) {
                             file.renameTo(new File(file.toString() + ".spc"));
@@ -139,7 +138,7 @@ public final class SingleTopComponent extends TopComponent {
 
                 SpecCollector sp = specViewer.getSpecCollector();
                 sp.setJDSpec((SaDocument) specViewer.getDocument());
-                sp.translate(TranslationTo_Type.WnX12Spec);
+                sp.translate(TranslationTo_Type.WinX12Spec);
                 specViewer = specViewer.refresh(sp);
                 
 //                JOptionPane.showMessageDialog(null, "I work on it");
@@ -152,7 +151,7 @@ public final class SingleTopComponent extends TopComponent {
 //               do nothing
 //                JOptionPane.showInputDialog(new ImageIcon("C:/Daten/Bastelgarage (290).gif"));
                 SpecCollector sp = specViewer.getSpecCollector();
-                sp.setWinX13Spec(specViewer.getWinX13Text());
+                sp.setWinX12Spec(specViewer.getWinX13Text());
                 sp.translate(TranslationTo_Type.JDSpec);
                 specViewer = specViewer.refresh(sp);
             }
