@@ -547,7 +547,7 @@ public final class MultiTopComponent extends TopComponent {
 //                        spec.setName();
                         spec.setWinX12Spec(spec_StringBuilder.toString());
                         spec.translate(TranslationTo_Type.JDSpec);
-
+                        spec.setName();
                         SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
                         spec.setJDSpec(item.toDocument());
 
