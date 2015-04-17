@@ -14,6 +14,7 @@ import ec.nbdemetra.ws.WorkspaceItem;
 import ec.satoolkit.ISaSpecification;
 import ec.tss.sa.SaItem;
 import Logic.SpecCollector;
+import ec.nbdemetra.sa.MultiProcessingDocument;
 import eu.nbdemetra.specParser.Miscellaneous.MyCellRenderer;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
@@ -251,7 +252,6 @@ public final class MultiTopComponent extends TopComponent {
                     window.open();
                     window.requestActive();
                 }
-
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             //daneben geklickt
@@ -267,24 +267,31 @@ public final class MultiTopComponent extends TopComponent {
 
         String path = System.getProperty("user.home");
         JFileChooser chooser = new JFileChooser(path);
-        chooser.setFileFilter(new MyFilter(".mta"));
-        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setDialogTitle("Create target directory");
+//        chooser.setFileFilter(new MyFilter(".mta"));
+//        chooser.setAcceptAllFileFilterUsed(false);
         int result = chooser.showSaveDialog(null);
 
         if (result == JFileChooser.APPROVE_OPTION) {
             try {
                 File mta_file = chooser.getSelectedFile();
+//                path = chooser.getSelectedFile().getPath().replaceAll(mta_file.getName(), "")+"\\"+ws.getDisplayName();
+                path = chooser.getSelectedFile().getPath();
+                new File(path).mkdir();
+                mta_file = new File(path + "\\" + mta_file.getName());
                 try (FileWriter mta_fw = new FileWriter(mta_file)) {
                     File spc_file;
-                    int index;
                     String file_name;
+                    int counter = 1;
                     for (SpecCollector c : spec_array) {
-                        index = c.getName().indexOf("'");
-                        file_name = c.getName().substring(index + 1, c.getName().length() - 1);
+
+                        file_name = mta_file.getName() + counter + "";
+                        counter++;
                         mta_fw.write(file_name);
                         mta_fw.write("\n");
-                        path = mta_file.getPath().replaceAll(mta_file.getName(), "") + "\\" + file_name + ".spc";
-                        spc_file = new File(path);
+
+                        spc_file = new File(path + "\\" + file_name + ".spc");
                         if (!spc_file.exists()) {
                             spc_file.createNewFile();
                         }
@@ -302,7 +309,7 @@ public final class MultiTopComponent extends TopComponent {
                     }
                 }
             } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, path);
+                JOptionPane.showMessageDialog(null, "It doesn't work");
                 Exceptions.printStackTrace(ex);
             }
         }
@@ -310,28 +317,33 @@ public final class MultiTopComponent extends TopComponent {
 
     private void saveGreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveGreenActionPerformed
         // TODO add your handling code here:
-//        JOptionPane.showMessageDialog(null, "I work on it");
         String path = System.getProperty("user.home");
         JFileChooser chooser = new JFileChooser(path);
-        chooser.setFileFilter(new MyFilter(".mta"));
-        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setDialogTitle("Create target directory");
+//        chooser.setFileFilter(new MyFilter(".mta"));
+//        chooser.setAcceptAllFileFilterUsed(false);
         int result = chooser.showSaveDialog(null);
 
         if (result == JFileChooser.APPROVE_OPTION) {
             try {
                 File mta_file = chooser.getSelectedFile();
+                path = chooser.getSelectedFile().getPath().replaceAll(mta_file.getName(), "") + "\\" + ws.getDisplayName();
+                new File(path).mkdir();
+                mta_file = new File(path + "\\" + mta_file.getName());
                 try (FileWriter mta_fw = new FileWriter(mta_file)) {
                     File spc_file;
-                    int index;
                     String file_name;
+                    int counter = 1;
                     for (SpecCollector c : spec_array) {
+
                         if (c.getErrors().length == 0) {
-                            index = c.getName().indexOf("'");
-                            file_name = c.getName().substring(index + 1, c.getName().length() - 1);
+                            file_name = counter + "";
+                            counter++;
                             mta_fw.write(file_name);
                             mta_fw.write("\n");
-                            path = mta_file.getPath().replaceAll(mta_file.getName(), "") + "\\" + file_name + ".spc";
-                            spc_file = new File(path);
+
+                            spc_file = new File(path + "\\" + file_name + ".spc");
                             if (!spc_file.exists()) {
                                 spc_file.createNewFile();
                             }
@@ -350,7 +362,7 @@ public final class MultiTopComponent extends TopComponent {
                     }
                 }
             } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, path);
+                JOptionPane.showMessageDialog(null, "It doesn't work");
                 Exceptions.printStackTrace(ex);
             }
         }
@@ -413,7 +425,7 @@ public final class MultiTopComponent extends TopComponent {
             //transformation information by one click
             //name of the selected document
 //            singleSpecName.setText(spec_array[specList.getSelectedIndex()].getName());
-            singleSpecName.setText(specList.getSelectedIndex()+1 + "    " + spec_array.get(specList.getSelectedIndex()).getName());
+            singleSpecName.setText(specList.getSelectedIndex() + 1 + "    " + spec_array.get(specList.getSelectedIndex()).getName());
             //error list of the translated document
             String[] errors = spec_array.get(specList.getSelectedIndex()).getErrors();
             String[] messages = spec_array.get(specList.getSelectedIndex()).getMessages();
@@ -532,6 +544,7 @@ public final class MultiTopComponent extends TopComponent {
                         }
 
                         SpecCollector spec = new SpecCollector(ws, object.getIndex());
+//                        spec.setName();
                         spec.setWinX12Spec(spec_StringBuilder.toString());
                         spec.translate(TranslationTo_Type.JDSpec);
 

@@ -20,6 +20,7 @@ import ec.tstoolkit.modelling.arima.x13.TransformSpec;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
 /**
@@ -35,10 +36,9 @@ public class JDSpecSeparator {
      errors      -   collect all errors, which appear where is no translation possible
      messages    -   collect messages, which are not errors by translating
      */
-    
     private X13Specification spec;
     private Ts ts;
-    private TreeMap<SpecificationPart, TreeMap<String, String>> result = new TreeMap();
+    private LinkedHashMap<SpecificationPart, LinkedHashMap<String, String>> result = new LinkedHashMap();
     private ArrayList<String> errors = new ArrayList();
     private ArrayList<String> messages = new ArrayList<String>();
 
@@ -51,7 +51,9 @@ public class JDSpecSeparator {
 
     public void build() {
 
-        generateTs();
+        if (ts != null) {
+            generateTs();
+        }
 
         generateBasicSpec();
         generateEstimateSpec();
@@ -69,12 +71,12 @@ public class JDSpecSeparator {
     private void generateArima() {
 
         ArimaSpec reg = spec.getRegArimaSpecification().getArima();
-        TreeMap<String, String> arima;
+        LinkedHashMap<String, String> arima;
 
         if (result.containsKey(SpecificationPart.ARIMA)) {
             arima = result.get(SpecificationPart.ARIMA);
         } else {
-            arima = new TreeMap<>();
+            arima = new LinkedHashMap<>();
         }
 
 //        1)model
@@ -182,12 +184,12 @@ public class JDSpecSeparator {
     private void generateAutomdl() {
 
         AutoModelSpec reg = spec.getRegArimaSpecification().getAutoModel();
-        TreeMap<String, String> automdl;
+        LinkedHashMap<String, String> automdl;
 
         if (result.containsKey(SpecificationPart.AUTOMDL)) {
             automdl = result.get(SpecificationPart.AUTOMDL);
         } else {
-            automdl = new TreeMap<>();
+            automdl = new LinkedHashMap<>();
         }
 
 //        1)accept default
@@ -257,12 +259,12 @@ public class JDSpecSeparator {
 
         //1) span
         RegArimaSpecification reg = spec.getRegArimaSpecification();
-        TreeMap<String, String> series;
+        LinkedHashMap<String, String> series;
 
         if (result.containsKey(SpecificationPart.SERIES)) {
             series = result.get(SpecificationPart.SERIES);
         } else {
-            series = new TreeMap<>();
+            series = new LinkedHashMap<>();
         }
 
         String span = separateSpan(reg.getBasic().getSpan(), "SERIES");
@@ -277,11 +279,11 @@ public class JDSpecSeparator {
         RegArimaSpecification reg = spec.getRegArimaSpecification();
 
 //        1)modelspan
-        TreeMap<String, String> series;
+        LinkedHashMap<String, String> series;
         if (result.containsKey(SpecificationPart.SERIES)) {
             series = result.get(SpecificationPart.SERIES);
         } else {
-            series = new TreeMap<>();
+            series = new LinkedHashMap<>();
         }
 
         String span = separateSpan(reg.getEstimate().getSpan(), "ESTIMATE");
@@ -292,11 +294,11 @@ public class JDSpecSeparator {
         result.put(SpecificationPart.SERIES, series);
 
 //        2)tol
-        TreeMap<String, String> estimate;
+        LinkedHashMap<String, String> estimate;
         if (result.containsKey(SpecificationPart.ESTIMATE)) {
             estimate = result.get(SpecificationPart.ESTIMATE);
         } else {
-            estimate = new TreeMap<>();
+            estimate = new LinkedHashMap<>();
         }
         estimate.put("tol", reg.getEstimate().getTol() + "");
 
@@ -306,11 +308,11 @@ public class JDSpecSeparator {
     private void generateOutlier() {
 
         OutlierSpec reg = spec.getRegArimaSpecification().getOutliers();
-        TreeMap<String, String> outlier;
+        LinkedHashMap<String, String> outlier;
         if (result.containsKey(SpecificationPart.OUTLIER)) {
             outlier = result.get(SpecificationPart.OUTLIER);
         } else {
-            outlier = new TreeMap<>();
+            outlier = new LinkedHashMap<>();
         }
 
 //        1)span
@@ -362,11 +364,11 @@ public class JDSpecSeparator {
     private void generateTransformSpec() {
 
         TransformSpec t = spec.getRegArimaSpecification().getTransform();
-        TreeMap<String, String> transform;
+        LinkedHashMap<String, String> transform;
         if (result.containsKey(SpecificationPart.TRANSFORM)) {
             transform = result.get(SpecificationPart.TRANSFORM);
         } else {
-            transform = new TreeMap<>();
+            transform = new LinkedHashMap<>();
         }
 
 //        1)function
@@ -410,26 +412,36 @@ public class JDSpecSeparator {
 
     private void generateTs() {
 
-        TreeMap<String, String> series;
+        LinkedHashMap<String, String> series;
         if (result.containsKey(SpecificationPart.SERIES)) {
             series = result.get(SpecificationPart.SERIES);
         } else {
-            series = new TreeMap<>();
+            series = new LinkedHashMap<>();
         }
 
-        //1) start
+//        1) title
+        series.put("title", ts.getRawName());
+
+        //2) start
         StringBuilder start = new StringBuilder(ts.getTsData().getStart().getYear() + ".");
         start.append(ts.getTsData().getStart().getPosition() + 1);
         series.put("start", start.toString());
 
-//        2) period
+//        3) period
         series.put("period", ts.getTsData().getFrequency().intValue() + "");
 
-//        3) data
-        series.put("data", "(" + ts.getTsData().getValues().toString() + ")");
-
-//        4) title
-        series.put("title", ts.getRawName());
+//        4) data
+        StringBuilder data = new StringBuilder("(\t");
+        for (int i = 0; i < ts.getTsData().getValues().getLength(); i++) {
+            data.append(ts.getTsData().getValues().get(i));
+            if ((i + 1) % 12 == 0) {
+                data.append("\n\t\t");
+            } else {
+                data.append("\t");
+            }
+        }
+        data.append(")");
+        series.put("data", data.toString());
 
         result.put(SpecificationPart.SERIES, series);
 
@@ -439,12 +451,12 @@ public class JDSpecSeparator {
 
 //        A)X11
         X11Specification x11 = spec.getX11Specification();
-        TreeMap<String, String> x11Result;
+        LinkedHashMap<String, String> x11Result;
 
         if (result.containsKey(SpecificationPart.X11)) {
             x11Result = result.get(SpecificationPart.X11);
         } else {
-            x11Result = new TreeMap<>();
+            x11Result = new LinkedHashMap<>();
         }
 
         //1) Mode
@@ -494,20 +506,27 @@ public class JDSpecSeparator {
         result.put(SpecificationPart.X11, x11Result);
 
 //        B) FORECAST
-        TreeMap<String, String> forecast;
+        LinkedHashMap<String, String> forecast;
         if (result.containsKey(SpecificationPart.FORECAST)) {
             forecast = result.get(SpecificationPart.FORECAST);
         } else {
-            forecast = new TreeMap<>();
+            forecast = new LinkedHashMap<>();
         }
+
 //        1) maxlead/forecast horizon
         int maxlead = x11.getForecastHorizon();
+
         if (maxlead < 0) {
-            maxlead = -1 * maxlead * ts.getTsData().getFrequency().intValue();
+            if (ts != null) {
+                maxlead = -1 * maxlead * ts.getTsData().getFrequency().intValue();
+            }else{
+                maxlead = -1 * maxlead *12;
+            }
         }
         forecast.put("maxlead", maxlead + "");
 
         result.put(SpecificationPart.FORECAST, forecast);
+
     }
 
     public String getResult() {
@@ -517,7 +536,7 @@ public class JDSpecSeparator {
         for (SpecificationPart spec : result.keySet()) {
             text.append(spec).append("\n{\n");
 
-            TreeMap<String, String> content = result.get(spec);
+            LinkedHashMap<String, String> content = result.get(spec);
 
             for (String argument : content.keySet()) {
                 text.append("\t").append(argument).append(" = ").append(content.get(argument)).append("\n");
@@ -566,5 +585,4 @@ public class JDSpecSeparator {
         }
         return result;
     }
-
 }

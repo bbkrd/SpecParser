@@ -37,6 +37,7 @@ public class SpecCollector {
     private String[] messages;
     private WorkspaceItem ws;
     private int index; //only for Multi documents
+    private String name;
 
 
     /*Constructor for Single Documents*/
@@ -45,14 +46,17 @@ public class SpecCollector {
 
         if (ws.getElement() instanceof X13Document) {
             jdSpec = (X13Document) ws.getElement();
+            ts = ((X13Document) ws.getElement()).getInput();
         }
     }
 
     /*Cnstructor for Multi Documents*/
     public SpecCollector(WorkspaceItem w, int i) {
+
         index = i;
         ws = w;
         if (((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1 >= index) {
+            ts = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).getTs();
             jdSpec = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).toDocument();
         } else {
             jdSpec = null;
@@ -97,16 +101,27 @@ public class SpecCollector {
     public void setName(String name) {
         //fuer single document wichtig im ws
         if (ws.getElement() instanceof X13Document) {
-            ws.setDisplayName(name);
+            if (!name.isEmpty()) {
+                this.name = name;
+                ws.setDisplayName(name);
+                ts = ts.rename(name);
+            }
+        }
+    }
+
+    public void setName() {
+        if (ws.getElement() instanceof MultiProcessingDocument) {
+            this.name = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).getTs().getRawName();
+            ts = ts.rename(name);
         }
     }
 
     public String getName() {
+        return name;
+    }
 
-        if (ws.getElement() instanceof MultiProcessingDocument) {
-            return ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).toString();
-        }
-        return "";
+    public int getIndex() {
+        return index;
     }
 
     public Ts getTs() {
@@ -161,6 +176,7 @@ public class SpecCollector {
                     ((MultiProcessingDocument) ws.getElement()).getCurrent().add(new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
                     index = ((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1;
                 }
+
             }
         }
     }

@@ -63,7 +63,7 @@ public class WinX12SpecSeparator {
     public String[] getErrorList() {
         return errors.toArray(new String[errors.size()]);
     }
-    
+
     public String[] getMessageList() {
         return messages.toArray(new String[messages.size()]);
     }
@@ -98,10 +98,12 @@ public class WinX12SpecSeparator {
             if (linebreak == true) {
                 if (line.contains(")")) {
                     linebreak = false;
-                    line = line.replaceAll(";", " ");
+
                 }
-                sb = new StringBuilder();
-                line = sb.append(line).toString();
+                line = line.replaceAll("\\n", " ");
+                line = line.replaceAll(";", " ");
+//                sb = new StringBuilder();
+//                line = sb.append(line).toString();
             }
             if (line.contains("(")) {
                 if (!line.contains(")")) {
@@ -1376,7 +1378,13 @@ public class WinX12SpecSeparator {
             errors.add(partName + ": Wrong format for tcrate");
         }
     }
-
+    
+    public void read_title(SpecificationPart partName, String content) {
+        if (partName == SpecificationPart.SERIES) {
+            tsName = content.replaceAll(";", "").trim();
+        }
+    }
+    
     public void read_tol(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
@@ -1483,9 +1491,6 @@ public class WinX12SpecSeparator {
     }
 
     public void read_savelog(SpecificationPart partName, String content) {
-    }
-
-    public void read_title(SpecificationPart partName, String content) {
     }
 
     public void read_type(SpecificationPart partName, String content) {

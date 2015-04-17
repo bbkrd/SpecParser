@@ -46,6 +46,7 @@ public class MultiSpec {
             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
                 if (!item.getEstimationMethod().name.contains("tramo")) {
                     specCollector = new SpecCollector(ws, counter);
+                    specCollector.setName();
                     specCollector.translate(TranslationTo_Type.WinX12Spec);
                     specList.add(specCollector);
                 }
