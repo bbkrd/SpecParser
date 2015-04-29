@@ -10,18 +10,28 @@ import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
 import ec.tstoolkit.Parameter;
+import ec.tstoolkit.algorithm.ProcessingContext;
+import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.modelling.ComponentType;
 import ec.tstoolkit.modelling.DefaultTransformationType;
+import ec.tstoolkit.modelling.TsVariableDescriptor;
+import ec.tstoolkit.modelling.TsVariableDescriptor.UserComponentType;
 import ec.tstoolkit.modelling.arima.x13.ArimaSpec;
 import ec.tstoolkit.modelling.arima.x13.AutoModelSpec;
+import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec;
 import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
+import ec.tstoolkit.modelling.arima.x13.RegressionSpec;
 import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
+import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
 import ec.tstoolkit.modelling.arima.x13.TransformSpec;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
+import ec.tstoolkit.timeseries.calendars.TradingDaysType;
+import ec.tstoolkit.timeseries.regression.ITsVariable;
+import ec.tstoolkit.timeseries.simplets.TsData;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.TreeMap;
 
 /**
  *
@@ -38,15 +48,17 @@ public class JDSpecSeparator {
      */
     private X13Specification spec;
     private Ts ts;
+    private ProcessingContext context;
     private LinkedHashMap<SpecificationPart, LinkedHashMap<String, String>> result = new LinkedHashMap();
     private ArrayList<String> errors = new ArrayList();
-    private ArrayList<String> messages = new ArrayList<String>();
+    private ArrayList<String> messages = new ArrayList<>();
 
     /*Constructor*/
-    public JDSpecSeparator(X13Specification x13, Ts ts) {
+    public JDSpecSeparator(X13Specification x13, Ts ts, ProcessingContext context) {
 //      get all information for translating 
         this.ts = ts;
         this.spec = x13;
+        this.context = context;
     }
 
     public void build() {
@@ -58,6 +70,7 @@ public class JDSpecSeparator {
         generateBasicSpec();
         generateEstimateSpec();
         generateTransformSpec();
+        generateRegression();
 
         if (spec.getRegArimaSpecification().getAutoModel().isEnabled()) {
             generateAutomdl();
@@ -66,6 +79,7 @@ public class JDSpecSeparator {
         }
         generateOutlier();
         generateX11Spec();
+        generateBenchmark();
     }
 
     private void generateArima() {
@@ -85,12 +99,17 @@ public class JDSpecSeparator {
 
 //        2)AR
         StringBuilder ar = null;
+        double value;
         if (reg.getP() > 0) {
             ar = new StringBuilder("( ");
             Parameter p;
             for (int i = 0; i < reg.getP(); i++) {
                 p = reg.getPhi()[i];
-                ar.append(p.getValue() * -1);
+                value = p.getValue();
+                if (value != 0.0) {
+                    value = value * -1.0;
+                }
+                ar.append(value);
                 switch (p.getType()) {
                     case Fixed:
                         ar.append("f");
@@ -110,7 +129,11 @@ public class JDSpecSeparator {
             Parameter p;
             for (int i = 0; i < reg.getBP(); i++) {
                 p = reg.getBPhi()[i];
-                ar.append(p.getValue() * -1);
+                value = p.getValue();
+                if (value != 0.0) {
+                    value = value * -1.0;
+                }
+                ar.append(value);
                 switch (p.getType()) {
                     case Fixed:
                         ar.append("f");
@@ -135,7 +158,11 @@ public class JDSpecSeparator {
             Parameter p;
             for (int i = 0; i < reg.getQ(); i++) {
                 p = reg.getTheta()[i];
-                ma.append(p.getValue() * -1);
+                value = p.getValue();
+                if (value != 0.0) {
+                    value = value * -1.0;
+                }
+                ma.append(value);
                 switch (p.getType()) {
                     case Fixed:
                         ma.append("f");
@@ -155,7 +182,11 @@ public class JDSpecSeparator {
             Parameter p;
             for (int i = 0; i < reg.getBQ(); i++) {
                 p = reg.getBTheta()[i];
-                ma.append(p.getValue() * -1);
+                value = p.getValue();
+                if (value != 0.0) {
+                    value = value * -1.0;
+                }
+                ma.append(value);
                 switch (p.getType()) {
                     case Fixed:
                         ma.append("f");
@@ -274,6 +305,13 @@ public class JDSpecSeparator {
         result.put(SpecificationPart.SERIES, series);
     }
 
+    private void generateBenchmark() {
+
+        if (spec.getBenchmarkingSpecification().isEnabled()) {
+            errors.add("BENCHMARKING: No Translation possible");
+        }
+    }
+
     private void generateEstimateSpec() {
 
         RegArimaSpecification reg = spec.getRegArimaSpecification();
@@ -301,6 +339,12 @@ public class JDSpecSeparator {
             estimate = new LinkedHashMap<>();
         }
         estimate.put("tol", reg.getEstimate().getTol() + "");
+
+//        3)outofsample
+        estimate.put("outofsample", "yes");
+
+//        4)maxiter
+        estimate.put("maxiter", "1500");
 
         result.put(SpecificationPart.ESTIMATE, estimate);
     }
@@ -359,6 +403,84 @@ public class JDSpecSeparator {
         }
 
         result.put(SpecificationPart.OUTLIER, outlier);
+    }
+
+    private void generateRegression() {
+
+        RegressionSpec reg = spec.getRegArimaSpecification().getRegression();
+        if (reg.isUsed()) {
+
+            LinkedHashMap<String, String> regression;
+            if (result.containsKey(SpecificationPart.REGRESSION)) {
+                regression = result.get(SpecificationPart.REGRESSION);
+            } else {
+                regression = new LinkedHashMap<>();
+            }
+
+//            A)TradingDays
+            TradingDaysSpec tdSpec = reg.getTradingDays();
+            if (tdSpec.isUsed()) {
+                messages.add("Type: " + tdSpec.getTradingDaysType().toString());
+                messages.add(tdSpec.getHolidays() + "\n" + tdSpec.getChangeOfRegime());
+
+            }
+//            B)
+            MovingHolidaySpec mov = reg.getEaster();
+            if (mov != null) {
+                messages.add("Easter");
+            }
+
+            //F) user defined variables
+            TsVariableDescriptor[] userDef = reg.getUserDefinedVariables();
+            if (userDef.length != 0) {
+                StringBuilder userName = new StringBuilder("( ");
+                StringBuilder userData = new StringBuilder();
+
+                for (TsVariableDescriptor t : userDef) {
+//                    1)Name
+                    userName.append(t.getName());
+
+//                    2)start
+                    TsData data = extractData(t.toTsVariable(context));
+                    regression.put("start", data.getStart().getYear() + "." + data.getStart().getPosition() + 1);
+//                    3)data
+                    StringBuilder dataString = new StringBuilder("(\t");
+                    for (int i = 0; i < data.getValues().getLength(); i++) {
+                        dataString.append(data.getValues().get(i));
+                        if (((i + 1) % data.getFrequency().intValue()) == 0) {
+                            dataString.append("\n\t\t");
+                        } else {
+                            dataString.append("\t");
+                        }
+                    }
+                    dataString.append(")");
+                    userData.append(dataString.toString());
+
+                    //4)Firstlag
+                    if (t.getFirstLag() != 0) {
+                        errors.add("REGRESSION: Firstlag in uder-defined variables is not supported");
+                    }
+//                    5)Lastlag
+                    if (t.getLastLag() != 0) {
+                        errors.add("REGRESSION: Lastlag in uder-defined variables is not supported");
+                    }
+//                    6)Component type
+                    if (!t.getEffect().equals(UserComponentType.Undefined)) {
+                        errors.add("REGRESSION: Component type in uder-defined variables is not supported");
+                    }
+                }
+//                1)Name
+                regression.put("name", userName.append(")").toString());
+//                2)Data
+                regression.put("data", userData.toString());
+//                3)usertype
+                if (tdSpec.isUsed() && tdSpec.getTradingDaysType().equals(TradingDaysType.None)) {
+//                    tdSpec.getUserVariables()
+                }
+            }
+
+            result.put(SpecificationPart.REGRESSION, regression);
+        }
     }
 
     private void generateTransformSpec() {
@@ -420,7 +542,7 @@ public class JDSpecSeparator {
         }
 
 //        1) title
-        series.put("title", ts.getRawName());
+        series.put("title", "'" + ts.getRawName() + "'");
 
         //2) start
         StringBuilder start = new StringBuilder(ts.getTsData().getStart().getYear() + ".");
@@ -428,17 +550,26 @@ public class JDSpecSeparator {
         series.put("start", start.toString());
 
 //        3) period
-        series.put("period", ts.getTsData().getFrequency().intValue() + "");
+        int period = ts.getTsData().getFrequency().intValue();
+        series.put("period", period + "");
 
 //        4) data
-        StringBuilder data = new StringBuilder("(\t");
+        StringBuilder data = new StringBuilder("(");
+        int counter = ts.getTsData().getStart().getPosition() + 1;
         for (int i = 0; i < ts.getTsData().getValues().getLength(); i++) {
+            if (i == 0) {
+                for (int j = 0; j < counter; j++) {
+                    data.append("\t");
+                }
+            }
             data.append(ts.getTsData().getValues().get(i));
-            if ((i + 1) % 12 == 0) {
+//            if ((i + 1) % 12 == 0) {
+            if ((counter) % period == 0) {
                 data.append("\n\t\t");
             } else {
                 data.append("\t");
             }
+            counter++;
         }
         data.append(")");
         series.put("data", data.toString());
@@ -477,20 +608,31 @@ public class JDSpecSeparator {
                 break;
         }
 
-        x11Result.put("mode", mode);
+        if (!result.get(SpecificationPart.TRANSFORM).get("function").toLowerCase().equals("auto")) {
+            x11Result.put("mode", mode);
+        }
 
         //2) Seasonalma
         if (x11.isSeasonal()) {
 
             StringBuilder seasonalma = new StringBuilder("( ");
             if (x11.getSeasonalFilters() != null) {
-                for (SeasonalFilterOption s : x11.getSeasonalFilters()) {
-                    seasonalma.append(s.toString()).append(" ");
+                if (x11.getSeasonalFilters().length != 1) {
+                    for (SeasonalFilterOption s : x11.getSeasonalFilters()) {
+                        seasonalma.append(s.toString()).append("\t");
+                    }
+                } else {
+                    for (int i = 0; i < ts.getTsData().getFrequency().intValue(); i++) {
+                        seasonalma.append(x11.getSeasonalFilters()[0].toString()).append("\t");
+                    }
                 }
             } else {
-                seasonalma.append(SeasonalFilterOption.Msr);
+                for (int i = 0; i < ts.getTsData().getFrequency().intValue(); i++) {
+                    seasonalma.append(SeasonalFilterOption.Msr).append("\t");
+                }
             }
-            seasonalma.append(")");
+            seasonalma.deleteCharAt(seasonalma.length() - 1);
+            seasonalma.append(" )");
 
             x11Result.put("seasonalma", seasonalma.toString());
         }
@@ -519,8 +661,8 @@ public class JDSpecSeparator {
         if (maxlead < 0) {
             if (ts != null) {
                 maxlead = -1 * maxlead * ts.getTsData().getFrequency().intValue();
-            }else{
-                maxlead = -1 * maxlead *12;
+            } else {
+                maxlead = -1 * maxlead * 12;
             }
         }
         forecast.put("maxlead", maxlead + "");
@@ -584,5 +726,12 @@ public class JDSpecSeparator {
                 break;
         }
         return result;
+    }
+
+    private TsData extractData(ITsVariable input) {
+        ArrayList<DataBlock> data = new ArrayList();
+        data.add(new DataBlock(input.getDefinitionDomain().getLength()));
+        input.data(input.getDefinitionDomain(), data);
+        return new TsData(input.getDefinitionDomain().getStart(), data.get(0));
     }
 }

@@ -11,6 +11,7 @@ import Logic.SpecCollector;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.text.Document;
 
 /**
  * This class shows the transformation of a SingleSpec. The WinX13Spec is in the
@@ -68,9 +69,13 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         return spec;
     }
 
-    public String getWinX13Text() {
+    public String getWinX12Text() {
 
         return winX12Text.getText();
+    }
+    
+    public Document getWinDoc(){
+        return winX12Text.getDocument();
     }
 
     public SpecViewer refresh(SpecCollector spec) {

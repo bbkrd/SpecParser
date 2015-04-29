@@ -8,14 +8,19 @@ package Logic;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
+import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
+import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
 import ec.tss.TsFactory;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
+import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.modelling.DefaultTransformationType;
+import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
+import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
 import ec.tstoolkit.modelling.arima.x13.X13Exception;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.Month;
@@ -24,6 +29,7 @@ import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.regression.OutlierType;
 import ec.tstoolkit.timeseries.simplets.TsData;
+import ec.tstoolkit.timeseries.simplets.TsDomain;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
 import java.io.BufferedReader;
@@ -47,17 +53,35 @@ public class WinX12SpecSeparator {
      period -   Period from WinX12, in JD+ it is given by the data
      */
     private X13Specification spec = new X13Specification();
+//    private X11Specification x11 = new X11Specification();
     private ArrayList<String> errors = new ArrayList();
     private ArrayList<String> messages = new ArrayList();
 
     //no equivalence in a JD+ spec item, this information is given in Ts
     private TsFrequency period = TsFrequency.Monthly;
     private Day tsStart = new Day(1970, Month.January, 0);
-    private TsData tsData = null;
+    private TsData tsData;
     private String tsName = null;
 
+    private String regressorName = null;
+    private DynamicTsVariable regressor = null;
+    private Day regressorStart = null;
+
+    private String path;
+
     public WinX12SpecSeparator() {
-        setDefaults();
+//        setDefaults();
+        spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
+
+    }
+
+    private void setPreprocessor() {
+        spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
+
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 
     public String[] getErrorList() {
@@ -76,7 +100,19 @@ public class WinX12SpecSeparator {
 
     public Ts getTs() {
         return TsFactory.instance.createTs(tsName, null, tsData);
+
     }
+
+    public String getRegressorName() {
+        return regressorName;
+    }
+
+    public DynamicTsVariable getRegressor() {
+        return regressor;
+    }
+//    public TsVariables getRegressor() {
+//        return regressor;
+//    }
 
     public void buildSpec(String winX13Text) {
 
@@ -149,7 +185,7 @@ public class WinX12SpecSeparator {
                             m.invoke(this, specPartName, lineSplitted[1]);
                         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
                             errors.add(specPartName.name() + ": No support for " + lineSplitted[0].toUpperCase());
-                        }
+                                                    }
                     }
                 }
             } catch (IllegalArgumentException ex) {
@@ -169,7 +205,7 @@ public class WinX12SpecSeparator {
         spec.getRegArimaSpecification().getArima().setBQ(0);
 
         //automdl
-        spec.getRegArimaSpecification().getAutoModel().setEnabled(true);
+        spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
         spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
         spec.getRegArimaSpecification().getAutoModel().setCheckMu(true);
         spec.getRegArimaSpecification().getAutoModel().setMixed(true);
@@ -346,9 +382,11 @@ public class WinX12SpecSeparator {
 
         switch (content) {
             case "YES":
+                setPreprocessor();
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(true);
                 break;
             case "NO":
+                setPreprocessor();
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
                 break;
             default:
@@ -359,6 +397,7 @@ public class WinX12SpecSeparator {
 
     public void read_adjust(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim();
 
         switch (content.toUpperCase()) {
@@ -384,6 +423,7 @@ public class WinX12SpecSeparator {
         content = content.replaceAll(";", "").trim();
         try {
             double value = Double.parseDouble(content);
+            setPreprocessor();
             spec.getRegArimaSpecification().getTransform().setAICDiff(value);
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong Format for " + content + " in aicdiff");
@@ -400,6 +440,7 @@ public class WinX12SpecSeparator {
          *   x, y with or without 'f'
          */
 //        1. Delete all unnecassary letters
+        setPreprocessor();
         content = content.replaceAll(";", "");
         String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
         s = s.toLowerCase();
@@ -494,6 +535,7 @@ public class WinX12SpecSeparator {
 
     public void read_armalimit(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim();
 
         try {
@@ -508,6 +550,7 @@ public class WinX12SpecSeparator {
 
     public void read_balanced(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -525,6 +568,7 @@ public class WinX12SpecSeparator {
 
     public void read_checkmu(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -542,6 +586,7 @@ public class WinX12SpecSeparator {
 
     public void read_critical(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim();
 
         String[] s = content.replaceAll("\\(", "").replaceAll("\\)", "").split(",");
@@ -571,8 +616,15 @@ public class WinX12SpecSeparator {
                 tsData = new TsData(new TsPeriod(period, tsStart), values, false);
                 break;
             case REGRESSION:
-                errors.add(partName + ": To load data for regression is not possible at the moment");
-                //noch nix, regression braucht auch start
+                if (regressorStart == null) {
+                    regressorStart = tsStart;
+                }
+                ArrayList<DataBlock> list = new ArrayList();
+                list.add(new DataBlock(values));
+
+                TsDomain domain = new TsDomain(period, regressorStart.getYear(), regressorStart.getMonth(), values.length);
+                regressor = new DynamicTsVariable(regressorName, null, new TsData(domain));
+                regressor.data(domain, list);
                 break;
             default: //Fehler
                 errors.add(partName + ": To load data is not implemented");
@@ -587,16 +639,23 @@ public class WinX12SpecSeparator {
     public void read_file(SpecificationPart partName, String content) {
         /*
          Load data from a file
-         possible endings are .dat or .ser
+         possible endings are .dat or .ser or .rgr
          */
 
+        //delete this letters: ; and ' and "
         content = content.replaceAll("[;'\"]", "").trim();
         ArrayList<String> v = new ArrayList();
         double[] values;
 
+        File file;
+        if (!content.contains("\\")) {
+            file = new File((path + content));
+        } else {
+            file = new File(content);
+        }
+
         if (content.toLowerCase().endsWith(".ser")) {
             /*SER*/
-            File file = new File(content);
 
             try {
                 FileReader f = new FileReader(file);
@@ -604,7 +663,10 @@ public class WinX12SpecSeparator {
                 try (BufferedReader br = new BufferedReader(f)) {
                     String zeile;
                     while ((zeile = br.readLine()) != null) {
-                        v.add(zeile);
+                        zeile = zeile.trim();
+                        if (!zeile.isEmpty()) {
+                            v.add(zeile);
+                        }
                     }
                     values = new double[v.size()];
 
@@ -626,7 +688,7 @@ public class WinX12SpecSeparator {
 
         } else if (content.toLowerCase().endsWith(".dat")) {
             /*DAT*/
-            File file = new File(content);
+
             try {
                 FileReader f = new FileReader(file);
 
@@ -637,17 +699,21 @@ public class WinX12SpecSeparator {
                     int year = 10000; //
 
                     while ((zeile = br.readLine()) != null) {
-                        split = zeile.split("\\s+");
-                        if (year > Integer.parseInt(split[0])) {
-                            year = Integer.parseInt(split[0]);
-                            tsStart = calcDay(partName, split[0] + "." + split[1]);
+                        zeile = zeile.trim();
+                        if (!zeile.isEmpty()) {
+
+                            split = zeile.split("\\s+");
+                            if (year > Integer.parseInt(split[0])) {
+                                year = Integer.parseInt(split[0]);
+                                tsStart = calcDay(partName, split[0] + "." + split[1]);
+                            }
+                            //calculate max period
+                            if (periode < Integer.parseInt(split[1])) {
+                                periode = Integer.parseInt(split[1]);
+                            }
+                            //collect values
+                            v.add(split[2]);
                         }
-                        //calculate max period
-                        if (periode < Integer.parseInt(split[1])) {
-                            periode = Integer.parseInt(split[1]);
-                        }
-                        //collect values
-                        v.add(split[2]);
                     }
                     //set period, when it is not Monthly data
                     if (periode <= 4) {
@@ -675,6 +741,50 @@ public class WinX12SpecSeparator {
                 errors.add(partName + ": Error loading file");
             }
 
+        } else if (content.toLowerCase().endsWith(".rgr")) {
+            //nur eine spalte zur zeit
+
+            if (regressorStart == null) {
+                regressorStart = tsStart;
+            }
+
+            try {
+                FileReader f = new FileReader(file);
+
+                try (BufferedReader br = new BufferedReader(f)) {
+                    String zeile;
+                    while ((zeile = br.readLine()) != null) {
+                        zeile = zeile.trim();
+                        if (!zeile.isEmpty()) {
+                            zeile = zeile.replaceAll("D", "E");
+                            v.add(zeile);
+                        }
+                    }
+
+                    values = new double[v.size()];
+
+                    for (int i = 0; i < v.size(); i++) {
+                        values[i] = Double.parseDouble(v.get(i));
+                    }
+
+                    if (partName == SpecificationPart.REGRESSION) {
+
+                        ArrayList<DataBlock> list = new ArrayList();
+                        list.add(new DataBlock(values));
+
+                        TsDomain domain = new TsDomain(period, regressorStart.getYear(), regressorStart.getMonth(), values.length);
+                        regressor = new DynamicTsVariable(regressorName, null, new TsData(domain));
+                        regressor.data(domain, list);
+
+                    } else {
+                        errors.add(partName + ": To load data is not possible");
+                    }
+                }
+            } catch (FileNotFoundException ex) {
+                errors.add(partName + ": File " + content + " not found");
+            } catch (IOException ex) {
+                errors.add(partName + ": Error loading file");
+            }
         } else {
             errors.add(partName + ": Loading data from file " + content + " is not possible");
         }
@@ -682,6 +792,7 @@ public class WinX12SpecSeparator {
 
     public void read_function(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim();
 
         switch (content.toUpperCase()) {
@@ -703,6 +814,7 @@ public class WinX12SpecSeparator {
 
     public void read_hrinitial(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -724,6 +836,7 @@ public class WinX12SpecSeparator {
 
         try {
             double value = Double.parseDouble(content);
+            setPreprocessor();
             spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(value);
         } catch (NumberFormatException ex) {
             errors.add(partName + ": Wrong format for ljungboxlimit");
@@ -735,6 +848,7 @@ public class WinX12SpecSeparator {
         content = content.replaceAll(";", "").trim();
         try {
             int value = Integer.parseInt(content);
+            setPreprocessor();
             spec.getRegArimaSpecification().getOutliers().setLSRun(value);
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong format for lsrun");
@@ -749,7 +863,7 @@ public class WinX12SpecSeparator {
          *
          *   x, y with or without 'f'
          */
-
+        setPreprocessor();
 //        1. Delete all unnecassary letters
         content = content.replaceAll(";", "");
         String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
@@ -866,6 +980,7 @@ public class WinX12SpecSeparator {
 
     public void read_method(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim();
         switch (content.toUpperCase()) {
             case "ADDONE":
@@ -883,6 +998,7 @@ public class WinX12SpecSeparator {
 
     public void read_mixed(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -935,6 +1051,7 @@ public class WinX12SpecSeparator {
          *  p,q are integers or [x ... z]
          *  delta is an integer (12 for months, 4 for quater year, ...)
          */
+        setPreprocessor();
         spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
 
         //1. Split on ")(" with or without spaces
@@ -1138,7 +1255,7 @@ public class WinX12SpecSeparator {
 
                     //change span
                     TsPeriodSelector sel;
-                    if (spec.getRegArimaSpecification().getBasic() != null && spec.getRegArimaSpecification().getBasic().getSpan() != null) {
+                    if (spec.getRegArimaSpecification().getBasic() != null && spec.getRegArimaSpecification().getBasic().getSpan() != null && !spec.getRegArimaSpecification().getBasic().getSpan().getType().equals(PeriodSelectorType.All)) {
                         sel = spec.getRegArimaSpecification().getBasic().getSpan();
                         if (sel.getD0() != null) {
                             sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "span start date"));
@@ -1149,7 +1266,7 @@ public class WinX12SpecSeparator {
                         spec.getRegArimaSpecification().getBasic().setSpan(sel);
                     }
                     //change modelspan
-                    if (spec.getRegArimaSpecification().getEstimate() != null && spec.getRegArimaSpecification().getEstimate().getSpan() != null) {
+                    if (spec.getRegArimaSpecification().getEstimate() != null && spec.getRegArimaSpecification().getEstimate().getSpan() != null && !spec.getRegArimaSpecification().getEstimate().getSpan().getType().equals(PeriodSelectorType.All)) {
                         sel = spec.getRegArimaSpecification().getEstimate().getSpan();
                         if (sel.getD0() != null) {
                             sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "modelspan start date"));
@@ -1177,6 +1294,7 @@ public class WinX12SpecSeparator {
         try {
             double value = Double.parseDouble(content);
             if (value == 0.0) {
+                setPreprocessor();
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
             }
         } catch (NumberFormatException e) {
@@ -1190,6 +1308,7 @@ public class WinX12SpecSeparator {
 
         try {
             double value = Double.parseDouble(content);
+            setPreprocessor();
             spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(value);
         } catch (NumberFormatException ex) {
             errors.add(partName + ": Wrong format for reducecv");
@@ -1333,9 +1452,11 @@ public class WinX12SpecSeparator {
 
             switch (partName.toString().toUpperCase()) {
                 case "OUTLIERS":
+                    setPreprocessor();
                     spec.getRegArimaSpecification().getOutliers().setSpan(p);
                     break;
                 case "ESTIMATE":
+                    setPreprocessor();
                     spec.getRegArimaSpecification().getEstimate().setSpan(p);
                     break;
                 case "SERIES":
@@ -1359,8 +1480,9 @@ public class WinX12SpecSeparator {
             case SERIES:
                 tsStart = calcDay(partName, content);
                 break;
-            case REGRESSION: //auch eine variable anlegen
-            // break;
+            case REGRESSION:
+                regressorStart = calcDay(partName, content);
+                break;
             default:
                 errors.add(partName + ": start argument is not implemented");
                 break;
@@ -1373,24 +1495,26 @@ public class WinX12SpecSeparator {
         String s = content.replaceAll(";", "").trim();
         try {
             double value = Double.parseDouble(s);
+            setPreprocessor();
             spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(value);
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong format for tcrate");
         }
     }
-    
+
     public void read_title(SpecificationPart partName, String content) {
-        if (partName == SpecificationPart.SERIES) {
-            tsName = content.replaceAll(";", "").trim();
-        }
+//        if (partName == SpecificationPart.SERIES) {
+//            tsName = content.replaceAll(";", "").trim();
+//        }
     }
-    
+
     public void read_tol(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
         try {
             double value = Double.parseDouble(content);
+            setPreprocessor();
             spec.getRegArimaSpecification().getEstimate().setTol(value);
         } catch (NumberFormatException ex) {
             errors.add(partName + ": Wrong format for tol");
@@ -1416,6 +1540,7 @@ public class WinX12SpecSeparator {
 
     public void read_types(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         spec.getRegArimaSpecification().getOutliers().clearTypes();
 
         String s = content.replaceAll(";", "").trim();
@@ -1461,6 +1586,7 @@ public class WinX12SpecSeparator {
 
     public void read_urfinal(SpecificationPart partName, String content) {
 
+        setPreprocessor();
         content = content.replaceAll(";", "").trim();
 
         try {
@@ -1471,6 +1597,44 @@ public class WinX12SpecSeparator {
         } catch (X13Exception e) {
             errors.add(e.getMessage());
         }
+    }
+
+    public void read_user(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        String[] regressors = content.split("\\s+");
+        if (regressors.length > 1) {
+            messages.add(partName + ": At the moment only work with one regressor is possible. ");
+        } else {
+            if (regressors.length == 0) {
+                //Fehler
+            } else {
+                //regressorname abspechern
+                regressorName = regressors[0];
+            }
+        }
+    }
+
+    public void read_usertype(SpecificationPart partName, String content) {
+        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        String[] regressors = content.split("\\s+");
+        if (regressors.length > 1) {
+            messages.add(partName + ": At the moment only work with one regressor is possible. ");
+        } else {
+            switch (regressors[0].toUpperCase()) {
+                case "TD":
+                    break;
+                case "USER":
+                    ArrayList<TsVariableDescriptor> var = new ArrayList();
+                    var.add(new TsVariableDescriptor(regressorName));
+                    spec.getRegArimaSpecification().getRegression().setUserDefinedVariables((TsVariableDescriptor[]) var.toArray(null));
+                    break;
+                default:
+                    errors.add(partName + ": Usertype " + regressors[0] + " is not supported");
+                    break;
+            }
+        }
+
     }
 
     /*

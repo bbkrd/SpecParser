@@ -11,6 +11,8 @@ import ec.tss.sa.SaItem;
 import ec.tstoolkit.utilities.Id;
 import eu.nbdemetra.specParser.MultiTopComponent;
 import Logic.SpecCollector;
+import ec.nbdemetra.ws.nodes.WsNode;
+import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,14 +32,16 @@ public class MultiSpec {
     private ArrayList<SpecCollector> specList = new ArrayList();
     private Id id;
 
-    public MultiSpec(WorkspaceItem ws) {
+    public MultiSpec(WsNode wsNode) {
+
+        WorkspaceItem ws = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
 
         MultiTopComponent window;
 
         if (!activeMultiWindows.containsKey(ws.getId())) {
 
             this.id = ws.getId();
-            window = new MultiTopComponent(ws);
+            window = new MultiTopComponent(wsNode);
             window.setName("SpecParser for " + ws.getDisplayName());
 
             SpecCollector specCollector;
@@ -45,26 +49,34 @@ public class MultiSpec {
 
             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
                 if (!item.getEstimationMethod().name.contains("tramo")) {
-                    specCollector = new SpecCollector(ws, counter);
-                    specCollector.setName();
+                    specCollector = new SpecCollector((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class), counter);
+                    specCollector.setPath(window.getPath());
+//                    specCollector.setName();
                     specCollector.translate(TranslationTo_Type.WinX12Spec);
+                    specCollector.setName(item.getTs().getRawName());
                     specList.add(specCollector);
                 }
                 counter++;
             }
 
             window.setSpecArray(specList);
+
             window.open();
             window.requestActive();
 
             activeMultiWindows.put(this.id, window);
         } else {
             window = activeMultiWindows.get(ws.getId());
+            window.setName("SpecParser for " + ws.getDisplayName());
             window.requestActive();
+            //close workspace and rename the document
+            wsNode.getWorkspace().sortFamily(wsNode.lookup());
         }
+        
     }
 
     public static void deleteWindow(Id id) {
         activeMultiWindows.remove(id);
+
     }
 }

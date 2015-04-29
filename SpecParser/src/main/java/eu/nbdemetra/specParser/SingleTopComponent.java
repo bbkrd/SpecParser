@@ -7,11 +7,17 @@ package eu.nbdemetra.specParser;
 
 import Logic.SpecCollector;
 import Administration.SingleSpec;
+import ec.nbdemetra.ui.variables.actions.RefreshAction;
+import ec.nbdemetra.ws.WorkspaceItem;
+import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tss.sa.documents.SaDocument;
+import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,8 +25,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.util.Exceptions;
@@ -54,126 +63,34 @@ import org.openide.util.NbBundle.Messages;
 public final class SingleTopComponent extends TopComponent {
 
     private String id;
+    private String path;
+    private WsNode ws;
+    private WorkspaceItem w;
+    private SpecViewer specViewer;
 
     public SingleTopComponent() {
+        initComponents();
+        setName(Bundle.CTL_SingleSpecWindowTopComponent());
+        setToolTipText(Bundle.HINT_SingleSpecWindowTopComponent());
+
+        setButtons();
+        load.setEnabled(false);
+    }
+
+    public SingleTopComponent(WsNode ws) {
+
+        this.ws = ws;
+        this.w = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
 
         initComponents();
         setName(Bundle.CTL_SingleSpecWindowTopComponent());
         setToolTipText(Bundle.HINT_SingleSpecWindowTopComponent());
 
-        //Button for save WinX13 Spec to file ends with .spc
-        JButton load = new JButton(new AbstractAction("Load WinX12Spec") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        setButtons();
+    }
 
-                JFileChooser fc = new JFileChooser();
-                fc.setFileFilter(new MyFilter(".spc"));
-                fc.setAcceptAllFileFilterUsed(false);
-
-                int state = fc.showOpenDialog(null);
-
-                if (state == JFileChooser.APPROVE_OPTION) {
-                    File file = fc.getSelectedFile();
-
-                    try {
-                        FileReader f = new FileReader(file);
-                        StringBuilder s;
-                        try (BufferedReader br = new BufferedReader(f)) {
-                            s = new StringBuilder();
-                            String zeile;
-                            while ((zeile = br.readLine()) != null) {
-                                s.append(zeile);
-                                s.append("\n");
-                            }
-                        }
-
-                        SpecCollector sp = specViewer.getSpecCollector();
-                        sp.setWinX12Spec(s.toString());
-                        sp.translate(TranslationTo_Type.JDSpec);
-                        sp.setName(file.getName());
-                        specViewer.refresh(sp);
-
-                    } catch (FileNotFoundException ex) {
-                        Exceptions.printStackTrace(ex);
-                    } catch (IOException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-//                else if (state == JFileChooser.CANCEL_OPTION){
-//                    JOptionPane.showMessageDialog(null, "File isn't loaded");
-//                }
-            }
-        });
-        JButton save = new JButton(new AbstractAction("Save WinX12Spec") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                String path = System.getProperty("user.home");
-                JFileChooser chooser = new JFileChooser(path);
-                chooser.setFileFilter(new MyFilter(".spc"));
-                chooser.setAcceptAllFileFilterUsed(false);
-                int result = chooser.showSaveDialog(null);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    try {
-                        File file = chooser.getSelectedFile();
-                        try (FileWriter fw = new FileWriter(file)) {
-                            fw.write(specViewer.getSpecCollector().getWinX12Spec());
-                        }
-                        if (!file.toString().endsWith(".spc")) {
-                            file.renameTo(new File(file.toString() + ".spc"));
-                        }
-                    } catch (IOException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-//                else if (result == JFileChooser.CANCEL_OPTION) {
-//                    JOptionPane.showMessageDialog(null, "File isn't saved");
-//                }
-            }
-        });
-        //Button for refresh winX13Spec from JD+ Spec
-        JButton refreshX13 = new JButton(new AbstractAction("Refresh WinX12Spec") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                SpecCollector sp = specViewer.getSpecCollector();
-                sp.setJDSpec((SaDocument) specViewer.getDocument());
-                sp.translate(TranslationTo_Type.WinX12Spec);
-                specViewer = specViewer.refresh(sp);
-                
-//                JOptionPane.showMessageDialog(null, "I work on it");
-            }
-        });
-        //Button for refresh JD+Spec from WinX13Spec
-        JButton refreshJD = new JButton(new AbstractAction("Refresh JD+ Spec") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-//               do nothing
-//                JOptionPane.showInputDialog(new ImageIcon("C:/Daten/Bastelgarage (290).gif"));
-                SpecCollector sp = specViewer.getSpecCollector();
-                sp.setWinX12Spec(specViewer.getWinX13Text());
-                sp.translate(TranslationTo_Type.JDSpec);
-                specViewer = specViewer.refresh(sp);
-            }
-        });
-
-        load.setBackground(Color.LIGHT_GRAY);
-        save.setBackground(Color.LIGHT_GRAY);
-        refreshX13.setBackground(Color.LIGHT_GRAY);
-        refreshJD.setBackground(Color.LIGHT_GRAY);
-
-        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
-        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
-        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
-
-        toolBar.add(load);
-        toolBar.add(filler1);
-        toolBar.add(save);
-        toolBar.add(filler2);
-        toolBar.add(refreshX13);
-        toolBar.add(filler3);
-        toolBar.add(refreshJD);
-
+    public SpecViewer getSpecViewer() {
+        return specViewer;
     }
 
     public void setSpecView(SpecCollector spec) {
@@ -182,6 +99,13 @@ public final class SingleTopComponent extends TopComponent {
         specViewer = specViewer.refresh(spec);
         add(specViewer);
         specViewer.refreshHeader();
+
+        if (spec.getWinX12Spec() != null) {
+            refreshJD.setEnabled(true);
+            save.setEnabled(true);
+        }
+
+        specViewer.getWinDoc().addDocumentListener(new MyDocumentListener());
     }
 
     public void setId(String id) {
@@ -190,6 +114,14 @@ public final class SingleTopComponent extends TopComponent {
 
     public String getId() {
         return id;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 
     /**
@@ -211,21 +143,18 @@ public final class SingleTopComponent extends TopComponent {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToolBar toolBar;
     // End of variables declaration//GEN-END:variables
-    private SpecViewer specViewer;
 
-    public SpecViewer getSpecViewer() {
-        return specViewer;
-    }
-
+    /*TopComponent methods*/
     @Override
     public void componentOpened() {
     }
 
     @Override
     public void componentClosed() {
-        //Fallunterscheidung drueber nachdenken ???
+
         SingleSpec.deleteWindow(id);
-        MultiTopComponent.deleteWindow(id);
+        firePropertyChange("CLOSE", null, null);
+//        MultiTopComponent.deleteWindow(id);
     }
 
     void writeProperties(java.util.Properties p) {
@@ -238,5 +167,172 @@ public final class SingleTopComponent extends TopComponent {
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         // TODO read your settings according to their version
+    }
+
+    /*BUTTONS*/
+    private JButton load = new JButton(new LoadAction());
+    private JButton save = new JButton(new SaveAction());
+    private JButton refreshX12 = new JButton(new RefreshAction());
+    private JButton refreshJD = new JButton(new RefreshWinAction());
+
+    public class LoadAction extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            JFileChooser fc = new JFileChooser();
+            fc.setFileFilter(new MyFilter(".spc"));
+            fc.setAcceptAllFileFilterUsed(false);
+
+            int state = fc.showOpenDialog(null);
+
+            if (state == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                path = file.getAbsolutePath().replaceAll(file.getName(), "");
+
+                try {
+                    FileReader f = new FileReader(file);
+                    StringBuilder s;
+                    try (BufferedReader br = new BufferedReader(f)) {
+                        s = new StringBuilder();
+                        String zeile;
+                        while ((zeile = br.readLine()) != null) {
+                            s.append(zeile);
+                            s.append("\n");
+                        }
+                    }
+
+                    SpecCollector sp = specViewer.getSpecCollector();
+                    sp.setWinX12Spec(s.toString());
+                    sp.setPath(path);
+                    sp.translate(TranslationTo_Type.JDSpec);
+//                    this.name=file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
+                    sp.setName(file.getName());
+                    specViewer.refresh(sp);
+
+                    refreshJD.setEnabled(true);
+                    save.setEnabled(true);
+                    refreshJD.setForeground(Color.black);
+
+                    String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
+                    w.setDisplayName(name);
+                    setDisplayName(name);
+                    repaint();
+                    ws.getWorkspace().sortFamily(ws.lookup());
+
+                } catch (FileNotFoundException ex) {
+                    Exceptions.printStackTrace(ex);
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        }
+    }
+
+    public class SaveAction extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            JFileChooser chooser = new JFileChooser(path);
+            chooser.setFileFilter(new MyFilter(".spc"));
+            chooser.setAcceptAllFileFilterUsed(false);
+            int result = chooser.showSaveDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                try {
+                    File file = chooser.getSelectedFile();
+                    try (FileWriter fw = new FileWriter(file)) {
+                        fw.write(specViewer.getSpecCollector().getWinX12Spec());
+                    }
+                    if (!file.toString().endsWith(".spc")) {
+                        file.renameTo(new File(file.toString() + ".spc"));
+                    }
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        }
+    }
+
+    public class RefreshJDAction extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            SpecCollector sp = specViewer.getSpecCollector();
+            sp.setPath(path);
+            sp.setWinX12Spec(specViewer.getWinX12Text());
+            sp.translate(TranslationTo_Type.JDSpec);
+            specViewer = specViewer.refresh(sp);
+            refreshJD.setForeground(Color.black);
+        }
+
+    }
+
+    public class RefreshWinAction extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            SpecCollector sp = specViewer.getSpecCollector();
+            sp.setJDSpec((SaDocument) specViewer.getDocument());
+            sp.translate(TranslationTo_Type.WinX12Spec);
+            specViewer = specViewer.refresh(sp);
+
+            refreshJD.setEnabled(true);
+            save.setEnabled(true);
+            refreshJD.setForeground(Color.black);
+        }
+
+    }
+
+    private void setButtons() {
+
+        refreshJD.setEnabled(false);
+        save.setEnabled(false);
+
+        load.setText("Load WinX12Spec");
+        save.setText("Save WinX12Spec");
+        refreshX12.setText("Refresh WinX12Text");
+        refreshJD.setText("Refresh JD+ Spec");
+
+        load.setBackground(Color.LIGHT_GRAY);
+        save.setBackground(Color.LIGHT_GRAY);
+        refreshX12.setBackground(Color.LIGHT_GRAY);
+        refreshJD.setBackground(Color.LIGHT_GRAY);
+
+        javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
+        javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
+        javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
+
+        toolBar.add(load);
+        toolBar.add(filler1);
+        toolBar.add(save);
+        toolBar.add(filler2);
+        toolBar.add(refreshX12);
+        toolBar.add(filler3);
+        toolBar.add(refreshJD);
+    }
+
+    
+    /*
+     *       DocumentListner for changes in Textarea
+     */
+    
+    public class MyDocumentListener implements DocumentListener {
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            refreshJD.setForeground(Color.blue);
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            refreshJD.setForeground(Color.blue);
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            refreshJD.setForeground(Color.blue);
+        }
     }
 }

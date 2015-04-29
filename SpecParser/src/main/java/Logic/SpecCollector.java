@@ -8,12 +8,15 @@ package Logic;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
+import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
+import ec.tstoolkit.timeseries.regression.TsVariables;
+import ec.tstoolkit.utilities.IModifiable;
 
 /**
  *
@@ -39,9 +42,12 @@ public class SpecCollector {
     private int index; //only for Multi documents
     private String name;
 
+    private String path = System.getProperty("user.dir");
+
 
     /*Constructor for Single Documents*/
     public SpecCollector(WorkspaceItem w) {
+
         ws = w;
 
         if (ws.getElement() instanceof X13Document) {
@@ -54,7 +60,9 @@ public class SpecCollector {
     public SpecCollector(WorkspaceItem w, int i) {
 
         index = i;
+
         ws = w;
+
         if (((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1 >= index) {
             ts = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).getTs();
             jdSpec = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).toDocument();
@@ -67,12 +75,19 @@ public class SpecCollector {
         this.winX12SpecText = text;
     }
 
+    public void setPath(String path) {
+        this.path = path;
+    }
+
     public String getWinX12Spec() {
         return winX12SpecText;
     }
 
     public void setJDSpec(SaDocument x13) {
         this.jdSpec = x13;
+         
+//        WorkspaceItem ws = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
+
         if (ws != null) {
             if (ws.getElement() instanceof X13Document) {
                 ws.setElement(jdSpec);
@@ -100,20 +115,24 @@ public class SpecCollector {
 
     public void setName(String name) {
         //fuer single document wichtig im ws
+         
+//        WorkspaceItem ws = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
+
         if (ws.getElement() instanceof X13Document) {
             if (!name.isEmpty()) {
-                this.name = name;
-                ws.setDisplayName(name);
-                ts = ts.rename(name);
+                this.name = name.replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
+//                ws.setDisplayName(this.name);
+//                wsNode.getWorkspace().sortFamily(wsNode.lookup());
+                
+                if (ts != null) {
+                    ts = ts.rename(name);
+                }
             }
+        }else{
+            this.name=name;
+//            ts=ts.rename(name);
         }
-    }
-
-    public void setName() {
-        if (ws.getElement() instanceof MultiProcessingDocument) {
-            this.name = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).getTs().getRawName();
-            ts = ts.rename(name);
-        }
+//        wsNode.getWorkspace().sortFamily(wsNode.lookup());
     }
 
     public String getName() {
@@ -130,44 +149,77 @@ public class SpecCollector {
 
     public void translate(TranslationTo_Type type) {
 
+//        WorkspaceItem ws = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
+
         if (type == TranslationTo_Type.JDSpec) {
             // Translation from WinX13Spec to JDemetra+Spec
             WinX12SpecSeparator separator = new WinX12SpecSeparator();
+            separator.setPath(path);
             separator.buildSpec(winX12SpecText);
-            jdSpec = separator.getResult();
-            ts = separator.getTs();
 
-            refreshWS();
+            if (separator.getTs().getTsData() != null) {
+                ts = separator.getTs();
+                jdSpec = separator.getResult();
+                //regressor
+                if (separator.getRegressorName() != null) {
+                    if (ws.getOwner().getContext().getTsVariableManagers().get(separator.getRegressorName()) == null) {
+                        TsVariables var = new TsVariables();
+                        var.set(separator.getRegressorName(), separator.getRegressor());
+                        ws.getOwner().getContext().getTsVariableManagers().set(separator.getRegressorName(), var);
+                    }
+                }
 
-            errors = separator.getErrorList();
-            messages = separator.getMessageList();
+                refreshWS();
+
+                errors = separator.getErrorList();
+                messages = separator.getMessageList();
+            } else {
+                
+                errors = new String[1];
+                errors[0] = "NO DATA";
+                messages = new String[1];
+                messages[0] = "NO DATA";
+            }
+
         } else {
             //Translation from JDemetra+Spec to WinX13Spec
             JDSpecSeparator separator;
 
             if (ws.getElement() instanceof X13Document) {
                 ts = ((X13Document) ws.getElement()).getInput();
-                separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts);
             } else {
                 ts = ((MultiProcessingDocument) ws.getElement()).getCurrent().get(index).getTs();
-                separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts);
             }
-            separator.build();
-            winX12SpecText = separator.getResult();
-            refreshWS();
-            errors = separator.getErrorList();
-            messages = separator.getMessageList();
-        }
+            if (ts.getTsData() != null) {
+                separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts, ws.getOwner().getContext());
 
+                separator.build();
+                winX12SpecText = separator.getResult();
+                refreshWS();
+                errors = separator.getErrorList();
+                messages = separator.getMessageList();
+            } else {
+                
+                errors = new String[1];
+                errors[0] = "NO DATA No Work";
+                messages = new String[1];
+                messages[0] = "NO DATA!!!";
+
+            }
+        }
     }
 
     private void refreshWS() {
+
+//        WorkspaceItem ws = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
+
         if (ws != null) {
             if (ws.getElement() instanceof X13Document) {
                 ws.setElement(jdSpec);
-                if (ts != null) {
-                    ((X13Document) ws.getElement()).setInput(ts);
-                }
+//                if (ts != null) {
+                ((X13Document) ws.getElement()).setInput(ts);
+                
+//                }
             } else {
                 if (((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1 >= index) {
                     ((MultiProcessingDocument) ws.getElement()).getCurrent().replace(((MultiProcessingDocument) ws.getElement()).getCurrent().get(index), new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
@@ -176,7 +228,6 @@ public class SpecCollector {
                     ((MultiProcessingDocument) ws.getElement()).getCurrent().add(new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
                     index = ((MultiProcessingDocument) ws.getElement()).getCurrent().size() - 1;
                 }
-
             }
         }
     }
