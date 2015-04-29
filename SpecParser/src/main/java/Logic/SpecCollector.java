@@ -11,6 +11,7 @@ import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
 import ec.satoolkit.x13.X13Specification;
+import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
@@ -36,6 +37,8 @@ public class SpecCollector {
     private String winX12SpecText;
     private SaDocument jdSpec;
     private Ts ts;
+    private DynamicTsVariable regressor;
+    private String regName;
     private String[] errors;
     private String[] messages;
     private WorkspaceItem ws;
@@ -73,6 +76,14 @@ public class SpecCollector {
 
     public void setWinX12Spec(String text) {
         this.winX12SpecText = text;
+    }
+    
+    public DynamicTsVariable getRegressor(){
+    return regressor;
+}
+    
+    public String getRegressorName(){
+        return regName;
     }
 
     public void setPath(String path) {
@@ -161,13 +172,10 @@ public class SpecCollector {
                 ts = separator.getTs();
                 jdSpec = separator.getResult();
                 //regressor
-                if (separator.getRegressorName() != null) {
-                    if (ws.getOwner().getContext().getTsVariableManagers().get(separator.getRegressorName()) == null) {
-                        TsVariables var = new TsVariables();
-                        var.set(separator.getRegressorName(), separator.getRegressor());
-                        ws.getOwner().getContext().getTsVariableManagers().set(separator.getRegressorName(), var);
-                    }
-                }
+//                if (separator.getRegressorName() != null) {
+//                    regressor=separator.getRegressor();
+//                    regName=separator.getRegressorName();
+//                }
 
                 refreshWS();
 

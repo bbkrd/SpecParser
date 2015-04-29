@@ -12,7 +12,6 @@ import ec.tss.Ts;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.algorithm.ProcessingContext;
 import ec.tstoolkit.data.DataBlock;
-import ec.tstoolkit.modelling.ComponentType;
 import ec.tstoolkit.modelling.DefaultTransformationType;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.TsVariableDescriptor.UserComponentType;
@@ -67,19 +66,25 @@ public class JDSpecSeparator {
             generateTs();
         }
 
-        generateBasicSpec();
-        generateEstimateSpec();
-        generateTransformSpec();
-        generateRegression();
-
-        if (spec.getRegArimaSpecification().getAutoModel().isEnabled()) {
-            generateAutomdl();
+        if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
+            generateX11Spec();
+            generateBenchmark();
+            
         } else {
-            generateArima();
+            generateBasicSpec();
+            generateEstimateSpec();
+            generateTransformSpec();
+//        generateRegression();
+
+            if (spec.getRegArimaSpecification().getAutoModel().isEnabled()) {
+                generateAutomdl();
+            } else {
+                generateArima();
+            }
+            generateOutlier();
+            generateX11Spec();
+            generateBenchmark();
         }
-        generateOutlier();
-        generateX11Spec();
-        generateBenchmark();
     }
 
     private void generateArima() {
@@ -420,14 +425,14 @@ public class JDSpecSeparator {
 //            A)TradingDays
             TradingDaysSpec tdSpec = reg.getTradingDays();
             if (tdSpec.isUsed()) {
-                messages.add("Type: " + tdSpec.getTradingDaysType().toString());
-                messages.add(tdSpec.getHolidays() + "\n" + tdSpec.getChangeOfRegime());
+//                messages.add("Type: " + tdSpec.getTradingDaysType().toString());
+//                messages.add(tdSpec.getHolidays() + "\n" + tdSpec.getChangeOfRegime());
 
             }
 //            B)
             MovingHolidaySpec mov = reg.getEaster();
             if (mov != null) {
-                messages.add("Easter");
+//                messages.add("Easter");
             }
 
             //F) user defined variables

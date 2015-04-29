@@ -185,7 +185,7 @@ public class WinX12SpecSeparator {
                             m.invoke(this, specPartName, lineSplitted[1]);
                         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
                             errors.add(specPartName.name() + ": No support for " + lineSplitted[0].toUpperCase());
-                                                    }
+                        }
                     }
                 }
             } catch (IllegalArgumentException ex) {
@@ -654,140 +654,141 @@ public class WinX12SpecSeparator {
             file = new File(content);
         }
 
-        if (content.toLowerCase().endsWith(".ser")) {
-            /*SER*/
+        String end = content.substring(content.length() -3 , content.length());
+        switch (end.toLowerCase()) {
+            case "ser":
+                try {
+                    FileReader f = new FileReader(file);
 
-            try {
-                FileReader f = new FileReader(file);
-
-                try (BufferedReader br = new BufferedReader(f)) {
-                    String zeile;
-                    while ((zeile = br.readLine()) != null) {
-                        zeile = zeile.trim();
-                        if (!zeile.isEmpty()) {
-                            v.add(zeile);
-                        }
-                    }
-                    values = new double[v.size()];
-
-                    for (int i = 0; i < v.size(); i++) {
-                        values[i] = Double.parseDouble(v.get(i));
-                    }
-                    if (partName == SpecificationPart.SERIES) {
-                        tsData = new TsData(new TsPeriod(period, tsStart), values, false);
-                    } else {
-                        errors.add(partName + ": To load data is not possible");
-                    }
-                }
-
-            } catch (FileNotFoundException ex) {
-                errors.add(partName + ": File " + content + " not found");
-            } catch (IOException ex) {
-                errors.add(partName + ": Error loading file");
-            }
-
-        } else if (content.toLowerCase().endsWith(".dat")) {
-            /*DAT*/
-
-            try {
-                FileReader f = new FileReader(file);
-
-                try (BufferedReader br = new BufferedReader(f)) {
-                    String zeile;
-                    String[] split;
-                    int periode = 0;
-                    int year = 10000; //
-
-                    while ((zeile = br.readLine()) != null) {
-                        zeile = zeile.trim();
-                        if (!zeile.isEmpty()) {
-
-                            split = zeile.split("\\s+");
-                            if (year > Integer.parseInt(split[0])) {
-                                year = Integer.parseInt(split[0]);
-                                tsStart = calcDay(partName, split[0] + "." + split[1]);
+                    try (BufferedReader br = new BufferedReader(f)) {
+                        String zeile;
+                        while ((zeile = br.readLine()) != null) {
+                            zeile = zeile.trim();
+                            if (!zeile.isEmpty()) {
+                                v.add(zeile);
                             }
-                            //calculate max period
-                            if (periode < Integer.parseInt(split[1])) {
-                                periode = Integer.parseInt(split[1]);
+                        }
+                        values = new double[v.size()];
+
+                        for (int i = 0; i < v.size(); i++) {
+                            values[i] = Double.parseDouble(v.get(i));
+                        }
+                        if (partName == SpecificationPart.SERIES) {
+                            tsData = new TsData(new TsPeriod(period, tsStart), values, false);
+                        } else {
+                            errors.add(partName + ": To load data is not possible");
+                        }
+                    }
+
+                } catch (FileNotFoundException ex) {
+                    errors.add(partName + ": File " + content + " not found");
+                } catch (IOException ex) {
+                    errors.add(partName + ": Error loading file");
+                }
+                break;
+
+            case "dat":
+                try {
+                    FileReader f = new FileReader(file);
+
+                    try (BufferedReader br = new BufferedReader(f)) {
+                        String zeile;
+                        String[] split;
+                        int periode = 0;
+                        int year = 10000; //
+
+                        while ((zeile = br.readLine()) != null) {
+                            zeile = zeile.trim();
+                            if (!zeile.isEmpty()) {
+
+                                split = zeile.split("\\s+");
+                                if (year > Integer.parseInt(split[0])) {
+                                    year = Integer.parseInt(split[0]);
+                                    tsStart = calcDay(partName, split[0] + "." + split[1]);
+                                }
+                                //calculate max period
+                                if (periode < Integer.parseInt(split[1])) {
+                                    periode = Integer.parseInt(split[1]);
+                                }
+                                //collect values
+                                v.add(split[2]);
                             }
-                            //collect values
-                            v.add(split[2]);
                         }
-                    }
-                    //set period, when it is not Monthly data
-                    if (periode <= 4) {
-                        period = TsFrequency.Quarterly;
+                        //set period, when it is not Monthly data
+                        if (periode <= 4) {
+                            period = TsFrequency.Quarterly;
+                        }
+
+                        //calculate values
+                        values = new double[v.size()];
+                        for (int i = 0; i < v.size(); i++) {
+                            values[i] = Double.parseDouble(v.get(i));
+                        }
+
+                        if (partName == SpecificationPart.SERIES) {
+                            tsData = new TsData(new TsPeriod(period, tsStart), values, false);
+                        } else {
+                            errors.add(partName + ": To load data is not possible");
+                        }
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        errors.add(partName + ": Format of dat-file is not correct ");
                     }
 
-                    //calculate values
-                    values = new double[v.size()];
-                    for (int i = 0; i < v.size(); i++) {
-                        values[i] = Double.parseDouble(v.get(i));
-                    }
+                } catch (FileNotFoundException ex) {
+                    errors.add(partName + ": File " + content + " not found");
+                } catch (IOException ex) {
+                    errors.add(partName + ": Error loading file");
+                }
+                break;
 
-                    if (partName == SpecificationPart.SERIES) {
-                        tsData = new TsData(new TsPeriod(period, tsStart), values, false);
-                    } else {
-                        errors.add(partName + ": To load data is not possible");
-                    }
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    errors.add(partName + ": Format of dat-file is not correct ");
+            case "rgr":
+                if (regressorStart == null) {
+                    regressorStart = tsStart;
                 }
 
-            } catch (FileNotFoundException ex) {
-                errors.add(partName + ": File " + content + " not found");
-            } catch (IOException ex) {
-                errors.add(partName + ": Error loading file");
-            }
+                try {
+                    FileReader f = new FileReader(file);
 
-        } else if (content.toLowerCase().endsWith(".rgr")) {
-            //nur eine spalte zur zeit
+                    try (BufferedReader br = new BufferedReader(f)) {
+                        String zeile;
+                        while ((zeile = br.readLine()) != null) {
+                            zeile = zeile.trim();
+                            if (!zeile.isEmpty()) {
+                                zeile = zeile.replaceAll("D", "E");
+                                v.add(zeile);
+                            }
+                        }
 
-            if (regressorStart == null) {
-                regressorStart = tsStart;
-            }
+                        values = new double[v.size()];
 
-            try {
-                FileReader f = new FileReader(file);
+                        for (int i = 0; i < v.size(); i++) {
+                            values[i] = Double.parseDouble(v.get(i));
+                        }
 
-                try (BufferedReader br = new BufferedReader(f)) {
-                    String zeile;
-                    while ((zeile = br.readLine()) != null) {
-                        zeile = zeile.trim();
-                        if (!zeile.isEmpty()) {
-                            zeile = zeile.replaceAll("D", "E");
-                            v.add(zeile);
+                        if (partName == SpecificationPart.REGRESSION) {
+
+                            ArrayList<DataBlock> list = new ArrayList();
+                            list.add(new DataBlock(values));
+
+                            TsDomain domain = new TsDomain(period, regressorStart.getYear(), regressorStart.getMonth(), values.length);
+                            regressor = new DynamicTsVariable(regressorName, null, new TsData(domain));
+                            regressor.data(domain, list);
+
+                        } else {
+                            errors.add(partName + ": To load data is not possible");
                         }
                     }
-
-                    values = new double[v.size()];
-
-                    for (int i = 0; i < v.size(); i++) {
-                        values[i] = Double.parseDouble(v.get(i));
-                    }
-
-                    if (partName == SpecificationPart.REGRESSION) {
-
-                        ArrayList<DataBlock> list = new ArrayList();
-                        list.add(new DataBlock(values));
-
-                        TsDomain domain = new TsDomain(period, regressorStart.getYear(), regressorStart.getMonth(), values.length);
-                        regressor = new DynamicTsVariable(regressorName, null, new TsData(domain));
-                        regressor.data(domain, list);
-
-                    } else {
-                        errors.add(partName + ": To load data is not possible");
-                    }
+                } catch (FileNotFoundException ex) {
+                    errors.add(partName + ": File " + content + " not found");
+                } catch (IOException ex) {
+                    errors.add(partName + ": Error loading file");
                 }
-            } catch (FileNotFoundException ex) {
-                errors.add(partName + ": File " + content + " not found");
-            } catch (IOException ex) {
-                errors.add(partName + ": Error loading file");
-            }
-        } else {
-            errors.add(partName + ": Loading data from file " + content + " is not possible");
+                break;
+            default:
+                errors.add(partName + ": Loading data from file " + content + " is not possible");
+                break;
         }
+
     }
 
     public void read_function(SpecificationPart partName, String content) {

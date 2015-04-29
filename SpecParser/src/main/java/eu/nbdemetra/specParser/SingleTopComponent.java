@@ -7,10 +7,13 @@ package eu.nbdemetra.specParser;
 
 import Logic.SpecCollector;
 import Administration.SingleSpec;
+import ec.nbdemetra.ui.variables.VariablesDocumentManager;
 import ec.nbdemetra.ui.variables.actions.RefreshAction;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tss.sa.documents.SaDocument;
+import ec.tstoolkit.timeseries.regression.TsVariable;
+import ec.tstoolkit.timeseries.regression.TsVariables;
 import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
@@ -172,8 +175,8 @@ public final class SingleTopComponent extends TopComponent {
     /*BUTTONS*/
     private JButton load = new JButton(new LoadAction());
     private JButton save = new JButton(new SaveAction());
-    private JButton refreshX12 = new JButton(new RefreshAction());
-    private JButton refreshJD = new JButton(new RefreshWinAction());
+    private JButton refreshX12 = new JButton(new RefreshWinAction());
+    private JButton refreshJD = new JButton(new RefreshJDAction());
 
     public class LoadAction extends AbstractAction {
 
@@ -217,6 +220,18 @@ public final class SingleTopComponent extends TopComponent {
                     String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
                     w.setDisplayName(name);
                     setDisplayName(name);
+//                    if(sp.getRegressorName()!=null){
+//                        WorkspaceItem<TsVariables> create=VariablesDocumentManager.create(ws.getWorkspace());
+//                        WorkspaceItem<TsVariables> item = new WorkspaceItem<TsVariables>(null, sp.getRegressorName(), sp.getRegressor());
+//                        w.getOwner().add();
+//                        ((VariablesDocument) w.setElement(name));
+//                    }
+//                    if (ws.getOwner().getContext().getTsVariableManagers().get(separator.getRegressorName()) == null) {
+//                        TsVariables var = new TsVariables();
+//                        var.set(separator.getRegressorName(), separator.getRegressor());
+//                        ws.getOwner().getContext().getTsVariableManagers().set(separator.getRegressorName(), var);
+//                    }
+                    
                     repaint();
                     ws.getWorkspace().sortFamily(ws.lookup());
 
