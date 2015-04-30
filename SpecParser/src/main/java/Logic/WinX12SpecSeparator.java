@@ -8,7 +8,6 @@ package Logic;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.SeasonalFilterOption;
-import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
@@ -67,12 +66,13 @@ public class WinX12SpecSeparator {
     private DynamicTsVariable regressor = null;
     private Day regressorStart = null;
 
+    //for File loading
     private String path;
 
     public WinX12SpecSeparator() {
 //        setDefaults();
         spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
-
+        setDefaults();
     }
 
     private void setPreprocessor() {
@@ -196,7 +196,14 @@ public class WinX12SpecSeparator {
 
     private void setDefaults() {
 
-        //arima
+        //X11
+        spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+        spec.getX11Specification().setSeasonal(false);
+        spec.getX11Specification().setSigma(1.5, 2.5);
+
+        if (!spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
+            //X13
+//arima
         spec.getRegArimaSpecification().getArima().setP(0);
         spec.getRegArimaSpecification().getArima().setD(0);
         spec.getRegArimaSpecification().getArima().setQ(0);
@@ -233,10 +240,10 @@ public class WinX12SpecSeparator {
         //?
         spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
 
+        }
+
+        
         //x11
-        spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
-        spec.getX11Specification().setSeasonal(false);
-        spec.getX11Specification().setSigma(1.5, 2.5);
     }
 
     private Day calcDay(SpecificationPart partName, String day) {
@@ -654,7 +661,7 @@ public class WinX12SpecSeparator {
             file = new File(content);
         }
 
-        String end = content.substring(content.length() -3 , content.length());
+        String end = content.substring(content.length() - 3, content.length());
         switch (end.toLowerCase()) {
             case "ser":
                 try {

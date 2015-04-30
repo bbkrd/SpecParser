@@ -7,20 +7,14 @@ package eu.nbdemetra.specParser;
 
 import Logic.SpecCollector;
 import Administration.SingleSpec;
-import ec.nbdemetra.ui.variables.VariablesDocumentManager;
-import ec.nbdemetra.ui.variables.actions.RefreshAction;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tss.sa.documents.SaDocument;
-import ec.tstoolkit.timeseries.regression.TsVariable;
-import ec.tstoolkit.timeseries.regression.TsVariables;
 import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,7 +22,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
@@ -66,7 +59,7 @@ import org.openide.util.NbBundle.Messages;
 public final class SingleTopComponent extends TopComponent {
 
     private String id;
-    private String path;
+    private String path = System.getProperty("user.dir");
     private WsNode ws;
     private WorkspaceItem w;
     private SpecViewer specViewer;
@@ -183,7 +176,7 @@ public final class SingleTopComponent extends TopComponent {
         @Override
         public void actionPerformed(ActionEvent e) {
 
-            JFileChooser fc = new JFileChooser();
+            JFileChooser fc = new JFileChooser(path);
             fc.setFileFilter(new MyFilter(".spc"));
             fc.setAcceptAllFileFilterUsed(false);
 
@@ -191,6 +184,7 @@ public final class SingleTopComponent extends TopComponent {
 
             if (state == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
+
                 path = file.getAbsolutePath().replaceAll(file.getName(), "");
 
                 try {
@@ -231,7 +225,7 @@ public final class SingleTopComponent extends TopComponent {
 //                        var.set(separator.getRegressorName(), separator.getRegressor());
 //                        ws.getOwner().getContext().getTsVariableManagers().set(separator.getRegressorName(), var);
 //                    }
-                    
+
                     repaint();
                     ws.getWorkspace().sortFamily(ws.lookup());
 
@@ -274,7 +268,7 @@ public final class SingleTopComponent extends TopComponent {
         @Override
         public void actionPerformed(ActionEvent e) {
             SpecCollector sp = specViewer.getSpecCollector();
-            sp.setPath(path);
+//            sp.setPath(path);
             sp.setWinX12Spec(specViewer.getWinX12Text());
             sp.translate(TranslationTo_Type.JDSpec);
             specViewer = specViewer.refresh(sp);
@@ -328,11 +322,9 @@ public final class SingleTopComponent extends TopComponent {
         toolBar.add(refreshJD);
     }
 
-    
     /*
      *       DocumentListner for changes in Textarea
      */
-    
     public class MyDocumentListener implements DocumentListener {
 
         @Override

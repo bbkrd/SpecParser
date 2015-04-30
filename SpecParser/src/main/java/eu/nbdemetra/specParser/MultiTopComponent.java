@@ -76,7 +76,7 @@ public final class MultiTopComponent extends TopComponent {
     private ThreadObjectList mta_files = new ThreadObjectList();
     private WorkspaceItem w;
     private WsNode ws;
-    private String path;
+    private String path = System.getProperty("user.dir");
     private String name;
 
     public MultiTopComponent() {}
@@ -383,7 +383,7 @@ public final class MultiTopComponent extends TopComponent {
 
     private void loadMtaFiles(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_loadMtaFiles
 
-        JFileChooser fc = new JFileChooser();
+        JFileChooser fc = new JFileChooser(path);
         fc.setFileFilter(new MyFilter(".mta"));
         fc.setAcceptAllFileFilterUsed(false);
 
@@ -493,6 +493,7 @@ public final class MultiTopComponent extends TopComponent {
                 window = new SingleTopComponent();
                 window.setSpecView(s);
                 window.setDisplayName(s.getName());
+                window.setPath(path);
                 window.setId(specList.getSelectedIndex() + "");
                 window.open();
                 window.requestActive();

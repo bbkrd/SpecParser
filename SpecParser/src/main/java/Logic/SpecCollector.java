@@ -8,7 +8,6 @@ package Logic;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
-import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.DynamicTsVariable;
@@ -16,8 +15,6 @@ import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
-import ec.tstoolkit.timeseries.regression.TsVariables;
-import ec.tstoolkit.utilities.IModifiable;
 
 /**
  *
@@ -45,7 +42,7 @@ public class SpecCollector {
     private int index; //only for Multi documents
     private String name;
 
-    private String path = System.getProperty("user.dir");
+    private String path;
 
 
     /*Constructor for Single Documents*/
@@ -133,8 +130,6 @@ public class SpecCollector {
             if (!name.isEmpty()) {
                 this.name = name.replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
 //                ws.setDisplayName(this.name);
-//                wsNode.getWorkspace().sortFamily(wsNode.lookup());
-                
                 if (ts != null) {
                     ts = ts.rename(name);
                 }
@@ -143,7 +138,6 @@ public class SpecCollector {
             this.name=name;
 //            ts=ts.rename(name);
         }
-//        wsNode.getWorkspace().sortFamily(wsNode.lookup());
     }
 
     public String getName() {
@@ -159,8 +153,6 @@ public class SpecCollector {
     }
 
     public void translate(TranslationTo_Type type) {
-
-//        WorkspaceItem ws = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
 
         if (type == TranslationTo_Type.JDSpec) {
             // Translation from WinX13Spec to JDemetra+Spec

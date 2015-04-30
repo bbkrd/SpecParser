@@ -59,13 +59,14 @@ public class JDSpecSeparator {
         this.spec = x13;
         this.context = context;
     }
-
+    
     public void build() {
-
+        
         if (ts != null) {
             generateTs();
         }
-
+        
+        //because of the order of the methods calling x11 and benchmark two times
         if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
             generateX11Spec();
             generateBenchmark();
@@ -86,12 +87,12 @@ public class JDSpecSeparator {
             generateBenchmark();
         }
     }
-
+    
     private void generateArima() {
-
+        
         ArimaSpec reg = spec.getRegArimaSpecification().getArima();
         LinkedHashMap<String, String> arima;
-
+        
         if (result.containsKey(SpecificationPart.ARIMA)) {
             arima = result.get(SpecificationPart.ARIMA);
         } else {
@@ -213,15 +214,15 @@ public class JDSpecSeparator {
         if (reg.isMean()) {
             errors.add(SpecificationPart.ARIMA + ": Mean is not supported in WinX12");
         }
-
+        
         result.put(SpecificationPart.ARIMA, arima);
     }
-
+    
     private void generateAutomdl() {
-
+        
         AutoModelSpec reg = spec.getRegArimaSpecification().getAutoModel();
         LinkedHashMap<String, String> automdl;
-
+        
         if (result.containsKey(SpecificationPart.AUTOMDL)) {
             automdl = result.get(SpecificationPart.AUTOMDL);
         } else {
@@ -287,38 +288,38 @@ public class JDSpecSeparator {
             hr = "no";
         }
         automdl.put("hrinitial", hr);
-
+        
         result.put(SpecificationPart.AUTOMDL, automdl);
     }
-
+    
     private void generateBasicSpec() {
 
         //1) span
         RegArimaSpecification reg = spec.getRegArimaSpecification();
         LinkedHashMap<String, String> series;
-
+        
         if (result.containsKey(SpecificationPart.SERIES)) {
             series = result.get(SpecificationPart.SERIES);
         } else {
             series = new LinkedHashMap<>();
         }
-
+        
         String span = separateSpan(reg.getBasic().getSpan(), "SERIES");
         if (span != null) {
             series.put("span", span);
         }
         result.put(SpecificationPart.SERIES, series);
     }
-
+    
     private void generateBenchmark() {
-
+        
         if (spec.getBenchmarkingSpecification().isEnabled()) {
             errors.add("BENCHMARKING: No Translation possible");
         }
     }
-
+    
     private void generateEstimateSpec() {
-
+        
         RegArimaSpecification reg = spec.getRegArimaSpecification();
 
 //        1)modelspan
@@ -328,12 +329,12 @@ public class JDSpecSeparator {
         } else {
             series = new LinkedHashMap<>();
         }
-
+        
         String span = separateSpan(reg.getEstimate().getSpan(), "ESTIMATE");
         if (span != null) {
             series.put("modelspan", span);
         }
-
+        
         result.put(SpecificationPart.SERIES, series);
 
 //        2)tol
@@ -350,12 +351,12 @@ public class JDSpecSeparator {
 
 //        4)maxiter
         estimate.put("maxiter", "1500");
-
+        
         result.put(SpecificationPart.ESTIMATE, estimate);
     }
-
+    
     private void generateOutlier() {
-
+        
         OutlierSpec reg = spec.getRegArimaSpecification().getOutliers();
         LinkedHashMap<String, String> outlier;
         if (result.containsKey(SpecificationPart.OUTLIER)) {
@@ -372,7 +373,7 @@ public class JDSpecSeparator {
 
 //        2)LSRun
         outlier.put("lsrun", reg.getLSRun() + "");
-
+        
         if (reg.isUsed()) {
 
 //            1)critical value
@@ -406,15 +407,15 @@ public class JDSpecSeparator {
             }
             outlier.put("types", types.toString());
         }
-
+        
         result.put(SpecificationPart.OUTLIER, outlier);
     }
-
+    
     private void generateRegression() {
-
+        
         RegressionSpec reg = spec.getRegArimaSpecification().getRegression();
         if (reg.isUsed()) {
-
+            
             LinkedHashMap<String, String> regression;
             if (result.containsKey(SpecificationPart.REGRESSION)) {
                 regression = result.get(SpecificationPart.REGRESSION);
@@ -440,7 +441,7 @@ public class JDSpecSeparator {
             if (userDef.length != 0) {
                 StringBuilder userName = new StringBuilder("( ");
                 StringBuilder userData = new StringBuilder();
-
+                
                 for (TsVariableDescriptor t : userDef) {
 //                    1)Name
                     userName.append(t.getName());
@@ -483,13 +484,13 @@ public class JDSpecSeparator {
 //                    tdSpec.getUserVariables()
                 }
             }
-
+            
             result.put(SpecificationPart.REGRESSION, regression);
         }
     }
-
+    
     private void generateTransformSpec() {
-
+        
         TransformSpec t = spec.getRegArimaSpecification().getTransform();
         LinkedHashMap<String, String> transform;
         if (result.containsKey(SpecificationPart.TRANSFORM)) {
@@ -528,17 +529,17 @@ public class JDSpecSeparator {
                     adjust = null;
                     break;
             }
-
+            
             if (adjust != null) {
                 transform.put("adjust", adjust);
             }
         }
-
+        
         result.put(SpecificationPart.TRANSFORM, transform);
     }
-
+    
     private void generateTs() {
-
+        
         LinkedHashMap<String, String> series;
         if (result.containsKey(SpecificationPart.SERIES)) {
             series = result.get(SpecificationPart.SERIES);
@@ -578,17 +579,17 @@ public class JDSpecSeparator {
         }
         data.append(")");
         series.put("data", data.toString());
-
+        
         result.put(SpecificationPart.SERIES, series);
-
+        
     }
-
+    
     private void generateX11Spec() {
 
 //        A)X11
         X11Specification x11 = spec.getX11Specification();
         LinkedHashMap<String, String> x11Result;
-
+        
         if (result.containsKey(SpecificationPart.X11)) {
             x11Result = result.get(SpecificationPart.X11);
         } else {
@@ -608,18 +609,31 @@ public class JDSpecSeparator {
                 mode = "mult";
                 break;
             default:
-                messages.add(SpecificationPart.X11 + ": No translation for mode. It will be set to default 'mode = mult'");
+                messages.add(SpecificationPart.X11 + ": No translation for mode.");
                 mode = "mult";
                 break;
         }
-
+        if (result.get(SpecificationPart.TRANSFORM).get("function").toLowerCase().equals("log")) {
+            if (!mode.equals("mult")) {
+                messages.add(SpecificationPart.X11 + ":  For transform function = log is only the decompostion mode multiplicative possible");
+                mode = "mult";
+            }
+            
+        } else {
+            if (result.get(SpecificationPart.TRANSFORM).get("function").toLowerCase().equals("none")) {
+                if (!mode.equals("add")) {
+                    messages.add(SpecificationPart.X11+": For no transform function is only decompostion mode additive possible");
+                    mode = "add";
+                }
+            }
+        }
         if (!result.get(SpecificationPart.TRANSFORM).get("function").toLowerCase().equals("auto")) {
             x11Result.put("mode", mode);
         }
 
         //2) Seasonalma
         if (x11.isSeasonal()) {
-
+            
             StringBuilder seasonalma = new StringBuilder("( ");
             if (x11.getSeasonalFilters() != null) {
                 if (x11.getSeasonalFilters().length != 1) {
@@ -638,7 +652,7 @@ public class JDSpecSeparator {
             }
             seasonalma.deleteCharAt(seasonalma.length() - 1);
             seasonalma.append(" )");
-
+            
             x11Result.put("seasonalma", seasonalma.toString());
         }
 
@@ -649,7 +663,7 @@ public class JDSpecSeparator {
 
         //4) sigmalim
         x11Result.put("sigmalim", "(" + x11.getLowerSigma() + " , " + x11.getUpperSigma() + " )");
-
+        
         result.put(SpecificationPart.X11, x11Result);
 
 //        B) FORECAST
@@ -662,7 +676,7 @@ public class JDSpecSeparator {
 
 //        1) maxlead/forecast horizon
         int maxlead = x11.getForecastHorizon();
-
+        
         if (maxlead < 0) {
             if (ts != null) {
                 maxlead = -1 * maxlead * ts.getTsData().getFrequency().intValue();
@@ -671,42 +685,42 @@ public class JDSpecSeparator {
             }
         }
         forecast.put("maxlead", maxlead + "");
-
+        
         result.put(SpecificationPart.FORECAST, forecast);
-
+        
     }
-
+    
     public String getResult() {
-
+        
         StringBuilder text = new StringBuilder();
-
+        
         for (SpecificationPart spec : result.keySet()) {
             text.append(spec).append("\n{\n");
-
+            
             LinkedHashMap<String, String> content = result.get(spec);
-
+            
             for (String argument : content.keySet()) {
                 text.append("\t").append(argument).append(" = ").append(content.get(argument)).append("\n");
             }
-
+            
             text.append("}\n\n");
         }
-
+        
         return text.toString();
     }
-
+    
     public String[] getErrorList() {
         return errors.toArray(new String[errors.size()]);
     }
-
+    
     public String[] getMessageList() {
         return messages.toArray(new String[messages.size()]);
     }
-
+    
     private String separateSpan(TsPeriodSelector p, String specPart) {
-
+        
         String result;
-
+        
         switch (p.getType()) {
             case All:
                 result = null;
@@ -732,7 +746,7 @@ public class JDSpecSeparator {
         }
         return result;
     }
-
+    
     private TsData extractData(ITsVariable input) {
         ArrayList<DataBlock> data = new ArrayList();
         data.add(new DataBlock(input.getDefinitionDomain().getLength()));
