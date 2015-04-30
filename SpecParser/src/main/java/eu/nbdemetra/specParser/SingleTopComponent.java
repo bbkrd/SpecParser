@@ -56,15 +56,24 @@ import org.openide.util.NbBundle.Messages;
     "CTL_SingleSpecWindowTopComponent=SingleSpecWindow",
     "HINT_SingleSpecWindowTopComponent=This is a SingleSpecWindow"
 })
+
 public final class SingleTopComponent extends TopComponent {
 
-    private String id;
-    private String path = System.getProperty("user.dir");
-    private WsNode ws;
-    private WorkspaceItem w;
+    /*   specViewer  -   GUI component
+     *   id          -   to identify a STC window
+     *   path        -   to open the a directory for loading and saving, notice the last directory by loading   */
     private SpecViewer specViewer;
+    private String id;
+    private String path = System.getProperty("user.home");
 
+    /*       wsItem      -   WorspaceItem, to modify the item in the GUI (name, data, spec)
+     *       wsNode      -   get WorkspaceItem and to show the rename of the WorkspaceItem  */
+    private WsNode wsNode;
+    private WorkspaceItem wsItem;
+
+    /*CONSTRUCTORS*/
     public SingleTopComponent() {
+//      for MultiDocuments
         initComponents();
         setName(Bundle.CTL_SingleSpecWindowTopComponent());
         setToolTipText(Bundle.HINT_SingleSpecWindowTopComponent());
@@ -74,9 +83,9 @@ public final class SingleTopComponent extends TopComponent {
     }
 
     public SingleTopComponent(WsNode ws) {
-
-        this.ws = ws;
-        this.w = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
+//      for Single Documents
+        this.wsNode = ws;
+        this.wsItem = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
 
         initComponents();
         setName(Bundle.CTL_SingleSpecWindowTopComponent());
@@ -100,7 +109,6 @@ public final class SingleTopComponent extends TopComponent {
             refreshJD.setEnabled(true);
             save.setEnabled(true);
         }
-
         specViewer.getWinDoc().addDocumentListener(new MyDocumentListener());
     }
 
@@ -117,6 +125,7 @@ public final class SingleTopComponent extends TopComponent {
     }
 
     public void setPath(String path) {
+//        for MTC
         this.path = path;
     }
 
@@ -171,6 +180,7 @@ public final class SingleTopComponent extends TopComponent {
     private JButton refreshX12 = new JButton(new RefreshWinAction());
     private JButton refreshJD = new JButton(new RefreshJDAction());
 
+    /*ACTIONS FOR BUTTONS*/
     public class LoadAction extends AbstractAction {
 
         @Override
@@ -179,7 +189,6 @@ public final class SingleTopComponent extends TopComponent {
             JFileChooser fc = new JFileChooser(path);
             fc.setFileFilter(new MyFilter(".spc"));
             fc.setAcceptAllFileFilterUsed(false);
-
             int state = fc.showOpenDialog(null);
 
             if (state == JFileChooser.APPROVE_OPTION) {
@@ -203,7 +212,6 @@ public final class SingleTopComponent extends TopComponent {
                     sp.setWinX12Spec(s.toString());
                     sp.setPath(path);
                     sp.translate(TranslationTo_Type.JDSpec);
-//                    this.name=file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
                     sp.setName(file.getName());
                     specViewer.refresh(sp);
 
@@ -212,8 +220,9 @@ public final class SingleTopComponent extends TopComponent {
                     refreshJD.setForeground(Color.black);
 
                     String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
-                    w.setDisplayName(name);
+                    wsItem.setDisplayName(name);
                     setDisplayName(name);
+                    
 //                    if(sp.getRegressorName()!=null){
 //                        WorkspaceItem<TsVariables> create=VariablesDocumentManager.create(ws.getWorkspace());
 //                        WorkspaceItem<TsVariables> item = new WorkspaceItem<TsVariables>(null, sp.getRegressorName(), sp.getRegressor());
@@ -227,7 +236,7 @@ public final class SingleTopComponent extends TopComponent {
 //                    }
 
                     repaint();
-                    ws.getWorkspace().sortFamily(ws.lookup());
+                    wsNode.getWorkspace().sortFamily(wsNode.lookup());
 
                 } catch (FileNotFoundException ex) {
                     Exceptions.printStackTrace(ex);
@@ -247,6 +256,7 @@ public final class SingleTopComponent extends TopComponent {
             chooser.setFileFilter(new MyFilter(".spc"));
             chooser.setAcceptAllFileFilterUsed(false);
             int result = chooser.showSaveDialog(null);
+            
             if (result == JFileChooser.APPROVE_OPTION) {
                 try {
                     File file = chooser.getSelectedFile();

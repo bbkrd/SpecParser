@@ -19,20 +19,24 @@ import java.util.HashMap;
  */
 public class SingleSpec {
 
-//    private SpecCollector spec;
-    private SingleTopComponent window;
+    /*  activeSingleWindows     -   collects all opened STC windows
+    *   window                  -   the current STC window
+    *   id                      -   reference number for the STC window
+    *   displayName             -   name of the STC window               */
+    
     private static HashMap<String, SingleTopComponent> activeSingleWindows = new HashMap();
+    private SingleTopComponent window;
     private String id;
     private String displayName;
 
     public SingleSpec(WsNode ws) {
 
         WorkspaceItem w = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
+
         if (w.getElement() instanceof X13Document) {
             id = w.getId() + "";
 
             if (!activeSingleWindows.containsKey(id)) {
-
                 window = new SingleTopComponent(ws);
                 window.setId(id);
 
@@ -44,14 +48,11 @@ public class SingleSpec {
             } else {
                 window = activeSingleWindows.get(id);
             }
+
             displayName = w.getDisplayName();
             window.setName("SpecParser for " + displayName);
-
-//            w.reload();
             window.open();
             window.requestActive();
-//            ws.getWorkspace().sortFamily(ws.lookup());
-
         }
     }
 

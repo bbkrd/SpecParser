@@ -23,11 +23,9 @@ import java.util.HashMap;
  */
 public class MultiSpec {
 
-    /*
-     *   activeWindows   -   collects the already opened multidoc generator windows
+    /*   activeWindows   -   collects the already opened multidoc generator windows
      *   singleSpecList  -   for the single documents/specs in the multidocument
-     *   id              -   identification for singel open documents 
-     */
+     *   id              -   identification for singel open documents                   */
     private static HashMap<Id, MultiTopComponent> activeMultiWindows = new HashMap();
     private ArrayList<SpecCollector> specList = new ArrayList();
     private Id id;
@@ -39,44 +37,44 @@ public class MultiSpec {
         MultiTopComponent window;
 
         if (!activeMultiWindows.containsKey(ws.getId())) {
-
             this.id = ws.getId();
             window = new MultiTopComponent(wsNode);
             window.setName("SpecParser for " + ws.getDisplayName());
 
-            SpecCollector specCollector;
-            int counter = 0;
-
-            for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
-                if (!item.getEstimationMethod().name.contains("tramo")) {
-                    specCollector = new SpecCollector((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class), counter);
-                    specCollector.setPath(window.getPath());
-//                    specCollector.setName();
-                    specCollector.translate(TranslationTo_Type.WinX12Spec);
-                    specCollector.setName(item.getTs().getRawName());
-                    specList.add(specCollector);
+            /*if the list of items in a multi doc has contents */
+            if (!((MultiProcessingDocument) ws.getElement()).getCurrent().isEmpty()) {
+                SpecCollector specCollector;
+                int counter = 0;
+                for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
+                    if (!item.getEstimationMethod().name.contains("tramo")) {
+//                        it is possible that here are also tramo docs in the list
+                        specCollector = new SpecCollector((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class), counter);
+                        specCollector.setPath(window.getPath());
+                        specCollector.translate(TranslationTo_Type.WinX12Spec);
+                        specCollector.setName(item.getTs().getRawName());
+                        specList.add(specCollector);
+                    }
+                    counter++;
                 }
-                counter++;
+                window.setSpecArray(specList);
             }
-
-            window.setSpecArray(specList);
+            
+            activeMultiWindows.put(this.id, window);
 
             window.open();
             window.requestActive();
-
-            activeMultiWindows.put(this.id, window);
         } else {
             window = activeMultiWindows.get(ws.getId());
             window.setName("SpecParser for " + ws.getDisplayName());
-            window.requestActive();
+
             //close workspace and rename the document
             wsNode.getWorkspace().sortFamily(wsNode.lookup());
+            
+            window.requestActive();
         }
-        
     }
 
     public static void deleteWindow(Id id) {
         activeMultiWindows.remove(id);
-
     }
 }

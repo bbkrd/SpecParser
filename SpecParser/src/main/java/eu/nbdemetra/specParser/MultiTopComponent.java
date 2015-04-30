@@ -66,30 +66,37 @@ import org.openide.util.NbBundle.Messages;
 
 public final class MultiTopComponent extends TopComponent {
 
-    /* Variables:
-     *      spec_array      -   gets all generated SpecCollectors from SaItems of the MultiDocument
+    /*      spec_array      -   gets all generated SpecCollectors from SaItems of the MultiDocument
      *      activeWindows   -   collects the selected SingleWindows
-     *      displayName     -   name of multi document
+     *      mta_files       -   collect all spc files for translate in a thread
      */
     private ArrayList<SpecCollector> spec_array = new ArrayList();
     private Map<String, SingleTopComponent> activeSingleWindows = new HashMap();
     private ThreadObjectList mta_files = new ThreadObjectList();
-    private WorkspaceItem w;
-    private WsNode ws;
-    private String path = System.getProperty("user.dir");
-    private String name;
 
-    public MultiTopComponent() {}
+    /*       wsItem      -   WorspaceItem, to modify the item in the GUI (name, data, spec)
+     *       wsNode      -   get WorkspaceItem and to show the rename of the WorkspaceItem
+     *       path        -   to open the a directory for loading and saving, notice the last directory by loading   */
+    private WorkspaceItem wsItem;
+    private WsNode wsNode;
+    private String path = System.getProperty("user.home");
+
+    /*CONSTRUCTORS*/
+    public MultiTopComponent() {
+        //never used, but important for TopComponent
+    }
 
     public MultiTopComponent(WsNode w) {
 
-        ws = w;
+        wsNode = w;
         initComponents();
         setToolTipText(Bundle.HINT_MultiDocSpecWindowTopComponent());
 
-        this.w=(WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
+        this.wsItem = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
     }
 
+    /*METHODS TO FILL THE LIST OF SINGLE SPECS IN THE GUI*/
+    
     public void setSpecArray(ArrayList<SpecCollector> list) {
 
         this.spec_array = list;
@@ -97,9 +104,6 @@ public final class MultiTopComponent extends TopComponent {
     }
 
     private void setSpecList() {
-        /*  This method fill the list in the window 
-         *  with the names of the multi processing documents
-         */
 
         DefaultListModel model = new DefaultListModel();
         for (SpecCollector item : spec_array) {
@@ -129,7 +133,7 @@ public final class MultiTopComponent extends TopComponent {
         errorText = new javax.swing.JTextArea();
         singleSpecName = new javax.swing.JLabel();
         toolBar1 = new javax.swing.JToolBar();
-        jButton1 = new javax.swing.JButton();
+        load = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
         saveAll = new javax.swing.JButton();
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
@@ -167,14 +171,14 @@ public final class MultiTopComponent extends TopComponent {
 
         toolBar1.setRollover(true);
 
-        jButton1.setBackground(Color.LIGHT_GRAY);
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.jButton1.text")); // NOI18N
-        jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
+        load.setBackground(Color.LIGHT_GRAY);
+        org.openide.awt.Mnemonics.setLocalizedText(load, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.load.text")); // NOI18N
+        load.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 loadMtaFiles(evt);
             }
         });
-        toolBar1.add(jButton1);
+        toolBar1.add(load);
         toolBar1.add(filler1);
 
         saveAll.setBackground(Color.LIGHT_GRAY);
@@ -232,6 +236,8 @@ public final class MultiTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
 
+    /*METHODS FOR FUNCTIONALITY OF GUI*/
+
     private void specListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_specListMouseClicked
         /*  This method opens the SingleSpecWindow of the selected item 
          *  from the list in front, when you click two times or more on the item.
@@ -275,20 +281,15 @@ public final class MultiTopComponent extends TopComponent {
          * Thid method saves all (in WinX13) transformed (single) Specs of 
          * the MultiDocument list in a folder.
          */
-//        JOptionPane.showMessageDialog(null, "I work on it");
 
-//        String path = System.getProperty("user.home");
         JFileChooser chooser = new JFileChooser(path);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle("Create target directory");
-//        chooser.setFileFilter(new MyFilter(".mta"));
-//        chooser.setAcceptAllFileFilterUsed(false);
         int result = chooser.showSaveDialog(null);
 
         if (result == JFileChooser.APPROVE_OPTION) {
             try {
                 File mta_file = chooser.getSelectedFile();
-//                path = chooser.getSelectedFile().getPath().replaceAll(mta_file.getName(), "")+"\\"+ws.getDisplayName();
                 String newPath = chooser.getSelectedFile().getPath();
                 new File(newPath).mkdir();
                 mta_file = new File(newPath + "\\" + mta_file.getName());
@@ -328,19 +329,15 @@ public final class MultiTopComponent extends TopComponent {
     }//GEN-LAST:event_saveAllActionPerformed
 
     private void saveGreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveGreenActionPerformed
-        // TODO add your handling code here:
-//        String path = System.getProperty("user.home");
+
         JFileChooser chooser = new JFileChooser(path);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle("Create target directory");
-//        chooser.setFileFilter(new MyFilter(".mta"));
-//        chooser.setAcceptAllFileFilterUsed(false);
         int result = chooser.showSaveDialog(null);
 
         if (result == JFileChooser.APPROVE_OPTION) {
             try {
                 File mta_file = chooser.getSelectedFile();
-//                path = chooser.getSelectedFile().getPath().replaceAll(mta_file.getName(), "") + "\\" + ws.getDisplayName();
                 String newPath = chooser.getSelectedFile().getPath();
                 new File(newPath).mkdir();
                 mta_file = new File(newPath + "\\" + mta_file.getName());
@@ -390,23 +387,21 @@ public final class MultiTopComponent extends TopComponent {
         //for choosing a mta file
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File mta_File = fc.getSelectedFile();
-            name = mta_File.getName();
+            String name = mta_File.getName();
             path = fc.getSelectedFile().getAbsolutePath().replaceAll(name, "");
-            name=name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
-            
-//            WorkspaceItem w = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
-            w.setDisplayName(name);
+            name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
+
+            wsItem.setDisplayName(name);
             this.setDisplayName(name);
             this.repaint();
-            ws.getWorkspace().sortFamily(ws.lookup());
-            
+            wsNode.getWorkspace().sortFamily(wsNode.lookup());
+
             try {
                 //open this mta file
                 FileReader mta_FileReader = new FileReader(mta_File);
                 //read all lines of the mta file
                 try (BufferedReader mta_BufferedReader = new BufferedReader(mta_FileReader)) {
 //                 
-//                    path = mta_File.getPath().substring(0, mta_File.getPath().lastIndexOf(mta_File.getName()));
                     String mta_line;
                     if (!mta_files.isEmpty()) {
                         mta_files = new ThreadObjectList();
@@ -419,6 +414,7 @@ public final class MultiTopComponent extends TopComponent {
                         }
                     }
 
+                    //work in threads
                     Thread[] t = new Thread[2];
                     t[0] = new ThreadMethod();
                     t[1] = new ThreadMethod();
@@ -429,11 +425,10 @@ public final class MultiTopComponent extends TopComponent {
                         t[0].join();
                         t[1].join();
                     } catch (InterruptedException e) {
-
                     }
 
                     setSpecList();
-                    jButton1.setEnabled(false);
+                    load.setEnabled(false);
 
                 } catch (IOException ex) {
                     Exceptions.printStackTrace(ex);
@@ -449,13 +444,10 @@ public final class MultiTopComponent extends TopComponent {
     private void specListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_specListValueChanged
         // TODO add your handling code here:
         try {
-            //transformation information by one click
-            //name of the selected document
-//            singleSpecName.setText(spec_array[specList.getSelectedIndex()].getName());
             singleSpecName.setText(specList.getSelectedIndex() + 1 + "    " + spec_array.get(specList.getSelectedIndex()).getName());
-            //error list of the translated document
             String[] errors = spec_array.get(specList.getSelectedIndex()).getErrors();
             String[] messages = spec_array.get(specList.getSelectedIndex()).getMessages();
+
             if (errors.length != 0) {
                 errorText.setText("ERRORS:\n"
                         + "******\n");
@@ -475,7 +467,7 @@ public final class MultiTopComponent extends TopComponent {
                 errorText.append("\nNo messages");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
-            //daneben geklickt
+            //click not on item
         }
     }//GEN-LAST:event_specListValueChanged
 
@@ -486,10 +478,10 @@ public final class MultiTopComponent extends TopComponent {
             SingleTopComponent window;
 
             SpecCollector s = spec_array.get(specList.getSelectedIndex());
-//            int index = singleSpecList.indexOf(s);
 
             //check for window of selected item in map activeWindows 
             if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
+                //create new one
                 window = new SingleTopComponent();
                 window.setSpecView(s);
                 window.setDisplayName(s.getName());
@@ -497,16 +489,17 @@ public final class MultiTopComponent extends TopComponent {
                 window.setId(specList.getSelectedIndex() + "");
                 window.open();
                 window.requestActive();
-
                 activeSingleWindows.put(specList.getSelectedIndex() + "", window);
+
+                //add a listener for closing STC when the corresponding MTC is closing
                 window.addPropertyChangeListener("CLOSE", new MyPropertyChangeListener());
             } else {
+                //open the old one (with with new SpecCollector, maybe changes) 
                 window = activeSingleWindows.get(specList.getSelectedIndex() + "");
                 window.setSpecView(s);
                 window.open();
                 window.requestActive();
             }
-
         }
     }//GEN-LAST:event_specListKeyPressed
 
@@ -515,9 +508,9 @@ public final class MultiTopComponent extends TopComponent {
     private javax.swing.JTextArea errorText;
     private javax.swing.Box.Filler filler1;
     private javax.swing.Box.Filler filler2;
-    private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JButton load;
     private javax.swing.JButton saveAll;
     private javax.swing.JButton saveGreen;
     private javax.swing.JLabel singleSpecName;
@@ -531,17 +524,15 @@ public final class MultiTopComponent extends TopComponent {
 
     @Override
     public void componentClosed() {
-
+//
         for (SingleTopComponent window : activeSingleWindows.values().toArray(new SingleTopComponent[0])) {
             window.close();
         }
-//        WorkspaceItem w = 
-        MultiSpec.deleteWindow(w.getId());
-
+        MultiSpec.deleteWindow(wsItem.getId());
     }
 
     protected void deleteWindow(String id) {
-
+        //if STC is closing, delete STC from list
         activeSingleWindows.remove(id);
     }
 
@@ -558,13 +549,14 @@ public final class MultiTopComponent extends TopComponent {
     }
 
     public WorkspaceItem getWs() {
-        return (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
+        return (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
     }
 
     public String getPath() {
         return path;
     }
 
+    /*INNER CLASSES*/
     //inner class, because of access to spec_array
     class ThreadMethod extends Thread {
 
@@ -574,7 +566,6 @@ public final class MultiTopComponent extends TopComponent {
             while (!mta_files.isEmpty()) {
                 try {
                     ThreadObject object = mta_files.getSpec();
-//                    FileReader spec_FileReader = new FileReader(new File(path.concat(object.getSpecName()).concat(".SPC")));
                     FileReader spec_FileReader = new FileReader(new File(path + (object.getSpecName()) + ".SPC"));
 
                     try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
@@ -585,7 +576,7 @@ public final class MultiTopComponent extends TopComponent {
                             spec_StringBuilder.append("\n");
                         }
 
-                        SpecCollector spec = new SpecCollector(w, object.getIndex());
+                        SpecCollector spec = new SpecCollector(wsItem, object.getIndex());
                         spec.setPath(path);
                         spec.setWinX12Spec(spec_StringBuilder.toString());
                         spec.translate(TranslationTo_Type.JDSpec);
