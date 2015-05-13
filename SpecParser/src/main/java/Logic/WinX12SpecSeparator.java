@@ -201,16 +201,29 @@ public class WinX12SpecSeparator {
 
     private void setDefaults() {
 
-        //X11
-        spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
-        spec.getX11Specification().setSeasonal(true);
-        spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
-        spec.getX11Specification().setSigma(1.5, 2.5);
-        spec.getX11Specification().setForecastHorizon(0);
-        spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
+        if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
 
-        if (!spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
-            //X13
+            //X11
+            spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+            spec.getX11Specification().setSeasonal(true);
+            spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
+
+            spec.getX11Specification().setSigma(1.5, 2.5);
+            spec.getX11Specification().setForecastHorizon(0);
+            spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
+
+        } else {
+//X13
+
+//            x11
+             spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+            spec.getX11Specification().setSeasonal(true);
+            spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
+            spec.getX11Specification().setSigma(1.5, 2.5);
+            spec.getX11Specification().setForecastHorizon(-1);
+            spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
+
+
             //arima
             spec.getRegArimaSpecification().getArima().setP(0);
             spec.getRegArimaSpecification().getArima().setD(0);
@@ -1522,10 +1535,10 @@ public class WinX12SpecSeparator {
         switch (partName) {
             case SERIES:
                 tsStart = calcDay(partName, content);
-                if(tsData!=null){
-                    double [] values = new double[tsData.getValues().getLength()];
-                    for(int i = 0; i< tsData.getValues().getLength(); i++){
-                        values[i]=tsData.getValues().get(i);
+                if (tsData != null) {
+                    double[] values = new double[tsData.getValues().getLength()];
+                    for (int i = 0; i < tsData.getValues().getLength(); i++) {
+                        values[i] = tsData.getValues().get(i);
                     }
                     tsData = new TsData(new TsPeriod(period, tsStart), values, false);
                 }
