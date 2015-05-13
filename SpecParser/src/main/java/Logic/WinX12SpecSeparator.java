@@ -16,10 +16,12 @@ import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
 import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.data.Values;
 import ec.tstoolkit.modelling.DefaultTransformationType;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
+import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.X13Exception;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.Month;
@@ -52,7 +54,6 @@ public class WinX12SpecSeparator {
      period -   Period from WinX12, in JD+ it is given by the data
      */
     private X13Specification spec = new X13Specification();
-//    private X11Specification x11 = new X11Specification();
     private ArrayList<String> errors = new ArrayList();
     private ArrayList<String> messages = new ArrayList();
 
@@ -62,12 +63,18 @@ public class WinX12SpecSeparator {
     private TsData tsData;
     private String tsName = null;
 
+//    regressin variables
     private String regressorName = null;
     private DynamicTsVariable regressor = null;
     private Day regressorStart = null;
 
-    //for File loading
+    //nessecary for File loading
     private String path;
+
+    //
+    private boolean transformNone = false;
+    private boolean transformLog = false;
+    private boolean transformAuto = false;
 
     public WinX12SpecSeparator() {
 //        setDefaults();
@@ -77,7 +84,6 @@ public class WinX12SpecSeparator {
 
     private void setPreprocessor() {
         spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
-
     }
 
     public void setPath(String path) {
@@ -100,7 +106,6 @@ public class WinX12SpecSeparator {
 
     public Ts getTs() {
         return TsFactory.instance.createTs(tsName, null, tsData);
-
     }
 
     public String getRegressorName() {
@@ -198,52 +203,50 @@ public class WinX12SpecSeparator {
 
         //X11
         spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
-        spec.getX11Specification().setSeasonal(false);
+        spec.getX11Specification().setSeasonal(true);
+        spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
         spec.getX11Specification().setSigma(1.5, 2.5);
+        spec.getX11Specification().setForecastHorizon(0);
+        spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
 
         if (!spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
             //X13
-//arima
-        spec.getRegArimaSpecification().getArima().setP(0);
-        spec.getRegArimaSpecification().getArima().setD(0);
-        spec.getRegArimaSpecification().getArima().setQ(0);
-        spec.getRegArimaSpecification().getArima().setBP(0);
-        spec.getRegArimaSpecification().getArima().setBD(0);
-        spec.getRegArimaSpecification().getArima().setBQ(0);
+            //arima
+            spec.getRegArimaSpecification().getArima().setP(0);
+            spec.getRegArimaSpecification().getArima().setD(0);
+            spec.getRegArimaSpecification().getArima().setQ(0);
+            spec.getRegArimaSpecification().getArima().setBP(0);
+            spec.getRegArimaSpecification().getArima().setBD(0);
+            spec.getRegArimaSpecification().getArima().setBQ(0);
 
-        //automdl
-        spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
-        spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
-        spec.getRegArimaSpecification().getAutoModel().setCheckMu(true);
-        spec.getRegArimaSpecification().getAutoModel().setMixed(true);
-        spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(0.95);
-        spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(1.0);
-        spec.getRegArimaSpecification().getAutoModel().setBalanced(false);
-        spec.getRegArimaSpecification().getAutoModel().setHannanRissanen(false);
-        spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(0.14268);
-        spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(1.05);
+            //automdl
+            spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
+            spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
+            spec.getRegArimaSpecification().getAutoModel().setCheckMu(true);
+            spec.getRegArimaSpecification().getAutoModel().setMixed(true);
+            spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(0.95);
+            spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(1.0);
+            spec.getRegArimaSpecification().getAutoModel().setBalanced(false);
+            spec.getRegArimaSpecification().getAutoModel().setHannanRissanen(false);
+            spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(0.14268);
+            spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(1.05);
 
-        //estimate
-        spec.getRegArimaSpecification().getEstimate().setTol(1.0e-5);
+            //estimate
+            spec.getRegArimaSpecification().getEstimate().setTol(1.0e-5);
 
-        //outliers immer an?
-        //critical value
-        spec.getRegArimaSpecification().getOutliers().setLSRun(0);
-        spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
-        spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
-        spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
-        spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(0.7);
+            //outliers immer an?
+            //critical value
+            spec.getRegArimaSpecification().getOutliers().setLSRun(0);
+            spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
+            spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
+            spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
+            spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(0.7);
 
-        //transform
-        spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
-        spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
-        //?
-        spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
-
+            //transform
+            spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
+            spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
+            spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
         }
-
-        
-        //x11
     }
 
     private Day calcDay(SpecificationPart partName, String day) {
@@ -598,13 +601,26 @@ public class WinX12SpecSeparator {
 
         String[] s = content.replaceAll("\\(", "").replaceAll("\\)", "").split(",");
 
-        if (s.length > 1) {
-            errors.add(partName + ": No support for more than one critical value , critical value is set to " + s[0]);
-        }
-        try {
-            spec.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(Double.parseDouble(s[0]));
-        } catch (NumberFormatException e) {
-            errors.add(partName + ": Wrong format for critical value");
+        SingleOutlierSpec[] o = spec.getRegArimaSpecification().getOutliers().getTypes();
+        if (o != null) {
+            if (s.length == o.length) {
+                for (int i = 0; i < s.length; i++) {
+                    try {
+                        o[i].setCriticalValue(Double.parseDouble(s[i]));
+                    } catch (NumberFormatException e) {
+                        errors.add(partName + ": Wrong format for critical value");
+                    }
+                }
+            } else {
+                try {
+                    spec.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(Double.parseDouble(s[0]));
+                } catch (NumberFormatException e) {
+                    errors.add(partName + ": Wrong format for critical value");
+                }
+            }
+//        errors.add(partName + ": No support for more than one critical value , critical value is set to " + s[0]);
+        } else {
+            errors.add(partName + ": types argument have to be defined before critical argument");
         }
     }
 
@@ -773,14 +789,7 @@ public class WinX12SpecSeparator {
                         }
 
                         if (partName == SpecificationPart.REGRESSION) {
-
-                            ArrayList<DataBlock> list = new ArrayList();
-                            list.add(new DataBlock(values));
-
-                            TsDomain domain = new TsDomain(period, regressorStart.getYear(), regressorStart.getMonth(), values.length);
-                            regressor = new DynamicTsVariable(regressorName, null, new TsData(domain));
-                            regressor.data(domain, list);
-
+                            regressor = new DynamicTsVariable(regressorName, null, new TsData(period, regressorStart.getYear(), regressorStart.getMonth(), values, true));
                         } else {
                             errors.add(partName + ": To load data is not possible");
                         }
@@ -795,7 +804,6 @@ public class WinX12SpecSeparator {
                 errors.add(partName + ": Loading data from file " + content + " is not possible");
                 break;
         }
-
     }
 
     public void read_function(SpecificationPart partName, String content) {
@@ -806,12 +814,18 @@ public class WinX12SpecSeparator {
         switch (content.toUpperCase()) {
             case "LOG":
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
+                spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+                transformLog = true;
                 break;
             case "NONE":
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
+                spec.getX11Specification().setMode(DecompositionMode.Additive);
+                transformNone = true;
                 break;
             case "AUTO":
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Auto);
+                spec.getX11Specification().setMode(DecompositionMode.Undefined);
+                transformAuto = true;
                 break;
             default:
                 errors.add(partName + ": No support for " + content + " in function");
@@ -1027,24 +1041,45 @@ public class WinX12SpecSeparator {
         /*
          *   Select the correct DecompositionMode for JD+
          */
-        content = content.replaceAll(";", "").trim();
-        content = content.replaceAll(" ", "");
-        switch (content.toLowerCase()) {
-            case "add":
-                spec.getX11Specification().setMode(DecompositionMode.Additive);
-                break;
-            case "mult":
-                spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
-                break;
-            case "logadd":
-                spec.getX11Specification().setMode(DecompositionMode.LogAdditive);
-                break;
-            case "pseudoadd":
-                errors.add(partName + ": No Support for value " + content.toUpperCase() + " in mode");
-                break;
-            default:
-                errors.add(partName + ": No Support for value " + content.toUpperCase() + " in mode ");
-                break;
+        if (!transformAuto) {
+            content = content.replaceAll(";", "").trim();
+            content = content.replaceAll(" ", "");
+            switch (content.toLowerCase()) {
+                case "add":
+                    if (!transformLog) {
+                        spec.getX11Specification().setMode(DecompositionMode.Additive);
+                    } else {
+                        errors.add(SpecificationPart.TRANSFORM + ": Decompostion mode = add is not possible for transform function = log.");
+                    }
+                    break;
+                case "mult":
+                    if (!transformNone) {
+                        spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+                    } else {
+                        errors.add(partName + ": For transform function = none is only mode=add in JD+ possible");
+                    }
+                    break;
+                case "logadd":
+                    if (!transformNone) {
+                        spec.getX11Specification().setMode(DecompositionMode.LogAdditive);
+                    } else {
+                        errors.add(partName + ": For transform function = none is only mode=add in JD+ possible");
+                    }
+                    break;
+                case "pseudoadd":
+                    if (!transformNone) {
+                        errors.add(partName + ": No Support for value " + content.toUpperCase() + " in mode");
+                    } else {
+                        errors.add(partName + ": For transform function = none is only mode=add in JD+ possible");
+                    }
+                    break;
+                default:
+                    errors.add(partName + ": No Support for value " + content.toUpperCase() + " in mode ");
+                    break;
+            }
+        } else {
+            messages.add(SpecificationPart.TRANSFORM + ": For transform function = auto it is not possible to set a decomposition mode");
+            spec.getX11Specification().setMode(DecompositionMode.Undefined);
         }
     }
 
@@ -1487,6 +1522,13 @@ public class WinX12SpecSeparator {
         switch (partName) {
             case SERIES:
                 tsStart = calcDay(partName, content);
+                if(tsData!=null){
+                    double [] values = new double[tsData.getValues().getLength()];
+                    for(int i = 0; i< tsData.getValues().getLength(); i++){
+                        values[i]=tsData.getValues().get(i);
+                    }
+                    tsData = new TsData(new TsPeriod(period, tsStart), values, false);
+                }
                 break;
             case REGRESSION:
                 regressorStart = calcDay(partName, content);
@@ -1495,7 +1537,6 @@ public class WinX12SpecSeparator {
                 errors.add(partName + ": start argument is not implemented");
                 break;
         }
-
     }
 
     public void read_tcrate(SpecificationPart partName, String content) {
@@ -1554,8 +1595,12 @@ public class WinX12SpecSeparator {
         String s = content.replaceAll(";", "").trim();
 
         s = s.replaceAll("\\(", "").replaceAll("\\)", "").trim();
-        String[] split = s.split("\\s+");
-
+        String[] split;
+        if (s.contains(",")) {
+            split = s.split(",");
+        } else {
+            split = s.split("\\s+");
+        }
 //            ArrayList<SingleOutlierSpec> value = new ArrayList();
         for (String t : split) {
             t = t.trim().toUpperCase();
@@ -1631,8 +1676,10 @@ public class WinX12SpecSeparator {
         } else {
             switch (regressors[0].toUpperCase()) {
                 case "TD":
+                    spec.getRegArimaSpecification().getRegression().getTradingDays().setUserVariables(regressors);
                     break;
                 case "USER":
+                    //klappt nicht
                     ArrayList<TsVariableDescriptor> var = new ArrayList();
                     var.add(new TsVariableDescriptor(regressorName));
                     spec.getRegArimaSpecification().getRegression().setUserDefinedVariables((TsVariableDescriptor[]) var.toArray(null));

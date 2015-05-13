@@ -80,6 +80,7 @@ public final class SingleTopComponent extends TopComponent {
 
         setButtons();
         load.setEnabled(false);
+        
     }
 
     public SingleTopComponent(WsNode ws) {
@@ -211,8 +212,8 @@ public final class SingleTopComponent extends TopComponent {
                     SpecCollector sp = specViewer.getSpecCollector();
                     sp.setWinX12Spec(s.toString());
                     sp.setPath(path);
-                    sp.translate(TranslationTo_Type.JDSpec);
                     sp.setName(file.getName());
+                    sp.translate(TranslationTo_Type.JDSpec);
                     specViewer.refresh(sp);
 
                     refreshJD.setEnabled(true);
@@ -291,7 +292,9 @@ public final class SingleTopComponent extends TopComponent {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-
+            
+            specViewer.pressApplyButton();
+            
             SpecCollector sp = specViewer.getSpecCollector();
             sp.setJDSpec((SaDocument) specViewer.getDocument());
             sp.translate(TranslationTo_Type.WinX12Spec);

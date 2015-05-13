@@ -8,11 +8,11 @@ package Logic;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
+import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.algorithm.ProcessingContext;
 import ec.tstoolkit.data.DataBlock;
-import ec.tstoolkit.modelling.DefaultTransformationType;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.TsVariableDescriptor.UserComponentType;
 import ec.tstoolkit.modelling.arima.x13.ArimaSpec;
@@ -25,8 +25,8 @@ import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
 import ec.tstoolkit.modelling.arima.x13.TransformSpec;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
-import ec.tstoolkit.timeseries.calendars.TradingDaysType;
 import ec.tstoolkit.timeseries.regression.ITsVariable;
+import ec.tstoolkit.timeseries.regression.TsVariables;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import java.util.ArrayList;
@@ -52,6 +52,11 @@ public class JDSpecSeparator {
     private ArrayList<String> errors = new ArrayList();
     private ArrayList<String> messages = new ArrayList<>();
 
+    private boolean transformAuto = false;
+    private boolean transformLog = false;
+    private boolean transformNone = false;
+
+
     /*Constructor*/
     public JDSpecSeparator(X13Specification x13, Ts ts, ProcessingContext context) {
 //      get all information for translating 
@@ -59,23 +64,23 @@ public class JDSpecSeparator {
         this.spec = x13;
         this.context = context;
     }
-    
+
     public void build() {
-        
+
         if (ts != null) {
             generateTs();
         }
-        
+
         //because of the order of the methods calling x11 and benchmark two times
         if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
-            generateX11Spec();
+            generateX11();
             generateBenchmark();
-            
+
         } else {
             generateBasicSpec();
             generateEstimateSpec();
-            generateTransformSpec();
-//        generateRegression();
+            generateTransform();
+//            generateRegression();
 
             if (spec.getRegArimaSpecification().getAutoModel().isEnabled()) {
                 generateAutomdl();
@@ -83,16 +88,17 @@ public class JDSpecSeparator {
                 generateArima();
             }
             generateOutlier();
-            generateX11Spec();
+            generateX11();
+            generateForecast();
             generateBenchmark();
         }
     }
-    
+
     private void generateArima() {
-        
+
         ArimaSpec reg = spec.getRegArimaSpecification().getArima();
         LinkedHashMap<String, String> arima;
-        
+
         if (result.containsKey(SpecificationPart.ARIMA)) {
             arima = result.get(SpecificationPart.ARIMA);
         } else {
@@ -214,15 +220,15 @@ public class JDSpecSeparator {
         if (reg.isMean()) {
             errors.add(SpecificationPart.ARIMA + ": Mean is not supported in WinX12");
         }
-        
+
         result.put(SpecificationPart.ARIMA, arima);
     }
-    
+
     private void generateAutomdl() {
-        
+
         AutoModelSpec reg = spec.getRegArimaSpecification().getAutoModel();
         LinkedHashMap<String, String> automdl;
-        
+
         if (result.containsKey(SpecificationPart.AUTOMDL)) {
             automdl = result.get(SpecificationPart.AUTOMDL);
         } else {
@@ -288,38 +294,38 @@ public class JDSpecSeparator {
             hr = "no";
         }
         automdl.put("hrinitial", hr);
-        
+
         result.put(SpecificationPart.AUTOMDL, automdl);
     }
-    
+
     private void generateBasicSpec() {
 
         //1) span
         RegArimaSpecification reg = spec.getRegArimaSpecification();
         LinkedHashMap<String, String> series;
-        
+
         if (result.containsKey(SpecificationPart.SERIES)) {
             series = result.get(SpecificationPart.SERIES);
         } else {
             series = new LinkedHashMap<>();
         }
-        
+
         String span = separateSpan(reg.getBasic().getSpan(), "SERIES");
         if (span != null) {
             series.put("span", span);
         }
         result.put(SpecificationPart.SERIES, series);
     }
-    
+
     private void generateBenchmark() {
-        
+
         if (spec.getBenchmarkingSpecification().isEnabled()) {
-            errors.add("BENCHMARKING: No Translation possible");
+            messages.add("BENCHMARKING is not supported");
         }
     }
-    
+
     private void generateEstimateSpec() {
-        
+
         RegArimaSpecification reg = spec.getRegArimaSpecification();
 
 //        1)modelspan
@@ -329,12 +335,12 @@ public class JDSpecSeparator {
         } else {
             series = new LinkedHashMap<>();
         }
-        
+
         String span = separateSpan(reg.getEstimate().getSpan(), "ESTIMATE");
         if (span != null) {
             series.put("modelspan", span);
         }
-        
+
         result.put(SpecificationPart.SERIES, series);
 
 //        2)tol
@@ -351,47 +357,62 @@ public class JDSpecSeparator {
 
 //        4)maxiter
         estimate.put("maxiter", "1500");
-        
+
         result.put(SpecificationPart.ESTIMATE, estimate);
     }
-    
-    private void generateOutlier() {
-        
-        OutlierSpec reg = spec.getRegArimaSpecification().getOutliers();
-        LinkedHashMap<String, String> outlier;
-        if (result.containsKey(SpecificationPart.OUTLIER)) {
-            outlier = result.get(SpecificationPart.OUTLIER);
+
+    private void generateForecast() {
+
+        LinkedHashMap<String, String> forecast;
+        if (result.containsKey(SpecificationPart.FORECAST)) {
+            forecast = result.get(SpecificationPart.FORECAST);
         } else {
-            outlier = new LinkedHashMap<>();
+            forecast = new LinkedHashMap<>();
         }
+
+//        1) maxlead/forecast horizon
+        int maxlead = spec.getX11Specification().getForecastHorizon();
+
+        if (maxlead < 0) {
+            if (ts != null) {
+                maxlead = -1 * maxlead * ts.getTsData().getFrequency().intValue();
+            } else {
+                maxlead = -1 * maxlead * 12;
+            }
+        }
+        forecast.put("maxlead", maxlead + "");
+
+        result.put(SpecificationPart.FORECAST, forecast);
+    }
+
+    private void generateOutlier() {
+
+        OutlierSpec outSpec = spec.getRegArimaSpecification().getOutliers();
+
+        if (outSpec.isUsed()) {
+            LinkedHashMap<String, String> outlier;
+            if (result.containsKey(SpecificationPart.OUTLIER)) {
+                outlier = result.get(SpecificationPart.OUTLIER);
+            } else {
+                outlier = new LinkedHashMap<>();
+            }
 
 //        1)span
-        String span = separateSpan(reg.getSpan(), "OUTLIER");
-        if (span != null) {
-            outlier.put("span", span);
-        }
+            String span = separateSpan(outSpec.getSpan(), "OUTLIER");
+            if (span != null) {
+                outlier.put("span", span);
+            }
 
 //        2)LSRun
-        outlier.put("lsrun", reg.getLSRun() + "");
-        
-        if (reg.isUsed()) {
+            outlier.put("lsrun", outSpec.getLSRun() + "");
 
-//            1)critical value
-            outlier.put("critical", reg.getDefaultCriticalValue() + "");
-
-//            2)TC rate
-            outlier.put("tcrate", reg.getMonthlyTCRate() + "");
-
-//            3)Method
-            outlier.put("method", reg.getMethod().toString());
-
-//            4)types
+//        3)types
             StringBuilder types;
-            if (reg.getTypes() == null) {
+            if (outSpec.getTypes() == null) {
                 types = new StringBuilder("none");
             } else {
                 types = new StringBuilder("( ");
-                for (SingleOutlierSpec s : reg.getTypes()) {
+                for (SingleOutlierSpec s : outSpec.getTypes()) {
                     switch (s.getType()) {
                         case AO:
                         case LS:
@@ -406,16 +427,27 @@ public class JDSpecSeparator {
                 types.append(")");
             }
             outlier.put("types", types.toString());
+
+//        4)critical value
+            if (outSpec.getDefaultCriticalValue() != 0.0) {
+                outlier.put("critical", outSpec.getDefaultCriticalValue() + "");
+            } 
+
+//        5)TC rate
+            outlier.put("tcrate", outSpec.getMonthlyTCRate() + "");
+
+//        6)Method
+            outlier.put("method", outSpec.getMethod().toString());
+
+            result.put(SpecificationPart.OUTLIER, outlier);
         }
-        
-        result.put(SpecificationPart.OUTLIER, outlier);
     }
-    
+
     private void generateRegression() {
-        
+
         RegressionSpec reg = spec.getRegArimaSpecification().getRegression();
         if (reg.isUsed()) {
-            
+
             LinkedHashMap<String, String> regression;
             if (result.containsKey(SpecificationPart.REGRESSION)) {
                 regression = result.get(SpecificationPart.REGRESSION);
@@ -426,11 +458,52 @@ public class JDSpecSeparator {
 //            A)TradingDays
             TradingDaysSpec tdSpec = reg.getTradingDays();
             if (tdSpec.isUsed()) {
-//                messages.add("Type: " + tdSpec.getTradingDaysType().toString());
-//                messages.add(tdSpec.getHolidays() + "\n" + tdSpec.getChangeOfRegime());
+                if (tdSpec.getUserVariables() != null) {
+                    //GUI option: UserDefined
+                    String regName = tdSpec.getUserVariables()[0];
+                    TsVariables var = context.getTsVariableManagers().get(regName.split("\\.")[0]);
 
-            }
-//            B)
+//                    1)data
+                    TsData regData = extractData(((DynamicTsVariable) var.variables().toArray()[0]));
+                    StringBuilder data = new StringBuilder("(");
+                    int counter = regData.getStart().getPosition() + 1;
+                    for (int i = 0; i < regData.getValues().getLength(); i++) {
+                        if (i == 0) {
+                            for (int j = 0; j < counter; j++) {
+                                data.append("\t");
+                            }
+                        }
+                        data.append(regData.getValues().get(i));
+//            
+                        int period = Integer.parseInt(result.get(SpecificationPart.SERIES).get("period"));
+                        if ((counter) % period == 0) {
+                            data.append("\n\t\t");
+                        } else {
+                            data.append("\t");
+                        }
+                        counter++;
+                    }
+                    data.append(")");
+                    regression.put("data", data.toString());
+
+//                    2)usertype
+                    regression.put("usertype", "td");
+
+//                    3)start
+                    regression.put("start", regData.getStart().getYear() + "." + regData.getStart().getPosition() + 1);
+
+                } else {
+                    if (tdSpec.getHolidays() != null) {
+                        //GUI option: Holidays
+                        messages.add("Holidays " + tdSpec.getHolidays());
+                    } else {
+                        //GUI option: Default
+                        messages.add("Default");
+                    }
+                }
+            }//GUI option: None
+
+//            B)Easter
             MovingHolidaySpec mov = reg.getEaster();
             if (mov != null) {
 //                messages.add("Easter");
@@ -441,14 +514,15 @@ public class JDSpecSeparator {
             if (userDef.length != 0) {
                 StringBuilder userName = new StringBuilder("( ");
                 StringBuilder userData = new StringBuilder();
-                
+
                 for (TsVariableDescriptor t : userDef) {
 //                    1)Name
-                    userName.append(t.getName());
+                    userName.append(t.getName()).append(" ");
 
 //                    2)start
                     TsData data = extractData(t.toTsVariable(context));
                     regression.put("start", data.getStart().getYear() + "." + data.getStart().getPosition() + 1);
+
 //                    3)data
                     StringBuilder dataString = new StringBuilder("(\t");
                     for (int i = 0; i < data.getValues().getLength(); i++) {
@@ -476,21 +550,22 @@ public class JDSpecSeparator {
                     }
                 }
 //                1)Name
-                regression.put("name", userName.append(")").toString());
+                regression.put("user", userName.append(")").toString());
 //                2)Data
                 regression.put("data", userData.toString());
 //                3)usertype
-                if (tdSpec.isUsed() && tdSpec.getTradingDaysType().equals(TradingDaysType.None)) {
+//                if (tdSpec.isUsed() && tdSpec.getTradingDaysType().equals(TradingDaysType.None)) {
 //                    tdSpec.getUserVariables()
-                }
+                regression.put("usertype", "user");
+//                }
             }
-            
+
             result.put(SpecificationPart.REGRESSION, regression);
         }
     }
-    
-    private void generateTransformSpec() {
-        
+
+    private void generateTransform() {
+
         TransformSpec t = spec.getRegArimaSpecification().getTransform();
         LinkedHashMap<String, String> transform;
         if (result.containsKey(SpecificationPart.TRANSFORM)) {
@@ -498,48 +573,71 @@ public class JDSpecSeparator {
         } else {
             transform = new LinkedHashMap<>();
         }
+        LinkedHashMap<String, String> x11;
 
-//        1)function
-        transform.put("function", t.getFunction().name());
+        switch (t.getFunction()) {
+            case None:
+                transformNone = true;
+                transform.put("function", "none");
+                if (result.containsKey(SpecificationPart.X11)) {
+                    x11 = result.get(SpecificationPart.X11);
+                } else {
+                    x11 = new LinkedHashMap<>();
+                }
+                x11.put("mode", "add");
+                messages.add(SpecificationPart.TRANSFORM + ": Only decompostion mode = add is in X11 part possible");
+                result.put(SpecificationPart.X11, x11);
+                break;
+            case Auto:
+                transformAuto = true;
+                transform.put("function", "auto");
+                transform.put("aicdiff", t.getAICDiff() + "");
+                break;
+            case Log:
+                transformLog = true;
+                transform.put("function", "log");
 
-//        2)aic diff
-        if (t.getFunction().equals(DefaultTransformationType.Auto)) {
-            transform.put("aicdiff", t.getAICDiff() + "");
+                if (result.containsKey(SpecificationPart.X11)) {
+                    x11 = result.get(SpecificationPart.X11);
+                } else {
+                    x11 = new LinkedHashMap<>();
+                }
+                x11.put("mode", "mult");
+                result.put(SpecificationPart.X11, x11);
+
+                String adjust;
+                switch (t.getAdjust()) {
+                    case None:
+                        adjust = "none";
+                        break;
+                    case LeapYear:
+                        adjust = "lpyear";
+                        break;
+                    case LengthOfPeriod:
+                        if (ts.getTsData().getFrequency().intValue() == 12) {
+                            adjust = "lom";
+                        } else {
+                            adjust = "loq";
+                        }
+                        break;
+                    default:
+                        errors.add(SpecificationPart.TRANSFORM + ": No translation for " + t.getAdjust());
+                        adjust = null;
+                        break;
+                }
+
+                if (adjust != null) {
+                    transform.put("adjust", adjust);
+                }
+            default:
+                break;
         }
 
-//        3)adjust
-        if (t.getFunction().equals(DefaultTransformationType.Log)) {
-            String adjust;
-            switch (t.getAdjust()) {
-                case None:
-                    adjust = "none";
-                    break;
-                case LeapYear:
-                    adjust = "lpyear";
-                    break;
-                case LengthOfPeriod:
-                    if (ts.getTsData().getFrequency().intValue() == 12) {
-                        adjust = "lom";
-                    } else {
-                        adjust = "loq";
-                    }
-                    break;
-                default:
-                    errors.add(SpecificationPart.TRANSFORM + ": No translation for " + t.getAdjust());
-                    adjust = null;
-                    break;
-            }
-            
-            if (adjust != null) {
-                transform.put("adjust", adjust);
-            }
-        }
-        
         result.put(SpecificationPart.TRANSFORM, transform);
     }
-    
+
     private void generateTs() {
-        
+
         LinkedHashMap<String, String> series;
         if (result.containsKey(SpecificationPart.SERIES)) {
             series = result.get(SpecificationPart.SERIES);
@@ -548,7 +646,20 @@ public class JDSpecSeparator {
         }
 
 //        1) title
-        series.put("title", "'" + ts.getRawName() + "'");
+        String name;
+        if (ts.getRawName() != null) {
+            name = ts.getRawName();
+        } else {
+            if (ts.getName() != null) {
+                name = ts.getName();
+            } else {
+                name = ts.toString();
+            }
+        }
+        if(name.isEmpty()){
+            name = "no title";
+        }
+        series.put("title", "'" + name + "'");
 
         //2) start
         StringBuilder start = new StringBuilder(ts.getTsData().getStart().getYear() + ".");
@@ -579,61 +690,66 @@ public class JDSpecSeparator {
         }
         data.append(")");
         series.put("data", data.toString());
-        
+
         result.put(SpecificationPart.SERIES, series);
-        
+
     }
-    
-    private void generateX11Spec() {
+
+    private void generateX11() {
 
 //        A)X11
         X11Specification x11 = spec.getX11Specification();
         LinkedHashMap<String, String> x11Result;
-        
+
         if (result.containsKey(SpecificationPart.X11)) {
             x11Result = result.get(SpecificationPart.X11);
         } else {
             x11Result = new LinkedHashMap<>();
         }
 
-        //1) Mode
-        String mode;
-        switch (x11.getMode()) {
-            case Additive:
-                mode = "add";
-                break;
-            case LogAdditive:
-                mode = "logadd";
-                break;
-            case Multiplicative:
-                mode = "mult";
-                break;
-            default:
-                messages.add(SpecificationPart.X11 + ": No translation for mode.");
-                mode = "mult";
-                break;
-        }
-        if (result.get(SpecificationPart.TRANSFORM).get("function").toLowerCase().equals("log")) {
-            if (!mode.equals("mult")) {
-                messages.add(SpecificationPart.X11 + ":  For transform function = log is only the decompostion mode multiplicative possible");
-                mode = "mult";
+        if (!transformAuto) {
+            //1) Mode
+            String mode = null;
+            switch (x11.getMode()) {
+                case Additive:
+                    if (transformLog) {
+                        errors.add(SpecificationPart.TRANSFORM + ": For transform function = log is decompostion mode add not possible");
+                    } else {
+                        mode = "add";
+                        x11Result.put("mode", mode);
+                    }
+                    break;
+                case LogAdditive:
+                    if (!transformNone) {
+                        mode = "logadd";
+                        x11Result.put("mode", mode);
+                    } else {
+                        errors.add(SpecificationPart.TRANSFORM + ": For transform function = none is only decomposition mode = add possible");
+                    }
+                    break;
+                case Multiplicative:
+                    if (!transformNone) {
+                        mode = "mult";
+                        x11Result.put("mode", mode);
+                    } else {
+                        errors.add(SpecificationPart.TRANSFORM + ": For transform function = none is only decomposition mode = add possible");
+                    }
+                    break;
+                case Undefined:
+                    messages.add(SpecificationPart.X11 + ": No decomposition mode is choosen");
+                    break;
+                default:
+                    messages.add(SpecificationPart.X11 + ": No translation for mode = " + x11.getMode());
+//                mode = "mult";
+                    break;
             }
-            
         } else {
-            if (result.get(SpecificationPart.TRANSFORM).get("function").toLowerCase().equals("none")) {
-                if (!mode.equals("add")) {
-                    messages.add(SpecificationPart.X11+": For no transform function is only decompostion mode additive possible");
-                    mode = "add";
-                }
-            }
-        }
-        if (!result.get(SpecificationPart.TRANSFORM).get("function").toLowerCase().equals("auto")) {
-            x11Result.put("mode", mode);
+            messages.add(SpecificationPart.TRANSFORM + ": For transform function = auto is no decompostion mode possible");
         }
 
         //2) Seasonalma
         if (x11.isSeasonal()) {
-            
+
             StringBuilder seasonalma = new StringBuilder("( ");
             if (x11.getSeasonalFilters() != null) {
                 if (x11.getSeasonalFilters().length != 1) {
@@ -652,7 +768,7 @@ public class JDSpecSeparator {
             }
             seasonalma.deleteCharAt(seasonalma.length() - 1);
             seasonalma.append(" )");
-            
+
             x11Result.put("seasonalma", seasonalma.toString());
         }
 
@@ -663,64 +779,42 @@ public class JDSpecSeparator {
 
         //4) sigmalim
         x11Result.put("sigmalim", "(" + x11.getLowerSigma() + " , " + x11.getUpperSigma() + " )");
-        
+
         result.put(SpecificationPart.X11, x11Result);
 
-//        B) FORECAST
-        LinkedHashMap<String, String> forecast;
-        if (result.containsKey(SpecificationPart.FORECAST)) {
-            forecast = result.get(SpecificationPart.FORECAST);
-        } else {
-            forecast = new LinkedHashMap<>();
-        }
-
-//        1) maxlead/forecast horizon
-        int maxlead = x11.getForecastHorizon();
-        
-        if (maxlead < 0) {
-            if (ts != null) {
-                maxlead = -1 * maxlead * ts.getTsData().getFrequency().intValue();
-            } else {
-                maxlead = -1 * maxlead * 12;
-            }
-        }
-        forecast.put("maxlead", maxlead + "");
-        
-        result.put(SpecificationPart.FORECAST, forecast);
-        
     }
-    
+
     public String getResult() {
-        
+
         StringBuilder text = new StringBuilder();
-        
+
         for (SpecificationPart spec : result.keySet()) {
             text.append(spec).append("\n{\n");
-            
+
             LinkedHashMap<String, String> content = result.get(spec);
-            
+
             for (String argument : content.keySet()) {
                 text.append("\t").append(argument).append(" = ").append(content.get(argument)).append("\n");
             }
-            
+
             text.append("}\n\n");
         }
-        
+
         return text.toString();
     }
-    
+
     public String[] getErrorList() {
         return errors.toArray(new String[errors.size()]);
     }
-    
+
     public String[] getMessageList() {
         return messages.toArray(new String[messages.size()]);
     }
-    
+
     private String separateSpan(TsPeriodSelector p, String specPart) {
-        
+
         String result;
-        
+
         switch (p.getType()) {
             case All:
                 result = null;
@@ -746,8 +840,9 @@ public class JDSpecSeparator {
         }
         return result;
     }
-    
+
     private TsData extractData(ITsVariable input) {
+
         ArrayList<DataBlock> data = new ArrayList();
         data.add(new DataBlock(input.getDefinitionDomain().getLength()));
         input.data(input.getDefinitionDomain(), data);

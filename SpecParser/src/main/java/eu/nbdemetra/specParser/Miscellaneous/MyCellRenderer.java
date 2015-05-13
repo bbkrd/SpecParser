@@ -17,12 +17,12 @@ import javax.swing.ListCellRenderer;
  * @author Nina Gonschorreck
  */
 public class MyCellRenderer extends JLabel implements ListCellRenderer {
+
     /**
      * This class will be used for the list of SpecCollectors from the
      * MultiDocument. The method shows which SingleSpec are correctly
      * transformed (green) or not (red).
      */
-
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         //To change body of generated methods, choose Tools | Templates.
@@ -37,7 +37,12 @@ public class MyCellRenderer extends JLabel implements ListCellRenderer {
             //display red or green logic because of the translation has errors or not
             String[] errorlist = spec.getErrors();
             if (errorlist.length == 0) {
-                setBackground(Color.green);
+                String[] messagesList = spec.getMessages();
+                if (messagesList.length == 0) {
+                    setBackground(Color.green);
+                } else {
+                    setBackground(Color.ORANGE);
+                }
             } else {
                 setBackground(Color.red);
             }
