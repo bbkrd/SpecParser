@@ -13,11 +13,13 @@ import ec.tss.Ts;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.algorithm.ProcessingContext;
 import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.TsVariableDescriptor.UserComponentType;
 import ec.tstoolkit.modelling.arima.x13.ArimaSpec;
 import ec.tstoolkit.modelling.arima.x13.AutoModelSpec;
 import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec;
+import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec.Type;
 import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
 import ec.tstoolkit.modelling.arima.x13.RegressionSpec;
@@ -25,9 +27,13 @@ import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
 import ec.tstoolkit.modelling.arima.x13.TransformSpec;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
+import ec.tstoolkit.timeseries.calendars.TradingDaysType;
 import ec.tstoolkit.timeseries.regression.ITsVariable;
+import ec.tstoolkit.timeseries.regression.OutlierDefinition;
+import ec.tstoolkit.timeseries.regression.Ramp;
 import ec.tstoolkit.timeseries.regression.TsVariables;
 import ec.tstoolkit.timeseries.simplets.TsData;
+import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -68,29 +74,34 @@ public class JDSpecSeparator {
     public void build() {
 
         if (ts != null) {
-            generateTs();
-        }
+            if (!ts.getTsData().getValues().hasMissingValues()) {
+                generateTs();
 
-        //because of the order of the methods calling x11 and benchmark two times
-        if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
-            generateX11();
-            generateBenchmark();
+                //because of the order of the methods calling x11 and benchmark two times
+                if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
+                    generateX11();
+                    generateBenchmark();
 
-        } else {
-            generateBasicSpec();
-            generateEstimateSpec();
-            generateTransform();
-//            generateRegression();
+                } else {
+                    generateBasicSpec();
+                    generateEstimateSpec();
+                    generateTransform();
+                    generateRegression();
 
-            if (spec.getRegArimaSpecification().getAutoModel().isEnabled()) {
-                generateAutomdl();
+                    if (spec.getRegArimaSpecification().getAutoModel().isEnabled()) {
+                        generateAutomdl();
+                    } else {
+                        generateArima();
+                    }
+                    generateOutlier();
+                    generateX11();
+                    generateForecast();
+                    generateBenchmark();
+                }
+
             } else {
-                generateArima();
+                errors.add("MISSING VALUES ARE NOT ALLOWED IN WINX12");
             }
-            generateOutlier();
-            generateX11();
-            generateForecast();
-            generateBenchmark();
         }
     }
 
@@ -431,7 +442,7 @@ public class JDSpecSeparator {
 //        4)critical value
             if (outSpec.getDefaultCriticalValue() != 0.0) {
                 outlier.put("critical", outSpec.getDefaultCriticalValue() + "");
-            } 
+            }
 
 //        5)TC rate
             outlier.put("tcrate", outSpec.getMonthlyTCRate() + "");
@@ -455,8 +466,23 @@ public class JDSpecSeparator {
                 regression = new LinkedHashMap<>();
             }
 
+            //collect all values for argument variables
+            StringBuilder variables = new StringBuilder();
+
+            //const
+            if (!spec.getRegArimaSpecification().getAutoModel().isEnabled() && spec.getRegArimaSpecification().getArima().isMean()) {
+                variables.append("const\n");
+            }
+
 //            A)TradingDays
             TradingDaysSpec tdSpec = reg.getTradingDays();
+            /* Possibilities fpr click in Calender -> TradingDays -> option
+             *   - None          if tdSpec = null
+             *   - Default       if tdSpec!= null + UserVariables = null + Holidays = null
+             *   - Stock         not implemented
+             *   - Holidays      if tdSpec!= null + UserVariables = null + Holidays != null
+             *   - UserDefined   if tdSpec!= null + UserVariables != null
+             */
             if (tdSpec.isUsed()) {
                 if (tdSpec.getUserVariables() != null) {
                     //GUI option: UserDefined
@@ -486,7 +512,7 @@ public class JDSpecSeparator {
                     data.append(")");
                     regression.put("data", data.toString());
 
-//                    2)usertype
+//                    2)usertype (WinX need this information)
                     regression.put("usertype", "td");
 
 //                    3)start
@@ -495,18 +521,145 @@ public class JDSpecSeparator {
                 } else {
                     if (tdSpec.getHolidays() != null) {
                         //GUI option: Holidays
-                        messages.add("Holidays " + tdSpec.getHolidays());
+                        errors.add("REGRESSION: Holidays are not supported in WinX12");
+
                     } else {
                         //GUI option: Default
-                        messages.add("Default");
+                        switch (tdSpec.getTradingDaysType()) {
+                            case WorkingDays:
+                                errors.add("REGRESSION: WorkingDays are not supported in WinX12");
+                                break;
+                            case TradingDays: {
+                                if (tdSpec.isAutoAdjust()) {
+                                    variables.append("td\n\t\t");
+                                } else {
+                                    errors.add("REGRESSION: autoadjusted has to be enabled");
+                                }
+                                break;
+                            }
+                            default: //None -> switched to GUI option None
+                                break;
+                        }
                     }
                 }
+
+//               i) test
+                switch (tdSpec.getTest()) {
+                    case None:
+                        break;
+                    case Add:
+                    case Remove:
+                    default:
+                        messages.add("REGRESSION: Test doesn't exist in WINX12. Please set it to None.");
+                }
+
             }//GUI option: None
 
 //            B)Easter
             MovingHolidaySpec mov = reg.getEaster();
             if (mov != null) {
-//                messages.add("Easter");
+                if (mov.getType().equals(Type.Easter)) {
+                    if (!mov.getTest().equals(RegressionTestSpec.None)) {
+                        errors.add("REGRESSION: Pre-Test for easter are not supported in WinX12");
+                    } else {
+                        variables.append("easter[");
+                        variables.append(mov.getW()).append("]\n\t\t");
+                    }
+                } else {
+                    //other types will not be supported
+                }
+            }
+
+//            C) Pre-Specified outliers
+            if (reg.getOutliersCount() != 0) {
+                StringBuilder outlier;
+                for (OutlierDefinition o : reg.getOutliers()) {
+
+                    outlier = new StringBuilder();
+                    outlier.append(o.type);
+                    outlier.append(o.position.getYear()).append(".");
+
+                    if (ts.getTsData().getFrequency().equals(TsFrequency.Monthly)) {
+                        outlier.append(o.position.getMonth() + 1);
+                    } else {
+                        //Quaterly
+                        if (o.position.getMonth() <= 2) {
+                            //1.Quarter
+                            outlier.append("1");
+                        } else if (o.position.getMonth() <= 5) {
+                            //2.quarter
+                            outlier.append("2");
+                        } else if (o.position.getMonth() <= 8) {
+                            //3. Quarter
+                            outlier.append("3");
+                        } else {
+                            //4.Quarter
+                            outlier.append("4");
+                        }
+                    }
+
+                    variables.append(outlier.toString()).append(" ");
+                }
+                variables.append("\n\t\t");
+            }
+//            D) Intervention variables
+            if (reg.getInterventionVariablesCount() != 0) {
+                errors.add("REGRESSION: Intervention variables are not possible in WinX");
+            }
+//            E) Ramps
+            if (reg.getRampsCount() != 0) {
+                StringBuilder ramp;
+                for (Ramp r : reg.getRamps()) {
+
+                    ramp = new StringBuilder("rp");
+
+                    ramp.append(r.getStart().getYear()).append(".");
+
+                    if (ts.getTsData().getFrequency().equals(TsFrequency.Monthly)) {
+                        ramp.append(r.getStart().getMonth() + 1).append("-");
+                    } else {
+                        //Quaterly
+                        if (r.getStart().getMonth() <= 2) {
+                            //1.Quarter
+                            ramp.append("1").append("-");
+                        } else if (r.getStart().getMonth() <= 5) {
+                            //2.quarter
+                            ramp.append("2").append("-");
+                        } else if (r.getStart().getMonth() <= 8) {
+                            //3. Quarter
+                            ramp.append("3").append("-");
+                        } else {
+                            //4.Quarter
+                            ramp.append("4").append("-");
+                        }
+                    }
+                    ramp.append(r.getEnd().getYear()).append(".");
+                    if (ts.getTsData().getFrequency().equals(TsFrequency.Monthly)) {
+                        ramp.append(r.getEnd().getMonth() + 1);
+                    } else {
+                        //Quaterly
+                        if (r.getEnd().getMonth() <= 2) {
+                            //1.Quarter
+                            ramp.append("1");
+                        } else if (r.getEnd().getMonth() <= 5) {
+                            //2.quarter
+                            ramp.append("2");
+                        } else if (r.getEnd().getMonth() <= 8) {
+                            //3. Quarter
+                            ramp.append("3");
+                        } else {
+                            //4.Quarter
+                            ramp.append("4");
+                        }
+                    }
+                    variables.append(ramp.toString()).append(" ");
+                }
+                variables.append("\n\t\t");
+            }
+
+            //final step for variables argument
+            if (variables.length() != 0) {
+                regression.put("variables", "( " + variables.toString() + "\t\t)");
             }
 
             //F) user defined variables
@@ -538,15 +691,15 @@ public class JDSpecSeparator {
 
                     //4)Firstlag
                     if (t.getFirstLag() != 0) {
-                        errors.add("REGRESSION: Firstlag in uder-defined variables is not supported");
+                        errors.add("REGRESSION: Firstlag in user-defined variables is not supported");
                     }
 //                    5)Lastlag
                     if (t.getLastLag() != 0) {
-                        errors.add("REGRESSION: Lastlag in uder-defined variables is not supported");
+                        errors.add("REGRESSION: Lastlag in user-defined variables is not supported");
                     }
 //                    6)Component type
-                    if (!t.getEffect().equals(UserComponentType.Undefined)) {
-                        errors.add("REGRESSION: Component type in uder-defined variables is not supported");
+                    if (!t.getEffect().equals(UserComponentType.Series)) {
+                        errors.add("REGRESSION: Component type in user-defined variables is not supported");
                     }
                 }
 //                1)Name
@@ -656,10 +809,11 @@ public class JDSpecSeparator {
                 name = ts.toString();
             }
         }
-        if(name.isEmpty()){
+        name = name.replaceAll("'", "");
+        if (name.isEmpty()) {
             name = "no title";
         }
-        series.put("title", "'" + name + "'");
+        series.put("name", "'" + name + "'");
 
         //2) start
         StringBuilder start = new StringBuilder(ts.getTsData().getStart().getYear() + ".");
@@ -671,20 +825,41 @@ public class JDSpecSeparator {
         series.put("period", period + "");
 
 //        4) data
+        int lineCounter = 8; // "data = (" -> #8
         StringBuilder data = new StringBuilder("(");
         int counter = ts.getTsData().getStart().getPosition() + 1;
         for (int i = 0; i < ts.getTsData().getValues().getLength(); i++) {
             if (i == 0) {
                 for (int j = 0; j < counter; j++) {
-                    data.append("\t");
+                    if (lineCounter < 133) {
+                        data.append(" \t");
+                        lineCounter = lineCounter + "\t".length();
+                    } else {
+                        data.append("\n\t\t");
+                        lineCounter = 2 * "\t".length();
+                    }
                 }
             }
+
+            if ((lineCounter + (ts.getTsData().getValues().get(i) + "").length()) >= 133) {
+                data.append("\n\t\t");
+                lineCounter = 2 * "\t".length();
+            }
             data.append(ts.getTsData().getValues().get(i));
+            lineCounter = lineCounter + (ts.getTsData().getValues().get(i) + "").length();
+
 //            if ((i + 1) % 12 == 0) {
             if ((counter) % period == 0) {
                 data.append("\n\t\t");
+                lineCounter = 2 * "\t".length();
             } else {
-                data.append("\t");
+                if (lineCounter < 133) {
+                    data.append("     ");
+                    lineCounter = lineCounter + 5;
+                } else {
+                    data.append("\n\t\t");
+                    lineCounter = 2 * "\t".length();
+                }
             }
             counter++;
         }

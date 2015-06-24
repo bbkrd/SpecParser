@@ -16,19 +16,24 @@ import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
 import ec.tstoolkit.data.DataBlock;
-import ec.tstoolkit.data.Values;
 import ec.tstoolkit.modelling.DefaultTransformationType;
+import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
+import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec;
 import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
 import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
+import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
 import ec.tstoolkit.modelling.arima.x13.X13Exception;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.Month;
 import ec.tstoolkit.timeseries.PeriodSelectorType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
+import ec.tstoolkit.timeseries.calendars.TradingDaysType;
+import ec.tstoolkit.timeseries.regression.OutlierDefinition;
 import ec.tstoolkit.timeseries.regression.OutlierType;
+import ec.tstoolkit.timeseries.regression.Ramp;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsDomain;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
@@ -71,10 +76,15 @@ public class WinX12SpecSeparator {
     //nessecary for File loading
     private String path;
 
-    //
+    //transformation conditions
     private boolean transformNone = false;
     private boolean transformLog = false;
     private boolean transformAuto = false;
+
+    //
+    private boolean onlyX11 = true;
+    private boolean outlierDefaults = false;
+    private boolean automdlDefault = false;
 
     public WinX12SpecSeparator() {
 //        setDefaults();
@@ -82,8 +92,38 @@ public class WinX12SpecSeparator {
         setDefaults();
     }
 
-    private void setPreprocessor() {
+    private void setX12Part() {
+        onlyX11 = false;
         spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
+        setDefaults();
+    }
+
+    private void setOUTLIERDefaults() {
+
+        outlierDefaults = true;
+
+        spec.getRegArimaSpecification().getOutliers().setLSRun(0);
+        spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
+        spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
+        spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
+        spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(0.7);
+    }
+
+    private void setAUTOMDLDefaults() {
+        //automdl
+
+        automdlDefault = true;
+
+        spec.getRegArimaSpecification().getAutoModel().setEnabled(true);
+        spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
+        spec.getRegArimaSpecification().getAutoModel().setCheckMu(true);
+        spec.getRegArimaSpecification().getAutoModel().setMixed(true);
+        spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(0.95);
+        spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(1.0);
+        spec.getRegArimaSpecification().getAutoModel().setBalanced(false);
+        spec.getRegArimaSpecification().getAutoModel().setHannanRissanen(false);
+        spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(0.14268);
+        spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(1.05);
     }
 
     public void setPath(String path) {
@@ -162,6 +202,7 @@ public class WinX12SpecSeparator {
         StringBuilder method;
         SpecificationPart specPartName;
         String[] specPartSplitted, lines, lineSplitted;
+        boolean noArgument = false;
 
         //2. for each specification part split on "{" to separate name and content
         for (String item : specParts) {
@@ -171,31 +212,64 @@ public class WinX12SpecSeparator {
             specPartSplitted[0] = specPartSplitted[0].replaceAll("\\s", "");
             try {
                 specPartName = SpecificationPart.valueOf(specPartSplitted[0].toUpperCase());
-                //all values for one argument in one line
-                specPartSplitted[1] = specPartSplitted[1].replaceAll("\n", " ");
-                //3. split on line breaks signed by ;
-                lines = specPartSplitted[1].split(";");
+                if (!specPartName.equals(SpecificationPart.X11) && !specPartName.equals(SpecificationPart.SERIES)) {
+                    if (onlyX11) {
+                        setX12Part();
+                    }
+                }
+                if (specPartSplitted.length > 1) {
+                    //all values for one argument in one line
+                    specPartSplitted[1] = specPartSplitted[1].replaceAll("\n", " ");
+
+                    if (!specPartSplitted[1].replaceAll(";", "").replaceAll("\\s*", "").isEmpty()) {
+                        //3. split on line breaks signed by ;
+                        lines = specPartSplitted[1].split(";");
 
 //                //4. for each line split on "=" to separate arguments and values
-                for (String tmp : lines) {
-                    if (tmp.contains("=")) {
-                        lineSplitted = tmp.split("=");
-                        lineSplitted[0] = lineSplitted[0].replaceAll("\\s", "");
-                        method = new StringBuilder("read_");
-                        method.append(lineSplitted[0].toLowerCase());
+                        for (String tmp : lines) {
+                            if (tmp.contains("=")) {
+                                lineSplitted = tmp.split("=");
+                                lineSplitted[0] = lineSplitted[0].replaceAll("\\s", "");
+                                method = new StringBuilder("read_");
+                                method.append(lineSplitted[0].toLowerCase());
 
-                        try {
-                            //5. try to invoke the method for the argument
-                            m = this.getClass().getMethod(method.toString().toLowerCase(), SpecificationPart.class, String.class);
-                            m.invoke(this, specPartName, lineSplitted[1]);
-                        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-                            errors.add(specPartName.name() + ": No support for " + lineSplitted[0].toUpperCase());
+                                try {
+                                    //5. try to invoke the method for the argument
+                                    m = this.getClass().getDeclaredMethod(method.toString().toLowerCase(), SpecificationPart.class, String.class);
+                                    m.setAccessible(true);
+                                    m.invoke(this, specPartName, lineSplitted[1]);
+                                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+                                    errors.add(specPartName.name() + ": No support for " + lineSplitted[0].toUpperCase());
+                                }
+                            }
                         }
+                    } else {
+                        noArgument = true;
+                    }
+                } else {
+                    noArgument = true;
+                }
+
+                if (noArgument) {
+                    //if in {} no arguments then set Defaults for the specification part
+                    method = new StringBuilder("set");
+                    method.append(specPartName.name().toUpperCase()).append("Defaults");
+                    try {
+
+                        System.out.println("DEFAULT");
+
+                        m = this.getClass().getDeclaredMethod(method.toString());
+                        m.setAccessible(true);
+                        m.invoke(this);
+
+                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException ex) {
+                        errors.add(specPartName.name() + ": No support for defaults. Please define some arguments.");
                     }
                 }
             } catch (IllegalArgumentException ex) {
                 errors.add("No support for " + specPartSplitted[0].toUpperCase());
             }
+            noArgument = false;
         }
     }
 
@@ -216,44 +290,26 @@ public class WinX12SpecSeparator {
 //X13
 
 //            x11
-             spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+            spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
             spec.getX11Specification().setSeasonal(true);
             spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
             spec.getX11Specification().setSigma(1.5, 2.5);
             spec.getX11Specification().setForecastHorizon(-1);
             spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
 
-
-            //arima
+            //arima: default is airline model
             spec.getRegArimaSpecification().getArima().setP(0);
-            spec.getRegArimaSpecification().getArima().setD(0);
-            spec.getRegArimaSpecification().getArima().setQ(0);
+            spec.getRegArimaSpecification().getArima().setD(1);
+            spec.getRegArimaSpecification().getArima().setQ(1);
             spec.getRegArimaSpecification().getArima().setBP(0);
-            spec.getRegArimaSpecification().getArima().setBD(0);
-            spec.getRegArimaSpecification().getArima().setBQ(0);
-
-            //automdl
-            spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
-            spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
-            spec.getRegArimaSpecification().getAutoModel().setCheckMu(true);
-            spec.getRegArimaSpecification().getAutoModel().setMixed(true);
-            spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(0.95);
-            spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(1.0);
-            spec.getRegArimaSpecification().getAutoModel().setBalanced(false);
-            spec.getRegArimaSpecification().getAutoModel().setHannanRissanen(false);
-            spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(0.14268);
-            spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(1.05);
+            spec.getRegArimaSpecification().getArima().setBD(1);
+            spec.getRegArimaSpecification().getArima().setBQ(1);
 
             //estimate
             spec.getRegArimaSpecification().getEstimate().setTol(1.0e-5);
 
-            //outliers immer an?
-            //critical value
-            spec.getRegArimaSpecification().getOutliers().setLSRun(0);
-            spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
-            spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
-            spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
-            spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(0.7);
+            //no outliers
+            spec.getRegArimaSpecification().getOutliers().reset();
 
             //transform
             spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
@@ -399,28 +455,31 @@ public class WinX12SpecSeparator {
     /**
      * ***************************************************************************
      */
-    public void read_acceptdefault(SpecificationPart partName, String content) {
+    private void read_acceptdefault(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toUpperCase();
 
+        if (!automdlDefault) {
+            setAUTOMDLDefaults();
+        }
         switch (content) {
             case "YES":
-                setPreprocessor();
+
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(true);
                 break;
             case "NO":
-                setPreprocessor();
+
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
                 break;
             default:
                 errors.add(partName + ": Wrong value for acceptdefault");
                 break;
         }
+
     }
 
-    public void read_adjust(SpecificationPart partName, String content) {
+    private void read_adjust(SpecificationPart partName, String content) {
 
-        setPreprocessor();
         content = content.replaceAll(";", "").trim();
 
         switch (content.toUpperCase()) {
@@ -441,19 +500,22 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_aicdiff(SpecificationPart partName, String content) {
+    private void read_aicdiff(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
         try {
             double value = Double.parseDouble(content);
-            setPreprocessor();
+
+            if (!automdlDefault) {
+                setAUTOMDLDefaults();
+            }
             spec.getRegArimaSpecification().getTransform().setAICDiff(value);
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong Format for " + content + " in aicdiff");
         }
     }
 
-    public void read_ar(SpecificationPart partName, String content) {
+    private void read_ar(SpecificationPart partName, String content) {
 
         /*  assigned String
          *   case 1: (x, ..., y);
@@ -463,7 +525,6 @@ public class WinX12SpecSeparator {
          *   x, y with or without 'f'
          */
 //        1. Delete all unnecassary letters
-        setPreprocessor();
         content = content.replaceAll(";", "");
         String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
         s = s.toLowerCase();
@@ -556,9 +617,12 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_armalimit(SpecificationPart partName, String content) {
+    private void read_armalimit(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!automdlDefault) {
+            setAUTOMDLDefaults();
+        }
+
         content = content.replaceAll(";", "").trim();
 
         try {
@@ -571,9 +635,11 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_balanced(SpecificationPart partName, String content) {
+    private void read_balanced(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!automdlDefault) {
+            setAUTOMDLDefaults();
+        }
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -589,9 +655,11 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_checkmu(SpecificationPart partName, String content) {
+    private void read_checkmu(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!automdlDefault) {
+            setAUTOMDLDefaults();
+        }
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -607,9 +675,12 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_critical(SpecificationPart partName, String content) {
+    private void read_critical(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!outlierDefaults) {
+            setOUTLIERDefaults();
+        }
+
         content = content.replaceAll(";", "").trim();
 
         String[] s = content.replaceAll("\\(", "").replaceAll("\\)", "").split(",");
@@ -637,7 +708,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_data(SpecificationPart partName, String content) {
+    private void read_data(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] split = content.split("\\s+");
@@ -668,11 +739,11 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_format(SpecificationPart partName, String content) {
+    private void read_format(SpecificationPart partName, String content) {
         errors.add(partName + ": Format isn't supported");
     }
 
-    public void read_file(SpecificationPart partName, String content) {
+    private void read_file(SpecificationPart partName, String content) {
         /*
          Load data from a file
          possible endings are .dat or .ser or .rgr
@@ -819,9 +890,8 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_function(SpecificationPart partName, String content) {
+    private void read_function(SpecificationPart partName, String content) {
 
-        setPreprocessor();
         content = content.replaceAll(";", "").trim();
 
         switch (content.toUpperCase()) {
@@ -847,9 +917,11 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_hrinitial(SpecificationPart partName, String content) {
+    private void read_hrinitial(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!automdlDefault) {
+            setAUTOMDLDefaults();
+        }
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -865,32 +937,38 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_ljungboxlimit(SpecificationPart partName, String content) {
+    private void read_ljungboxlimit(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
         try {
             double value = Double.parseDouble(content);
-            setPreprocessor();
+
+            if (!automdlDefault) {
+                setAUTOMDLDefaults();
+            }
             spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(value);
         } catch (NumberFormatException ex) {
             errors.add(partName + ": Wrong format for ljungboxlimit");
         }
     }
 
-    public void read_lsrun(SpecificationPart partName, String content) {
+    private void read_lsrun(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
         try {
             int value = Integer.parseInt(content);
-            setPreprocessor();
+
+            if (!outlierDefaults) {
+                setOUTLIERDefaults();
+            }
             spec.getRegArimaSpecification().getOutliers().setLSRun(value);
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong format for lsrun");
         }
     }
 
-    public void read_ma(SpecificationPart partName, String content) {
+    private void read_ma(SpecificationPart partName, String content) {
         /*  assigned String
          *   case 1: (x, ..., y);
          *   case 2: (, x);
@@ -898,7 +976,7 @@ public class WinX12SpecSeparator {
          *
          *   x, y with or without 'f'
          */
-        setPreprocessor();
+
 //        1. Delete all unnecassary letters
         content = content.replaceAll(";", "");
         String s = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
@@ -992,7 +1070,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_maxlead(SpecificationPart partName, String content) {
+    private void read_maxlead(SpecificationPart partName, String content) {
 
         content = content.trim();
 
@@ -1013,9 +1091,12 @@ public class WinX12SpecSeparator {
 
     }
 
-    public void read_method(SpecificationPart partName, String content) {
+    private void read_method(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!outlierDefaults) {
+            setOUTLIERDefaults();
+        }
+
         content = content.replaceAll(";", "").trim();
         switch (content.toUpperCase()) {
             case "ADDONE":
@@ -1031,9 +1112,11 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_mixed(SpecificationPart partName, String content) {
+    private void read_mixed(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!automdlDefault) {
+            setAUTOMDLDefaults();
+        }
         content = content.replaceAll(";", "").trim().toUpperCase();
 
         switch (content) {
@@ -1049,7 +1132,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_mode(SpecificationPart partName, String content) {
+    private void read_mode(SpecificationPart partName, String content) {
 
         /*
          *   Select the correct DecompositionMode for JD+
@@ -1096,7 +1179,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_model(SpecificationPart partName, String content) {
+    private void read_model(SpecificationPart partName, String content) {
 
         /*  assigned String
          *   case 1: "(p d q)(P D Q)delta;"
@@ -1107,8 +1190,14 @@ public class WinX12SpecSeparator {
          *  p,q are integers or [x ... z]
          *  delta is an integer (12 for months, 4 for quater year, ...)
          */
-        setPreprocessor();
         spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
+        //important if one Arima part is not specified
+        spec.getRegArimaSpecification().getArima().setP(0);
+        spec.getRegArimaSpecification().getArima().setD(0);
+        spec.getRegArimaSpecification().getArima().setQ(0);
+        spec.getRegArimaSpecification().getArima().setBP(0);
+        spec.getRegArimaSpecification().getArima().setBD(0);
+        spec.getRegArimaSpecification().getArima().setBQ(0);
 
         //1. Split on ")(" with or without spaces
         content = content.replaceAll(";", "").trim();
@@ -1266,13 +1355,13 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_modelspan(SpecificationPart partName, String content) {
+    private void read_modelspan(SpecificationPart partName, String content) {
 
         read_span(SpecificationPart.ESTIMATE, content);
 
     }
 
-    public void read_name(SpecificationPart partName, String content) {
+    private void read_name(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
         switch (partName) {
@@ -1286,7 +1375,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_period(SpecificationPart partName, String content) {
+    private void read_period(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
         try {
@@ -1343,14 +1432,14 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_power(SpecificationPart partName, String content) {
+    private void read_power(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
         try {
             double value = Double.parseDouble(content);
             if (value == 0.0) {
-                setPreprocessor();
+
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
             }
         } catch (NumberFormatException e) {
@@ -1358,13 +1447,16 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_reducecv(SpecificationPart partName, String content) {
+    private void read_reducecv(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
         try {
             double value = Double.parseDouble(content);
-            setPreprocessor();
+
+            if (!automdlDefault) {
+                setAUTOMDLDefaults();
+            }
             spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(value);
         } catch (NumberFormatException ex) {
             errors.add(partName + ": Wrong format for reducecv");
@@ -1373,7 +1465,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_seasonalma(SpecificationPart partName, String content) {
+    private void read_seasonalma(SpecificationPart partName, String content) {
 
         /*
          *   Select the correct seasonal filters for JD+
@@ -1431,7 +1523,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_sigmalim(SpecificationPart partName, String content) {
+    private void read_sigmalim(SpecificationPart partName, String content) {
 
         /* 
          *    Selects the values for lower and upper sigma
@@ -1474,7 +1566,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_span(SpecificationPart partName, String content) {
+    private void read_span(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
         String s = content.replaceAll("\\(", " ");
@@ -1508,11 +1600,14 @@ public class WinX12SpecSeparator {
 
             switch (partName.toString().toUpperCase()) {
                 case "OUTLIERS":
-                    setPreprocessor();
+
+                    if (!outlierDefaults) {
+                        setOUTLIERDefaults();
+                    }
                     spec.getRegArimaSpecification().getOutliers().setSpan(p);
                     break;
                 case "ESTIMATE":
-                    setPreprocessor();
+
                     spec.getRegArimaSpecification().getEstimate().setSpan(p);
                     break;
                 case "SERIES":
@@ -1528,7 +1623,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_start(SpecificationPart partName, String content) {
+    private void read_start(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
@@ -1552,31 +1647,30 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_tcrate(SpecificationPart partName, String content) {
+    private void read_tcrate(SpecificationPart partName, String content) {
 
         String s = content.replaceAll(";", "").trim();
         try {
             double value = Double.parseDouble(s);
-            setPreprocessor();
+
             spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(value);
         } catch (NumberFormatException e) {
             errors.add(partName + ": Wrong format for tcrate");
         }
     }
 
-    public void read_title(SpecificationPart partName, String content) {
+    private void read_title(SpecificationPart partName, String content) {
 //        if (partName == SpecificationPart.SERIES) {
 //            tsName = content.replaceAll(";", "").trim();
 //        }
     }
 
-    public void read_tol(SpecificationPart partName, String content) {
+    private void read_tol(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim();
 
         try {
             double value = Double.parseDouble(content);
-            setPreprocessor();
             spec.getRegArimaSpecification().getEstimate().setTol(value);
         } catch (NumberFormatException ex) {
             errors.add(partName + ": Wrong format for tol");
@@ -1585,7 +1679,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_trendma(SpecificationPart partName, String content) {
+    private void read_trendma(SpecificationPart partName, String content) {
 
         /*
          *   Set the correct length of Hendersonfilter for JD+
@@ -1600,9 +1694,12 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_types(SpecificationPart partName, String content) {
+    private void read_types(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!outlierDefaults) {
+            setOUTLIERDefaults();
+        }
+
         spec.getRegArimaSpecification().getOutliers().clearTypes();
 
         String s = content.replaceAll(";", "").trim();
@@ -1650,9 +1747,11 @@ public class WinX12SpecSeparator {
 
     }
 
-    public void read_urfinal(SpecificationPart partName, String content) {
+    private void read_urfinal(SpecificationPart partName, String content) {
 
-        setPreprocessor();
+        if (!automdlDefault) {
+            setAUTOMDLDefaults();
+        }
         content = content.replaceAll(";", "").trim();
 
         try {
@@ -1665,7 +1764,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_user(SpecificationPart partName, String content) {
+    private void read_user(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] regressors = content.split("\\s+");
@@ -1681,7 +1780,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_usertype(SpecificationPart partName, String content) {
+    private void read_usertype(SpecificationPart partName, String content) {
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] regressors = content.split("\\s+");
         if (regressors.length > 1) {
@@ -1705,26 +1804,123 @@ public class WinX12SpecSeparator {
 
     }
 
+    private void read_variables(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        String[] variables = content.split("\\s+");
+        //problem sincos
+
+        String method;
+        String assign;
+        for (String var : variables) {
+
+            var = var.trim();
+            if (var.contains("[")) {
+                //easter
+                method = "do_" + var.substring(0, var.indexOf("[")).trim().toLowerCase();
+                assign = var.substring(var.indexOf("[") + 1, var.indexOf("]")).trim();
+
+            } else if (var.length() > 2 && (var.charAt(2) == '1' || var.charAt(2) == '2')) {
+                //outlier oder ramp
+
+                method = "do_" + var.substring(0, 2).toLowerCase();
+                assign = var.substring(2);
+
+            } else {
+                //const oder td
+                method = "do_" + var.toLowerCase();
+                assign = null;
+            }
+            try {
+                //5. try to invoke the method for the argument
+                Method m = this.getClass().getDeclaredMethod(method.toString().toLowerCase(), SpecificationPart.class, String.class);
+                m.setAccessible(true);
+                m.invoke(this, partName, assign);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+                errors.add(partName.name() + ": ");
+            }
+
+            //dynamisch mit method und string, exception handling
+        }
+    }
+
+    /*methods for variables*/
+    private void do_const(SpecificationPart partName, String content) {
+
+        spec.getRegArimaSpecification().getArima().setMean(true);
+    }
+
+    private void do_td(SpecificationPart partName, String content) {
+
+        TradingDaysSpec td = spec.getRegArimaSpecification().getRegression().getTradingDays();
+        td.setAutoAdjust(true);
+        td.setTradingDaysType(TradingDaysType.TradingDays);
+        td.setTest(RegressionTestSpec.None);
+        td.setHolidays(null);
+        td.setUserVariables(null);
+    }
+
+    private void do_easter(SpecificationPart partName, String content) {
+
+        spec.getRegArimaSpecification().getRegression().getEaster().setType(MovingHolidaySpec.Type.Easter);
+        spec.getRegArimaSpecification().getRegression().getEaster().setTest(RegressionTestSpec.None);
+        int w = Integer.parseInt(content);//abfangen
+        spec.getRegArimaSpecification().getRegression().getEaster().setW(w);
+    }
+
+    private void do_ao(SpecificationPart partName, String content) {
+
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.AO, true);
+        spec.getRegArimaSpecification().getRegression().add(o);
+    }
+
+    private void do_ls(SpecificationPart partName, String content) {
+
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.LS, true);
+        spec.getRegArimaSpecification().getRegression().add(o);
+    }
+
+    private void do_tc(SpecificationPart partName, String content) {
+
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.TC, true);
+        spec.getRegArimaSpecification().getRegression().add(o);
+    }
+
+    private void do_so(SpecificationPart partName, String content) {
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.SO, true);
+        spec.getRegArimaSpecification().getRegression().add(o);
+
+    }
+
+    private void do_rp(SpecificationPart partName, String content) {
+
+        String [] ramps = content.split("-");
+        Day start = calcDay(partName, ramps[0].trim());
+        Day end = calcDay(partName, ramps[1].trim());
+        
+        spec.getRegArimaSpecification().getRegression().add(new Ramp(start, end));
+    }
+
     /*
      * empty methods
      *
      *   argument is not supported, but it is not an error
      */
-    public void read_decimals(SpecificationPart partName, String content) {
+    private void read_decimals(SpecificationPart partName, String content) {
     }
 
-    public void read_precision(SpecificationPart partName, String content) {
+    private void read_precision(SpecificationPart partName, String content) {
     }
 
-    public void read_print(SpecificationPart partName, String content) {
+    private void read_print(SpecificationPart partName, String content) {
     }
 
-    public void read_save(SpecificationPart partName, String content) {
+    private void read_save(SpecificationPart partName, String content) {
     }
 
-    public void read_savelog(SpecificationPart partName, String content) {
+    private void read_savelog(SpecificationPart partName, String content) {
     }
 
-    public void read_type(SpecificationPart partName, String content) {
+    private void read_type(SpecificationPart partName, String content) {
     }
 }

@@ -18,6 +18,7 @@ import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
+import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.timeseries.regression.TsVariables;
 
 /**
@@ -182,8 +183,13 @@ public class SpecCollector {
                         wsVariables.setIdentifier("reg_" + name);
                         wsVariables.setDisplayName("reg_" + name);
                         wsVariables.getElement().set(regName, regressor);
-
                     }
+//                      show in window
+                    TsVariableDescriptor userVar = new TsVariableDescriptor();
+                    userVar.setName("reg_" + name + "." + regName);
+                    userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+                    ((X13Specification) jdSpec.getSpecification()).getRegArimaSpecification().getRegression().add(userVar);
+
                 }
 
                 refreshWS();
