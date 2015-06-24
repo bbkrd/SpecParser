@@ -46,6 +46,7 @@
         <module>nbdemetra-anomalydetection</module>
         <module>nbdemetra-sa-ext</module>
         <module>nbdemetra-chainlinking</module>
+        <module>SpecParser</module>
     </modules>
 
     <dependencyManagement>
