@@ -5,8 +5,7 @@
  */
 package Logic;
 
-import ec.satoolkit.x11.SeasonalFilterOption;
-import ec.satoolkit.x11.X11Specification;
+import ec.satoolkit.x11.*;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
@@ -16,22 +15,10 @@ import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.TsVariableDescriptor.UserComponentType;
-import ec.tstoolkit.modelling.arima.x13.ArimaSpec;
-import ec.tstoolkit.modelling.arima.x13.AutoModelSpec;
-import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec;
+import ec.tstoolkit.modelling.arima.x13.*;
 import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec.Type;
-import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
-import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
-import ec.tstoolkit.modelling.arima.x13.RegressionSpec;
-import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
-import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
-import ec.tstoolkit.modelling.arima.x13.TransformSpec;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
-import ec.tstoolkit.timeseries.calendars.TradingDaysType;
-import ec.tstoolkit.timeseries.regression.ITsVariable;
-import ec.tstoolkit.timeseries.regression.OutlierDefinition;
-import ec.tstoolkit.timeseries.regression.Ramp;
-import ec.tstoolkit.timeseries.regression.TsVariables;
+import ec.tstoolkit.timeseries.regression.*;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
@@ -955,8 +942,107 @@ public class JDSpecSeparator {
         //4) sigmalim
         x11Result.put("sigmalim", "(" + x11.getLowerSigma() + " , " + x11.getUpperSigma() + " )");
 
+        //5) Calendarsigma
+        switch (x11.getCalendarSigma()) {
+            case All:
+                x11Result.put("calendarsigma", "all");
+                break;
+            case Select:
+                x11Result.put("calendarsigma", "select");
+                x11Result.put("sigmavec", "( " + do_sigmavec() + ")");
+                break;
+            case Signif:
+                x11Result.put("calendarsigma", "signif");
+                break;
+            case None:
+                x11Result.put("calendarsigma", "none");
+            default:
+                break;
+        }
         result.put(SpecificationPart.X11, x11Result);
+    }
 
+    private String do_sigmavec() {
+        
+        StringBuilder sb = new StringBuilder("");
+        SigmavecOption[] s = spec.getX11Specification().getSigmavec();
+        
+        if (s == null) {
+            //defaut setting: Group1 for all 
+            s = new SigmavecOption[ts.getTsData().getFrequency().intValue()];
+            for (int i = 0; i < ts.getTsData().getFrequency().intValue(); i++) {
+                s[i]=SigmavecOption.Group1;
+            }
+        }
+        for (int i = 0; i < s.length; i++) {
+            switch (s[i]) {
+                case Group1:
+
+                    switch (i) {
+                        case 0:
+                            if (s.length == 4) {
+                                sb.append("q1 ");
+                            } else {
+                                sb.append("jan ");
+                            }
+                            break;
+                        case 1:
+                            if (s.length == 4) {
+                                sb.append("q2 ");
+                            } else {
+                                sb.append("feb ");
+                            }
+                            break;
+                        case 2:
+                            if (s.length == 4) {
+                                sb.append("q3 ");
+                            } else {
+                                sb.append("mar ");
+                            }
+                            break;
+                        case 3:
+                            if (s.length == 4) {
+                                sb.append("q4 ");
+                            } else {
+                                sb.append("apr ");
+                            }
+                            break;
+                        case 4:
+                            sb.append("may ");
+                            break;
+                        case 5:
+                            sb.append("jun ");
+
+                            break;
+                        case 6:
+                            sb.append("jul ");
+                            break;
+                        case 7:
+                            sb.append("aug ");
+                            break;
+                        case 8:
+                            sb.append("sep ");
+                            break;
+                        case 9:
+                            sb.append("oct ");
+                            break;
+                        case 10:
+                            sb.append("nov ");
+                            break;
+                        case 11:
+                            sb.append("dec ");
+                            break;
+                        default: //iwie Fehler aufgetrten
+                        }
+
+                    break;
+                case Group2:
+                    break;
+                default:
+                    break;
+            }
+        }
+        return sb.toString();
     }
 
     public String getResult() {

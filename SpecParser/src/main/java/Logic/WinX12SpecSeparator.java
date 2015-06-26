@@ -7,7 +7,10 @@ package Logic;
 
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
 import ec.satoolkit.DecompositionMode;
+import ec.satoolkit.x11.CalendarSigma;
 import ec.satoolkit.x11.SeasonalFilterOption;
+import ec.satoolkit.x11.SigmavecOption;
+import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
@@ -19,30 +22,19 @@ import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.modelling.DefaultTransformationType;
 import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
-import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec;
-import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
-import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
-import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
-import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
-import ec.tstoolkit.modelling.arima.x13.X13Exception;
+import ec.tstoolkit.modelling.arima.x13.*;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.Month;
 import ec.tstoolkit.timeseries.PeriodSelectorType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.calendars.TradingDaysType;
-import ec.tstoolkit.timeseries.regression.OutlierDefinition;
-import ec.tstoolkit.timeseries.regression.OutlierType;
-import ec.tstoolkit.timeseries.regression.Ramp;
+import ec.tstoolkit.timeseries.regression.*;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsDomain;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -85,6 +77,7 @@ public class WinX12SpecSeparator {
     private boolean onlyX11 = true;
     private boolean outlierDefaults = false;
     private boolean automdlDefault = false;
+    private boolean calendarsigmaSelect = false;
 
     public WinX12SpecSeparator() {
 //        setDefaults();
@@ -653,6 +646,30 @@ public class WinX12SpecSeparator {
                 errors.add(partName + ": Wrong value for balanced");
                 break;
         }
+    }
+
+    private void read_calendarsigma(SpecificationPart partName, String content) {
+
+        X11Specification x11 = spec.getX11Specification();
+        content = content.replaceAll(";", "").trim().toUpperCase();
+        switch (content) {
+            case "ALL":
+                x11.setCalendarSigma(CalendarSigma.All);
+                break;
+            case "SELECT":
+                x11.setCalendarSigma(CalendarSigma.Select);
+                calendarsigmaSelect = true;
+                break;
+            case "SIGNIF":
+                x11.setCalendarSigma(CalendarSigma.Signif);
+                break;
+            default:
+                System.out.println(partName + ": This argument for calendarsigma is not possible. Calendarsigma will be set to None.");
+            case "NONE":
+                x11.setCalendarSigma(CalendarSigma.None);
+                break;
+        }
+
     }
 
     private void read_checkmu(SpecificationPart partName, String content) {
@@ -1421,6 +1438,14 @@ public class WinX12SpecSeparator {
                         }
                         spec.getRegArimaSpecification().getEstimate().setSpan(sel);
                     }
+//                    //change sigmavec
+                    //not relevant because it is not in SERIES
+//                    if (calendarsigmaSelect) {
+//                        SigmavecOption[] quarter = new SigmavecOption[4];
+//                        //the first four arguments in the array are important, the rest is rubbish (default values because of the period length of monthly)
+//                        System.arraycopy(spec.getX11Specification().getSigmavec(), 0, quarter, 0, 4);
+//                        spec.getX11Specification().setSigmavec(quarter);
+//                    }
 
                     break;
                 default:
@@ -1564,6 +1589,60 @@ public class WinX12SpecSeparator {
         } catch (NumberFormatException e) {
             errors.add(partName + ": " + content + " is no correct format for the sigma argument");
         }
+    }
+
+    private void read_sigmavec(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+        String s = content.replaceAll("\\(", " ");
+        s = s.replaceAll("\\)", " ").toLowerCase();
+
+        if (calendarsigmaSelect) {
+            SigmavecOption[] vec = new SigmavecOption[period.intValue()];
+            
+            //Default setting
+            for(int i = 0; i<vec.length; i++){
+                vec[i]=SigmavecOption.Group2;
+            }
+
+            if (s.contains("jan") || s.contains("q1")) {
+                vec[0] = SigmavecOption.Group1;
+            }
+            if (s.contains("feb") || s.contains("q2")) {
+                vec[1] = SigmavecOption.Group1;
+            } 
+            if (s.contains("mar") || s.contains("q3")) {
+                vec[2] = SigmavecOption.Group1;
+            } 
+            if (s.contains("apr") || s.contains("q4")) {
+                vec[3] = SigmavecOption.Group1;
+            } 
+            if (s.contains("may")) {
+                vec[4] = SigmavecOption.Group1;
+            } 
+            if (s.contains("jun")) {
+                vec[5] = SigmavecOption.Group1;
+            } 
+            if (s.contains("jul")) {
+                vec[6] = SigmavecOption.Group1;
+            } 
+            if (s.contains("aug")) {
+                vec[7] = SigmavecOption.Group1;
+            }
+            if (s.contains("sep")) {
+                vec[8] = SigmavecOption.Group1;
+            } 
+            if (s.contains("oct")) {
+                vec[9] = SigmavecOption.Group1;
+            }
+            if (s.contains("nov")) {
+                vec[10] = SigmavecOption.Group1;
+            } 
+            if (s.contains("dec")) {
+                vec[11] = SigmavecOption.Group1;
+            } 
+            spec.getX11Specification().setSigmavec(vec);
+        }//else: sigmavec are not allowed to set
     }
 
     private void read_span(SpecificationPart partName, String content) {
@@ -1870,34 +1949,34 @@ public class WinX12SpecSeparator {
 
     private void do_ao(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.AO, true);
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.AO, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_ls(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.LS, true);
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.LS, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_tc(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.TC, true);
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.TC, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_so(SpecificationPart partName, String content) {
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName,content), OutlierType.SO, true);
+        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.SO, true);
         spec.getRegArimaSpecification().getRegression().add(o);
 
     }
 
     private void do_rp(SpecificationPart partName, String content) {
 
-        String [] ramps = content.split("-");
+        String[] ramps = content.split("-");
         Day start = calcDay(partName, ramps[0].trim());
         Day end = calcDay(partName, ramps[1].trim());
-        
+
         spec.getRegArimaSpecification().getRegression().add(new Ramp(start, end));
     }
 
