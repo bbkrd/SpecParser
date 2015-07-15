@@ -15,10 +15,10 @@ import javax.swing.filechooser.FileFilter;
  */
 public class MyFilter extends FileFilter {
 
-        private String endung;
+        private String extension;
 
         public MyFilter(String endung) {
-            this.endung = endung;
+            this.extension = endung;
         }
 
         @Override
@@ -33,11 +33,11 @@ public class MyFilter extends FileFilter {
             }
 
             // true, wenn File gewuenschte Endung besitzt
-            return f.getName().toLowerCase().endsWith(endung);
+            return f.getName().toLowerCase().endsWith(extension);
         }
 
         @Override
         public String getDescription() {
-            return "*" + endung;
+            return "*" + extension;
         }
     }

@@ -5,7 +5,9 @@
  */
 package Logic;
 
-import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
+import WriteAndRead.DataLoaderRegression;
+import WriteAndRead.DataLoader;
+import eu.nbdemetra.specParser.Miscellaneous.*;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.CalendarSigma;
 import ec.satoolkit.x11.SeasonalFilterOption;
@@ -18,22 +20,17 @@ import ec.tss.TsFactory;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
-import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.modelling.DefaultTransformationType;
 import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.arima.x13.*;
 import ec.tstoolkit.timeseries.Day;
-import ec.tstoolkit.timeseries.Month;
 import ec.tstoolkit.timeseries.PeriodSelectorType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.calendars.TradingDaysType;
 import ec.tstoolkit.timeseries.regression.*;
-import ec.tstoolkit.timeseries.simplets.TsData;
-import ec.tstoolkit.timeseries.simplets.TsDomain;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
-import ec.tstoolkit.timeseries.simplets.TsPeriod;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -55,15 +52,12 @@ public class WinX12SpecSeparator {
     private ArrayList<String> messages = new ArrayList();
 
     //no equivalence in a JD+ spec item, this information is given in Ts
-    private TsFrequency period = TsFrequency.Monthly;
-    private Day tsStart = new Day(1970, Month.January, 0);
-    private TsData tsData;
+    //for timeseries
+    private DataLoader dataLoader = new DataLoader();
     private String tsName = null;
-
-//    regressin variables
-    private String regressorName = null;
-    private DynamicTsVariable regressor = null;
-    private Day regressorStart = null;
+    //for regression variables
+    private DataLoaderRegression regressionLoader = new DataLoaderRegression();
+    private String[] regressionTyp;
 
     //nessecary for File loading
     private String path;
@@ -138,19 +132,16 @@ public class WinX12SpecSeparator {
     }
 
     public Ts getTs() {
-        return TsFactory.instance.createTs(tsName, null, tsData);
+        return TsFactory.instance.createTs(tsName, null, dataLoader.getData());
     }
 
-    public String getRegressorName() {
-        return regressorName;
+    public String[] getRegressorName() {
+        return regressionLoader.getRegressorName();
     }
 
-    public DynamicTsVariable getRegressor() {
-        return regressor;
+    public TsVariable[] getRegressor() {
+        return regressionLoader.getRegressors();
     }
-//    public TsVariables getRegressor() {
-//        return regressor;
-//    }
 
     public void buildSpec(String winX13Text) {
 
@@ -264,6 +255,34 @@ public class WinX12SpecSeparator {
             }
             noArgument = false;
         }
+        //if regression user defined variables are in the spec
+        if (regressionTyp != null) {
+            ArrayList<String> td = new ArrayList();
+            ArrayList<TsVariableDescriptor> user = new ArrayList();
+            String[] regNames = regressionLoader.getRegressorName();
+       
+            for (int i = 0; i < regressionTyp.length; i++) {
+                switch (regressionTyp[i]) {
+                    case "TD":
+                        td.add("reg_" + tsName + "." +regNames[i]);
+                        break;
+                    case "USER":       
+                        TsVariableDescriptor userVar = new TsVariableDescriptor();
+                         userVar.setName("reg_" + tsName + "." + regNames[i]);
+                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+                        user.add(userVar);
+                        break;
+                    default: //darf eig nicht auftreten 
+                        break;
+                }
+            }
+            if (!td.isEmpty()) {
+                spec.getRegArimaSpecification().getRegression().getTradingDays().setUserVariables(td.toArray(new String[0]));
+            }
+            if (!user.isEmpty()) {
+                spec.getRegArimaSpecification().getRegression().setUserDefinedVariables(user.toArray(new TsVariableDescriptor[0]));
+            }
+        }
     }
 
     private void setDefaults() {
@@ -311,143 +330,6 @@ public class WinX12SpecSeparator {
         }
     }
 
-    private Day calcDay(SpecificationPart partName, String day) {
-
-        String[] split = day.split("\\.");
-
-        int year = Integer.parseInt(split[0].trim());
-        Day erg = new Day(1970, Month.January, 0);
-
-        switch (period) {
-            case Monthly:
-                switch (split[1].trim().toUpperCase()) {
-                    case "JAN":
-                    case "01":
-                    case "1":
-                        erg = new Day(year, Month.January, 0);
-                        break;
-                    case "FEB":
-                    case "02":
-                    case "2":
-                        erg = new Day(year, Month.February, 0);
-                        break;
-                    case "MAR":
-                    case "03":
-                    case "3":
-                        erg = new Day(year, Month.March, 0);
-                        break;
-                    case "APR":
-                    case "04":
-                    case "4":
-                        erg = new Day(year, Month.April, 0);
-                        break;
-                    case "MAY":
-                    case "05":
-                    case "5":
-                        erg = new Day(year, Month.May, 0);
-                        break;
-                    case "JUN":
-                    case "06":
-                    case "6":
-                        erg = new Day(year, Month.June, 0);
-                        break;
-                    case "JUL":
-                    case "07":
-                    case "7":
-                        erg = new Day(year, Month.July, 0);
-                        break;
-                    case "AUG":
-                    case "08":
-                    case "8":
-                        erg = new Day(year, Month.August, 0);
-                        break;
-                    case "SEP":
-                    case "09":
-                    case "9":
-                        erg = new Day(year, Month.September, 0);
-                        break;
-                    case "OCT":
-                    case "10":
-                        erg = new Day(year, Month.October, 0);
-                        break;
-                    case "NOV":
-                    case "11":
-                        erg = new Day(year, Month.November, 0);
-                        break;
-                    case "DEC":
-                    case "12":
-                        erg = new Day(year, Month.December, 0);
-                        break;
-                    default:
-                        errors.add(partName + ": Date format is not correct");
-                        break;
-                }
-                break;
-            case Quarterly:
-                switch (split[1].trim().toUpperCase()) {
-                    case "01":
-                    case "1":
-                        erg = new Day(year, Month.January, 0);
-                        break;
-                    case "02":
-                    case "2":
-                        erg = new Day(year, Month.April, 0);
-                        break;
-                    case "03":
-                    case "3":
-                        erg = new Day(year, Month.July, 0);
-                        break;
-                    case "04":
-                    case "4":
-                        erg = new Day(year, Month.October, 0);
-                        break;
-                    default:
-                        errors.add(partName + ": Date format is not correct");
-                        break;
-                }
-        }
-        return erg;
-    }
-
-    private Day toQuarterDay(Day month, String part, String detail) {
-
-        int quarter = month.getMonth();
-        Day erg;
-
-        switch (quarter) {
-            //Recalculation from month to quarter
-            //i.e. the third quarter is defined, calculate to march and than to the beginning of the third quarter
-            //1970.3 -> 1970-03-01 -> month=2 -> 1970-07-01
-            case 0:
-                //yyyy.1
-                erg = new Day(month.getYear(), Month.January, 0);
-                break;
-            case 1:
-                //yyyy.2
-                erg = new Day(month.getYear(), Month.April, 0);
-                break;
-            case 2:
-                //yyyy.3
-                erg = new Day(month.getYear(), Month.July, 0);
-                break;
-            case 3:
-                //yyyy.4
-                erg = new Day(month.getYear(), Month.October, 0);
-                break;
-            default:
-                errors.add(part + ": " + detail + " format is not valid");
-                erg = month;
-                break;
-        }
-        return erg;
-    }
-
-    /* The following methods have to be public, 
-     because the invoke procedure doesn't work with private. */
-    /*methods for each argument*/
-    /**
-     * ***************************************************************************
-     */
     private void read_acceptdefault(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toUpperCase();
@@ -457,11 +339,9 @@ public class WinX12SpecSeparator {
         }
         switch (content) {
             case "YES":
-
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(true);
                 break;
             case "NO":
-
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
                 break;
             default:
@@ -671,6 +551,15 @@ public class WinX12SpecSeparator {
         }
 
     }
+    
+     private void read_centeruser(SpecificationPart partName, String content) {
+     
+         content = content.replaceAll(";", "").trim().toUpperCase();
+         if(content.equals("SEASONAL")){
+             errors.add(partName+": Please use the Plugin centeruser=seasonal");
+         }
+     }
+     
 
     private void read_checkmu(SpecificationPart partName, String content) {
 
@@ -728,27 +617,16 @@ public class WinX12SpecSeparator {
     private void read_data(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
-        String[] split = content.split("\\s+");
-
-        double[] values = new double[split.length];
-        for (int i = 0; i < split.length; i++) {
-            values[i] = Double.parseDouble(split[i]);
-        }
 
         switch (partName) {
             case SERIES:
-                tsData = new TsData(new TsPeriod(period, tsStart), values, false);
+                dataLoader.load(content);
                 break;
             case REGRESSION:
-                if (regressorStart == null) {
-                    regressorStart = tsStart;
+                regressionLoader.load(content);
+                if (regressionTyp == null) {
+                    regressionTyp = new String[]{"TD"};
                 }
-                ArrayList<DataBlock> list = new ArrayList();
-                list.add(new DataBlock(values));
-
-                TsDomain domain = new TsDomain(period, regressorStart.getYear(), regressorStart.getMonth(), values.length);
-                regressor = new DynamicTsVariable(regressorName, null, new TsData(domain));
-                regressor.data(domain, list);
                 break;
             default: //Fehler
                 errors.add(partName + ": To load data is not implemented");
@@ -757,7 +635,7 @@ public class WinX12SpecSeparator {
     }
 
     private void read_format(SpecificationPart partName, String content) {
-        errors.add(partName + ": Format isn't supported");
+        messages.add(partName + ": Format is ignored. Please have a look in SpecParser UserGuide");
     }
 
     private void read_file(SpecificationPart partName, String content) {
@@ -768,9 +646,6 @@ public class WinX12SpecSeparator {
 
         //delete this letters: ; and ' and "
         content = content.replaceAll("[;'\"]", "").trim();
-        ArrayList<String> v = new ArrayList();
-        double[] values;
-
         File file;
         if (!content.contains("\\")) {
             file = new File((path + content));
@@ -778,131 +653,15 @@ public class WinX12SpecSeparator {
             file = new File(content);
         }
 
-        String end = content.substring(content.length() - 3, content.length());
-        switch (end.toLowerCase()) {
-            case "ser":
-                try {
-                    FileReader f = new FileReader(file);
-
-                    try (BufferedReader br = new BufferedReader(f)) {
-                        String zeile;
-                        while ((zeile = br.readLine()) != null) {
-                            zeile = zeile.trim();
-                            if (!zeile.isEmpty()) {
-                                v.add(zeile);
-                            }
-                        }
-                        values = new double[v.size()];
-
-                        for (int i = 0; i < v.size(); i++) {
-                            values[i] = Double.parseDouble(v.get(i));
-                        }
-                        if (partName == SpecificationPart.SERIES) {
-                            tsData = new TsData(new TsPeriod(period, tsStart), values, false);
-                        } else {
-                            errors.add(partName + ": To load data is not possible");
-                        }
-                    }
-
-                } catch (FileNotFoundException ex) {
-                    errors.add(partName + ": File " + content + " not found");
-                } catch (IOException ex) {
-                    errors.add(partName + ": Error loading file");
-                }
+        switch (partName) {
+            case SERIES:
+                dataLoader.load(file);
                 break;
-
-            case "dat":
-                try {
-                    FileReader f = new FileReader(file);
-
-                    try (BufferedReader br = new BufferedReader(f)) {
-                        String zeile;
-                        String[] split;
-                        int periode = 0;
-                        int year = 10000; //
-
-                        while ((zeile = br.readLine()) != null) {
-                            zeile = zeile.trim();
-                            if (!zeile.isEmpty()) {
-
-                                split = zeile.split("\\s+");
-                                if (year > Integer.parseInt(split[0])) {
-                                    year = Integer.parseInt(split[0]);
-                                    tsStart = calcDay(partName, split[0] + "." + split[1]);
-                                }
-                                //calculate max period
-                                if (periode < Integer.parseInt(split[1])) {
-                                    periode = Integer.parseInt(split[1]);
-                                }
-                                //collect values
-                                v.add(split[2]);
-                            }
-                        }
-                        //set period, when it is not Monthly data
-                        if (periode <= 4) {
-                            period = TsFrequency.Quarterly;
-                        }
-
-                        //calculate values
-                        values = new double[v.size()];
-                        for (int i = 0; i < v.size(); i++) {
-                            values[i] = Double.parseDouble(v.get(i));
-                        }
-
-                        if (partName == SpecificationPart.SERIES) {
-                            tsData = new TsData(new TsPeriod(period, tsStart), values, false);
-                        } else {
-                            errors.add(partName + ": To load data is not possible");
-                        }
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                        errors.add(partName + ": Format of dat-file is not correct ");
-                    }
-
-                } catch (FileNotFoundException ex) {
-                    errors.add(partName + ": File " + content + " not found");
-                } catch (IOException ex) {
-                    errors.add(partName + ": Error loading file");
-                }
-                break;
-
-            case "rgr":
-                if (regressorStart == null) {
-                    regressorStart = tsStart;
-                }
-
-                try {
-                    FileReader f = new FileReader(file);
-
-                    try (BufferedReader br = new BufferedReader(f)) {
-                        String zeile;
-                        while ((zeile = br.readLine()) != null) {
-                            zeile = zeile.trim();
-                            if (!zeile.isEmpty()) {
-                                zeile = zeile.replaceAll("D", "E");
-                                v.add(zeile);
-                            }
-                        }
-
-                        values = new double[v.size()];
-
-                        for (int i = 0; i < v.size(); i++) {
-                            values[i] = Double.parseDouble(v.get(i));
-                        }
-
-                        if (partName == SpecificationPart.REGRESSION) {
-                            regressor = new DynamicTsVariable(regressorName, null, new TsData(period, regressorStart.getYear(), regressorStart.getMonth(), values, true));
-                        } else {
-                            errors.add(partName + ": To load data is not possible");
-                        }
-                    }
-                } catch (FileNotFoundException ex) {
-                    errors.add(partName + ": File " + content + " not found");
-                } catch (IOException ex) {
-                    errors.add(partName + ": Error loading file");
-                }
+            case REGRESSION:
+                regressionLoader.load(file);
                 break;
             default:
-                errors.add(partName + ": Loading data from file " + content + " is not possible");
+                messages.add(partName + ": To load a file is not possible");
                 break;
         }
     }
@@ -1247,8 +1006,8 @@ public class WinX12SpecSeparator {
                 }
                 if (match.length == 2) {
                     sarima = true;
-                    if (period != null) {
-                        if (!match[1].trim().equals(period.intValue() + "")) {
+                    if (dataLoader.getPeriod() != null) {
+                        if (!match[1].trim().equals(dataLoader.getPeriod().intValue() + "")) {
                             errors.add(partName + ": Periods are not conform.");
                         } //else all right
                     } else {
@@ -1383,7 +1142,7 @@ public class WinX12SpecSeparator {
         content = content.replaceAll(";", "").trim();
         switch (partName) {
             case SERIES:
-                tsName = content;
+                tsName = content.replaceAll("'", "");
                 break;
             case REGRESSION:
             default:
@@ -1399,31 +1158,29 @@ public class WinX12SpecSeparator {
             int p = Integer.parseInt(content);
             switch (p) {
                 case 12:
-                    if (period != TsFrequency.Monthly) {
-                        period = TsFrequency.Monthly;
-                    }
+                    dataLoader.setPeriod(TsFrequency.Monthly);
+                    regressionLoader.setPeriod(TsFrequency.Monthly);
                     break;
                 case 4:
                     //change period
-                    period = TsFrequency.Quarterly;
+                    dataLoader.setPeriod(TsFrequency.Quarterly);
+                    regressionLoader.setPeriod(TsFrequency.Quarterly);
 
                     //change start date
-                    tsStart = toQuarterDay(tsStart, "SERIES", "start date");
-
-                    //change data object
-                    if (tsData != null) {
-                        tsData = new TsData(new TsPeriod(period, tsStart), tsData.getValues().internalStorage(), false);
-                    }
+                    dataLoader.setStart(DateConverter.changeToQuarter(dataLoader.getStart()));
+                    regressionLoader.setStart(DateConverter.changeToQuarter(regressionLoader.getStart()));
 
                     //change span
                     TsPeriodSelector sel;
                     if (spec.getRegArimaSpecification().getBasic() != null && spec.getRegArimaSpecification().getBasic().getSpan() != null && !spec.getRegArimaSpecification().getBasic().getSpan().getType().equals(PeriodSelectorType.All)) {
                         sel = spec.getRegArimaSpecification().getBasic().getSpan();
                         if (sel.getD0() != null) {
-                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "span start date"));
+                            sel.setD0(DateConverter.changeToQuarter(sel.getD0()));
+//                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "span start date"));
                         }
                         if (sel.getD1() != null) {
-                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "span ending date"));
+                            sel.setD1(DateConverter.changeToQuarter(sel.getD1()));
+//                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "span ending date"));
                         }
                         spec.getRegArimaSpecification().getBasic().setSpan(sel);
                     }
@@ -1431,21 +1188,15 @@ public class WinX12SpecSeparator {
                     if (spec.getRegArimaSpecification().getEstimate() != null && spec.getRegArimaSpecification().getEstimate().getSpan() != null && !spec.getRegArimaSpecification().getEstimate().getSpan().getType().equals(PeriodSelectorType.All)) {
                         sel = spec.getRegArimaSpecification().getEstimate().getSpan();
                         if (sel.getD0() != null) {
-                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "modelspan start date"));
+                            sel.setD0(DateConverter.changeToQuarter(sel.getD0()));
+//                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "modelspan start date"));
                         }
                         if (sel.getD1() != null) {
-                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "model span ending date"));
+                            sel.setD1(DateConverter.changeToQuarter(sel.getD1()));
+//                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "model span ending date"));
                         }
                         spec.getRegArimaSpecification().getEstimate().setSpan(sel);
                     }
-//                    //change sigmavec
-                    //not relevant because it is not in SERIES
-//                    if (calendarsigmaSelect) {
-//                        SigmavecOption[] quarter = new SigmavecOption[4];
-//                        //the first four arguments in the array are important, the rest is rubbish (default values because of the period length of monthly)
-//                        System.arraycopy(spec.getX11Specification().getSigmavec(), 0, quarter, 0, 4);
-//                        spec.getX11Specification().setSigmavec(quarter);
-//                    }
 
                     break;
                 default:
@@ -1540,7 +1291,7 @@ public class WinX12SpecSeparator {
                 }
             }
         }
-        if (tmp.size() == 1 || tmp.size() == period.intValue()) {
+        if (tmp.size() == 1 || tmp.size() == dataLoader.getPeriod().intValue()) {
             spec.getX11Specification().setSeasonalFilters((SeasonalFilterOption[]) tmp.toArray(new SeasonalFilterOption[tmp.size()]));
         } else {
             errors.add(partName + ": Periods are not conform. Sesonal filter is set to " + tmp.get(0));
@@ -1598,11 +1349,11 @@ public class WinX12SpecSeparator {
         s = s.replaceAll("\\)", " ").toLowerCase();
 
         if (calendarsigmaSelect) {
-            SigmavecOption[] vec = new SigmavecOption[period.intValue()];
-            
+            SigmavecOption[] vec = new SigmavecOption[dataLoader.getPeriod().intValue()];
+
             //Default setting
-            for(int i = 0; i<vec.length; i++){
-                vec[i]=SigmavecOption.Group2;
+            for (int i = 0; i < vec.length; i++) {
+                vec[i] = SigmavecOption.Group2;
             }
 
             if (s.contains("jan") || s.contains("q1")) {
@@ -1610,37 +1361,37 @@ public class WinX12SpecSeparator {
             }
             if (s.contains("feb") || s.contains("q2")) {
                 vec[1] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("mar") || s.contains("q3")) {
                 vec[2] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("apr") || s.contains("q4")) {
                 vec[3] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("may")) {
                 vec[4] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("jun")) {
                 vec[5] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("jul")) {
                 vec[6] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("aug")) {
                 vec[7] = SigmavecOption.Group1;
             }
             if (s.contains("sep")) {
                 vec[8] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("oct")) {
                 vec[9] = SigmavecOption.Group1;
             }
             if (s.contains("nov")) {
                 vec[10] = SigmavecOption.Group1;
-            } 
+            }
             if (s.contains("dec")) {
                 vec[11] = SigmavecOption.Group1;
-            } 
+            }
             spec.getX11Specification().setSigmavec(vec);
         }//else: sigmavec are not allowed to set
     }
@@ -1662,18 +1413,21 @@ public class WinX12SpecSeparator {
                 } else {
                     //to
                     p.setType(PeriodSelectorType.To);
-                    p.to(calcDay(partName, split[1]));
+                    p.to(DateConverter.toJD(split[1], dataLoader.getPeriod()));
+//                    p.to(calcDay(partName, split[1]));
                 }
             } else {
                 if (split[1].replaceAll("\\s+", "").isEmpty()) {
                     //from
                     p.setType(PeriodSelectorType.From);
-                    p.from(calcDay(partName, split[0]));
+                    p.from(DateConverter.toJD(split[0], dataLoader.getPeriod()));
+//                    p.from(calcDay(partName, split[0]));
 
                 } else {
                     //between
                     p.setType(PeriodSelectorType.Between);
-                    p.between(calcDay(partName, split[0]), calcDay(partName, split[1]));
+                    p.between(DateConverter.toJD(split[0], dataLoader.getPeriod()), DateConverter.toJD(split[1], dataLoader.getPeriod()));
+//                    p.between(calcDay(partName, split[0]), calcDay(partName, split[1]));
                 }
             }
 
@@ -1708,17 +1462,10 @@ public class WinX12SpecSeparator {
 
         switch (partName) {
             case SERIES:
-                tsStart = calcDay(partName, content);
-                if (tsData != null) {
-                    double[] values = new double[tsData.getValues().getLength()];
-                    for (int i = 0; i < tsData.getValues().getLength(); i++) {
-                        values[i] = tsData.getValues().get(i);
-                    }
-                    tsData = new TsData(new TsPeriod(period, tsStart), values, false);
-                }
+                dataLoader.setStart(DateConverter.toJD(content, dataLoader.getPeriod()));
                 break;
             case REGRESSION:
-                regressorStart = calcDay(partName, content);
+                regressionLoader.setStart(DateConverter.toJD(content, regressionLoader.getPeriod()));
                 break;
             default:
                 errors.add(partName + ": start argument is not implemented");
@@ -1847,14 +1594,16 @@ public class WinX12SpecSeparator {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] regressors = content.split("\\s+");
-        if (regressors.length > 1) {
-            messages.add(partName + ": At the moment only work with one regressor is possible. ");
-        } else {
-            if (regressors.length == 0) {
-                //Fehler
-            } else {
-                //regressorname abspechern
-                regressorName = regressors[0];
+        regressionLoader.setRegressorName(regressors);
+        if(regressionLoader.isStartDefault()){
+            regressionLoader.setStart(dataLoader.getStart());
+        }
+        regressionLoader.setPeriod(dataLoader.getPeriod());
+        
+        if (regressionTyp == null) {
+            regressionTyp = new String[regressors.length];
+            for (int i = 0; i < regressionTyp.length; i++) {
+                regressionTyp[i] = "USER";
             }
         }
     }
@@ -1862,25 +1611,20 @@ public class WinX12SpecSeparator {
     private void read_usertype(SpecificationPart partName, String content) {
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] regressors = content.split("\\s+");
-        if (regressors.length > 1) {
-            messages.add(partName + ": At the moment only work with one regressor is possible. ");
-        } else {
-            switch (regressors[0].toUpperCase()) {
+
+        for (int i = 0; i < regressors.length; i++) {
+            switch (regressors[i].toUpperCase().trim()) {
                 case "TD":
-                    spec.getRegArimaSpecification().getRegression().getTradingDays().setUserVariables(regressors);
+                    regressionTyp[i] = "TD";
                     break;
                 case "USER":
-                    //klappt nicht
-                    ArrayList<TsVariableDescriptor> var = new ArrayList();
-                    var.add(new TsVariableDescriptor(regressorName));
-                    spec.getRegArimaSpecification().getRegression().setUserDefinedVariables((TsVariableDescriptor[]) var.toArray(null));
+                    regressionTyp[i] = "USER";
                     break;
                 default:
-                    errors.add(partName + ": Usertype " + regressors[0] + " is not supported");
+                    errors.add(partName + ": Usertype " + regressors[i] + " is not supported");
                     break;
             }
         }
-
     }
 
     private void read_variables(SpecificationPart partName, String content) {
@@ -1916,7 +1660,7 @@ public class WinX12SpecSeparator {
                 m.setAccessible(true);
                 m.invoke(this, partName, assign);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-                errors.add(partName.name() + ": ");
+                errors.add(partName.name() + ": "+assign);
             }
 
             //dynamisch mit method und string, exception handling
@@ -1938,6 +1682,10 @@ public class WinX12SpecSeparator {
         td.setHolidays(null);
         td.setUserVariables(null);
     }
+    
+    private void do_seasonal(SpecificationPart partName, String content) {
+        errors.add(partName+": seasonal are not supported");
+    }
 
     private void do_easter(SpecificationPart partName, String content) {
 
@@ -1949,24 +1697,25 @@ public class WinX12SpecSeparator {
 
     private void do_ao(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.AO, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.AO, true);
+//        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.AO, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_ls(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.LS, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.LS, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_tc(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.TC, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.TC, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_so(SpecificationPart partName, String content) {
-        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.SO, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.SO, true);
         spec.getRegArimaSpecification().getRegression().add(o);
 
     }
@@ -1974,8 +1723,10 @@ public class WinX12SpecSeparator {
     private void do_rp(SpecificationPart partName, String content) {
 
         String[] ramps = content.split("-");
-        Day start = calcDay(partName, ramps[0].trim());
-        Day end = calcDay(partName, ramps[1].trim());
+        Day start = DateConverter.toJD(ramps[0].trim(), dataLoader.getPeriod());
+        Day end = DateConverter.toJD(ramps[1].trim(), dataLoader.getPeriod());
+//        Day start = calcDay(partName, ramps[0].trim());
+//        Day end = calcDay(partName, ramps[1].trim());
 
         spec.getRegArimaSpecification().getRegression().add(new Ramp(start, end));
     }
@@ -1985,6 +1736,9 @@ public class WinX12SpecSeparator {
      *
      *   argument is not supported, but it is not an error
      */
+     private void read_appendfcst(SpecificationPart partName, String content) {
+    }
+    
     private void read_decimals(SpecificationPart partName, String content) {
     }
 

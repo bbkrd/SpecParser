@@ -13,13 +13,14 @@ import ec.nbdemetra.ws.WorkspaceFactory;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.satoolkit.ISaSpecification;
 import ec.satoolkit.x13.X13Specification;
-import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
-import ec.tstoolkit.modelling.TsVariableDescriptor;
+import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariables;
+import java.util.ArrayList;
 
 /**
  *
@@ -36,8 +37,8 @@ public class SpecCollector {
 
     /*   regressor   -   object for regression (data, GUI, ...)
      *   regName     -   name of regressor                           */
-    private DynamicTsVariable regressor;
-    private String regName;
+//    private DynamicTsVariable[] regressor;
+//    private String[] regName;
 
     /*  errors      -   collects errors which appear by translating
      *   messages    -   collects messages which appear by translating   */
@@ -65,7 +66,7 @@ public class SpecCollector {
         }
     }
 
-    /*Cnstructor for Multi Documents*/
+    /*Constructor for Multi Documents*/
     public SpecCollector(WorkspaceItem w, int i) {
 
         index = i;
@@ -87,13 +88,6 @@ public class SpecCollector {
         return winX12SpecText;
     }
 
-//    public DynamicTsVariable getRegressor() {
-//        return regressor;
-//    }
-//
-//    public String getRegressorName() {
-//        return regName;
-//    }
     public void setPath(String path) {
         this.path = path;
     }
@@ -136,6 +130,7 @@ public class SpecCollector {
                 }
             }
         } else {
+            //multi document: Name of mta?
             this.name = name;
         }
     }
@@ -171,25 +166,56 @@ public class SpecCollector {
                 jdSpec = separator.getResult();
 
                 //regressor
-                if (separator.getRegressorName() != null) {
-                    regressor = separator.getRegressor();
-                    regName = separator.getRegressorName();
-//                    if (wsItem.getOwner().getContext().getTsVariable(regName) == null) {
+                if (separator.getRegressorName() != null && separator.getRegressor() != null) {
+                    TsVariable[] regressor = separator.getRegressor();
+                    String[] regName = separator.getRegressorName();
 
-                    if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains("reg_" + name + "." + regName)) {
-                        IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
-                        WorkspaceItem<TsVariables> wsVariables = mgr.create(wsItem.getOwner());
-                        wsItem.getOwner().getContext().getTsVariableManagers().rename(wsVariables.getDisplayName(), "reg_" + name);
-                        wsVariables.setIdentifier("reg_" + name);
-                        wsVariables.setDisplayName("reg_" + name);
-                        wsVariables.getElement().set(regName, regressor);
+                    if (wsItem.getOwner() != null) {
+                        WorkspaceItem<TsVariables> wsVariables = (WorkspaceItem<TsVariables>) wsItem.getOwner().searchDocumentByName(VariablesDocumentManager.ID, "reg_" + name);
+//                        if (wsVariables==null || !wsVariables.getIdentifier().equals("reg_"+name)) {
+//                            //new regressors
+//                            IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
+//                            wsVariables = mgr.create(wsItem.getOwner());
+//                            wsItem.getOwner().getContext().getTsVariableManagers().rename(wsVariables.getDisplayName(), "reg_" + name);
+//                            wsVariables.setIdentifier("reg_" + name);
+//                            wsVariables.setDisplayName("reg_" + name);
+
+                        if (wsVariables == null) {
+                            IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
+
+                            wsVariables = mgr.create(wsItem.getOwner());
+                        }
+
+                        if (!wsVariables.getIdentifier().equals("reg_" + name)) {
+//                            wsItem.getOwner().getContext().getTsVariableManagers().rename(wsVariables.getDisplayName(), "reg_" + name);
+
+                            wsVariables.setIdentifier("reg_" + name);
+                            wsVariables.setDisplayName("reg_" + name);//wsItem + tab
+                            wsVariables.getElement().clear();
+                            wsItem.getOwner().getContext().getTsVariableManagers().set("reg_" + name, wsVariables.getElement());
+
+                            for (int i = 0; i < regressor.length; i++) {
+                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains("reg_" + name + "." + regName[i])) {
+                                    wsVariables.getElement().set(regName[i], regressor[i]);
+                                }
+                            }
+                        } else {
+                            //refresh regression
+                            for (int i = 0; i < regressor.length; i++) {
+
+                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains("reg_" + name + "." + regName[i])) {
+                                    //regressor ex. noch nicht
+                                    wsVariables.getElement().set(regName[i], regressor[i]);
+                                } else {
+                                    //existiert bereits, Werte aktuallisieren
+                                    ArrayList<DataBlock> data = new ArrayList();
+                                    DataBlock d = new DataBlock(regressor[i].getTsData().rextract(0, regressor[i].getTsData().getLength()));
+                                    data.add(d);
+                                    wsVariables.getElement().get(regName[i]).data(regressor[i].getDefinitionDomain(), data);
+                                }
+                            }
+                        }
                     }
-//                      show in window
-                    TsVariableDescriptor userVar = new TsVariableDescriptor();
-                    userVar.setName("reg_" + name + "." + regName);
-                    userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
-                    ((X13Specification) jdSpec.getSpecification()).getRegArimaSpecification().getRegression().add(userVar);
-
                 }
 
                 refreshWS();

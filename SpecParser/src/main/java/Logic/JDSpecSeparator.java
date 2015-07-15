@@ -5,9 +5,9 @@
  */
 package Logic;
 
+import WriteAndRead.DataWriterRegression;
 import ec.satoolkit.x11.*;
 import ec.satoolkit.x13.X13Specification;
-import ec.tss.DynamicTsVariable;
 import ec.tss.Ts;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.algorithm.ProcessingContext;
@@ -453,8 +453,13 @@ public class JDSpecSeparator {
                 regression = new LinkedHashMap<>();
             }
 
-            //collect all values for argument variables
+            //collect all values for argument <name>
             StringBuilder variables = new StringBuilder();
+            StringBuilder usertype = new StringBuilder();
+            StringBuilder user = new StringBuilder();
+
+            //regression parameters
+            DataWriterRegression regCollector = new DataWriterRegression();
 
             //const
             if (!spec.getRegArimaSpecification().getAutoModel().isEnabled() && spec.getRegArimaSpecification().getArima().isMean()) {
@@ -471,40 +476,40 @@ public class JDSpecSeparator {
              *   - UserDefined   if tdSpec!= null + UserVariables != null
              */
             if (tdSpec.isUsed()) {
-                if (tdSpec.getUserVariables() != null) {
+               if (tdSpec.getUserVariables() != null) {
+                   for(String regName : tdSpec.getUserVariables()){
+                       // context.getTsVariableDictionary()
+                       messages.add(regName);
+                   }
                     //GUI option: UserDefined
-                    String regName = tdSpec.getUserVariables()[0];
-                    TsVariables var = context.getTsVariableManagers().get(regName.split("\\.")[0]);
+                   /* for (String regName : tdSpec.getUserVariables()) {
+                        context.getTsVariable(regName);
+                        TsVariables var = context.getTsVariableManagers().get(regName.split("\\.")[0]);//Fehlerhaft: var ist immer null
 
-//                    1)data
-                    TsData regData = extractData(((DynamicTsVariable) var.variables().toArray()[0]));
-                    StringBuilder data = new StringBuilder("(");
-                    int counter = regData.getStart().getPosition() + 1;
-                    for (int i = 0; i < regData.getValues().getLength(); i++) {
-                        if (i == 0) {
-                            for (int j = 0; j < counter; j++) {
-                                data.append("\t");
+//                        1) user name
+                        if (regCollector.addRegressorName(regName)) {
+                            //new user defined variable
+
+//                    2)data
+                            TsData regData = extractData(((DynamicTsVariable) var.variables().toArray()[0]));
+                            int length = regData.getValues().getLength();
+                            String[] data = new String[length];
+                            for (int i = 0; i < length; i++) {
+                                data[i] = regData.getValues().get(i) + "";
                             }
-                        }
-                        data.append(regData.getValues().get(i));
-//            
-                        int period = Integer.parseInt(result.get(SpecificationPart.SERIES).get("period"));
-                        if ((counter) % period == 0) {
-                            data.append("\n\t\t");
-                        } else {
-                            data.append("\t");
-                        }
-                        counter++;
-                    }
-                    data.append(")");
-                    regression.put("data", data.toString());
-
-//                    2)usertype (WinX need this information)
-                    regression.put("usertype", "td");
+                            regCollector.addRegValues(data);
 
 //                    3)start
-                    regression.put("start", regData.getStart().getYear() + "." + regData.getStart().getPosition() + 1);
+//                            regression.put("start", regData.getStart().getYear() + "." + regData.getStart().getPosition() + 1);
+                            regCollector.addStart(regData.getStart());
+                            regCollector.addEnd(regData.getEnd());
 
+                        }//else: already exist 
+//                        4) add user name to spec
+                        user.append(regName.substring(regName.lastIndexOf(".") + 1)).append(" ");
+//                           3)usertype (WinX need this information)
+                        usertype.append("td ");
+                    }*/
                 } else {
                     if (tdSpec.getHolidays() != null) {
                         //GUI option: Holidays
@@ -605,7 +610,7 @@ public class JDSpecSeparator {
                     if (ts.getTsData().getFrequency().equals(TsFrequency.Monthly)) {
                         ramp.append(r.getStart().getMonth() + 1).append("-");
                     } else {
-                        //Quaterly
+                        //Quarterly
                         if (r.getStart().getMonth() <= 2) {
                             //1.Quarter
                             ramp.append("1").append("-");
@@ -652,52 +657,50 @@ public class JDSpecSeparator {
             //F) user defined variables
             TsVariableDescriptor[] userDef = reg.getUserDefinedVariables();
             if (userDef.length != 0) {
-                StringBuilder userName = new StringBuilder("( ");
-                StringBuilder userData = new StringBuilder();
-
+                String[] values;
+                
                 for (TsVariableDescriptor t : userDef) {
+                    messages.add("userdef: "+t.getName());
 //                    1)Name
-                    userName.append(t.getName()).append(" ");
-
+                    user.append(t.getName()).append(" ");
+                    usertype.append("user ");
+                    if (regCollector.addRegressorName(t.getName())) {
+                        //if not exist 
 //                    2)start
-                    TsData data = extractData(t.toTsVariable(context));
-                    regression.put("start", data.getStart().getYear() + "." + data.getStart().getPosition() + 1);
+                        TsData data = extractData(t.toTsVariable(context));
+                        regCollector.addStart(data.getStart());
+                        regCollector.addEnd(data.getEnd());
 
 //                    3)data
-                    StringBuilder dataString = new StringBuilder("(\t");
-                    for (int i = 0; i < data.getValues().getLength(); i++) {
-                        dataString.append(data.getValues().get(i));
-                        if (((i + 1) % data.getFrequency().intValue()) == 0) {
-                            dataString.append("\n\t\t");
-                        } else {
-                            dataString.append("\t");
+                        values = new String[data.getValues().getLength()];
+                        
+                        for (int i = 0; i < data.getValues().getLength(); i++) {
+                            values[i]=data.getValues().get(i)+"";
+                           
+                        }
+                        regCollector.addRegValues(values);
+
+                        //4)Firstlag
+                        if (t.getFirstLag() != 0) {
+                            errors.add("REGRESSION: Firstlag in user-defined variables is not supported");
+                        }
+//                    5)Lastlag
+                        if (t.getLastLag() != 0) {
+                            errors.add("REGRESSION: Lastlag in user-defined variables is not supported");
+                        }
+//                    6)Component type
+                        if (!t.getEffect().equals(UserComponentType.Series)) {
+                            errors.add("REGRESSION: Component type in user-defined variables is not supported");
                         }
                     }
-                    dataString.append(")");
-                    userData.append(dataString.toString());
-
-                    //4)Firstlag
-                    if (t.getFirstLag() != 0) {
-                        errors.add("REGRESSION: Firstlag in user-defined variables is not supported");
-                    }
-//                    5)Lastlag
-                    if (t.getLastLag() != 0) {
-                        errors.add("REGRESSION: Lastlag in user-defined variables is not supported");
-                    }
-//                    6)Component type
-                    if (!t.getEffect().equals(UserComponentType.Series)) {
-                        errors.add("REGRESSION: Component type in user-defined variables is not supported");
-                    }
                 }
-//                1)Name
-                regression.put("user", userName.append(")").toString());
-//                2)Data
-                regression.put("data", userData.toString());
-//                3)usertype
-//                if (tdSpec.isUsed() && tdSpec.getTradingDaysType().equals(TradingDaysType.None)) {
-//                    tdSpec.getUserVariables()
-                regression.put("usertype", "user");
-//                }
+            }
+            if (user.length() > 0) {
+                regression.put("user", "( " + user.append(")").toString());
+                regression.put("file", "'regressordata.rgr'");
+            }
+            if (usertype.length() > 0) {
+                regression.put("usertype", "( " + usertype.append(")").toString());
             }
 
             result.put(SpecificationPart.REGRESSION, regression);
@@ -963,15 +966,15 @@ public class JDSpecSeparator {
     }
 
     private String do_sigmavec() {
-        
+
         StringBuilder sb = new StringBuilder("");
         SigmavecOption[] s = spec.getX11Specification().getSigmavec();
-        
+
         if (s == null) {
             //defaut setting: Group1 for all 
             s = new SigmavecOption[ts.getTsData().getFrequency().intValue()];
             for (int i = 0; i < ts.getTsData().getFrequency().intValue(); i++) {
-                s[i]=SigmavecOption.Group1;
+                s[i] = SigmavecOption.Group1;
             }
         }
         for (int i = 0; i < s.length; i++) {
@@ -1062,6 +1065,12 @@ public class JDSpecSeparator {
         }
 
         return text.toString();
+    }
+
+    public void gerRegressors() {
+        ts.getTsData().getDomain();//Periode
+        spec.getX11Specification().getMode(); //mode
+
     }
 
     public String[] getErrorList() {

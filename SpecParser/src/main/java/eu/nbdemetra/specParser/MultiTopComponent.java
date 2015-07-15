@@ -79,7 +79,7 @@ public final class MultiTopComponent extends TopComponent {
      *       path        -   to open the a directory for loading and saving, notice the last directory by loading   */
     private WorkspaceItem wsItem;
     private WsNode wsNode;
-    private String path = System.getProperty("user.home");
+    private static String path = System.getProperty("user.home");
 
     /*CONSTRUCTORS*/
     public MultiTopComponent() {
@@ -96,7 +96,6 @@ public final class MultiTopComponent extends TopComponent {
     }
 
     /*METHODS TO FILL THE LIST OF SINGLE SPECS IN THE GUI*/
-    
     public void setSpecArray(ArrayList<SpecCollector> list) {
 
         this.spec_array = list;
@@ -252,7 +251,7 @@ public final class MultiTopComponent extends TopComponent {
                     window = new SingleTopComponent();
                     window.setPath(path);
                     window.setSpecView(s);
-                    window.setDisplayName(s.getName());
+                    window.setDisplayName("SpecParser for " + s.getName());
                     window.setId(specList.getSelectedIndex() + "");
                     window.open();
                     window.requestActive();
@@ -387,7 +386,7 @@ public final class MultiTopComponent extends TopComponent {
             name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
 
             wsItem.setDisplayName(name);
-            this.setDisplayName(name);
+            this.setDisplayName("SpecParser for " + name);
             this.repaint();
             wsNode.getWorkspace().sortFamily(wsNode.lookup());
 
@@ -576,7 +575,9 @@ public final class MultiTopComponent extends TopComponent {
                         spec.setWinX12Spec(spec_StringBuilder.toString());
                         spec.translate(TranslationTo_Type.JDSpec);
 
-                        spec.setName(object.getSpecName());
+//                        spec.setName(object.getSpecName());
+                        spec.setName(MultiTopComponent.this.getDisplayName());
+
                         if (spec.getTs() != null) {
                             SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
                             spec.setJDSpec(item.toDocument());

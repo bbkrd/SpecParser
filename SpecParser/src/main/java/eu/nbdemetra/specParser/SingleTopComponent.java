@@ -64,7 +64,7 @@ public final class SingleTopComponent extends TopComponent {
      *   path        -   to open the a directory for loading and saving, notice the last directory by loading   */
     private SpecViewer specViewer;
     private String id;
-    private String path = System.getProperty("user.home");
+    private static String path = System.getProperty("user.home");
 
     /*       wsItem      -   WorspaceItem, to modify the item in the GUI (name, data, spec)
      *       wsNode      -   get WorkspaceItem and to show the rename of the WorkspaceItem  */
@@ -80,7 +80,7 @@ public final class SingleTopComponent extends TopComponent {
 
         setButtons();
         load.setEnabled(false);
-        
+
     }
 
     public SingleTopComponent(WsNode ws) {
@@ -222,8 +222,8 @@ public final class SingleTopComponent extends TopComponent {
 
                     String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
                     wsItem.setDisplayName(name);
-                    setDisplayName(name);
-                    
+                    setDisplayName("SpecParser for "+name);
+
 //                    if(sp.getRegressorName()!=null){
 //                        WorkspaceItem<TsVariables> create=VariablesDocumentManager.create(ws.getWorkspace());
 //                        WorkspaceItem<TsVariables> item = new WorkspaceItem<TsVariables>(null, sp.getRegressorName(), sp.getRegressor());
@@ -235,7 +235,6 @@ public final class SingleTopComponent extends TopComponent {
 //                        var.set(separator.getRegressorName(), separator.getRegressor());
 //                        ws.getOwner().getContext().getTsVariableManagers().set(separator.getRegressorName(), var);
 //                    }
-
                     repaint();
                     wsNode.getWorkspace().sortFamily(wsNode.lookup());
 
@@ -257,7 +256,7 @@ public final class SingleTopComponent extends TopComponent {
             chooser.setFileFilter(new MyFilter(".spc"));
             chooser.setAcceptAllFileFilterUsed(false);
             int result = chooser.showSaveDialog(null);
-            
+
             if (result == JFileChooser.APPROVE_OPTION) {
                 try {
                     File file = chooser.getSelectedFile();
@@ -284,17 +283,17 @@ public final class SingleTopComponent extends TopComponent {
             sp.translate(TranslationTo_Type.JDSpec);
             specViewer = specViewer.refresh(sp);
             refreshJD.setForeground(Color.black);
+            wsNode.getWorkspace().sortFamily(wsNode.lookup());
         }
-
     }
 
     public class RefreshWinAction extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            
+
             specViewer.pressApplyButton();
-            
+
             SpecCollector sp = specViewer.getSpecCollector();
             sp.setJDSpec((SaDocument) specViewer.getDocument());
             sp.translate(TranslationTo_Type.WinX12Spec);

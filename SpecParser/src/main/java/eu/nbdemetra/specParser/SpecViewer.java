@@ -49,7 +49,7 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         winX12Text = new JTextArea();
         errormessage = new JTextArea();
 
-        errormessage.setFocusable(false);
+        errormessage.setEditable(false);
 
         winX12Text.setText("empty");
         errormessage.setText("error messages");
@@ -83,21 +83,22 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
     public SpecViewer refresh(SpecCollector spec) {
 
-        this.spec = spec;
-        winX12Text.setText(this.spec.getWinX12Spec());
-        errormessage.setText("ERRORS\n"
-                + "******\n");
-        for (String a : this.spec.getErrors()) {
-            errormessage.append(a + "\n");
-        }
-        errormessage.append("\nMESSAGES\n"
-                + "********\n");
-        for (String a : this.spec.getMessages()) {
-            errormessage.append(a + "\n");
-        }
+        if (spec != null) {
+            this.spec = spec;
+            winX12Text.setText(this.spec.getWinX12Spec());
+            errormessage.setText("ERRORS\n"
+                    + "******\n");
+            for (String a : this.spec.getErrors()) {
+                errormessage.append(a + "\n");
+            }
+            errormessage.append("\nMESSAGES\n"
+                    + "********\n");
+            for (String a : this.spec.getMessages()) {
+                errormessage.append(a + "\n");
+            }
 
-        setDocument(spec.getJDSpec());
-
+            setDocument(spec.getJDSpec());
+        }
         return this;
     }
 
