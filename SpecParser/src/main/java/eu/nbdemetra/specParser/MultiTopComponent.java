@@ -81,6 +81,8 @@ public final class MultiTopComponent extends TopComponent {
     private WsNode wsNode;
     private static String path = System.getProperty("user.home");
 
+    private String mtaName;
+
     /*CONSTRUCTORS*/
     public MultiTopComponent() {
         //never used, but important for TopComponent
@@ -116,6 +118,10 @@ public final class MultiTopComponent extends TopComponent {
             saveAll.setEnabled(true);
             saveGreen.setEnabled(true);
         }
+    }
+
+    public String getMtaName() {
+        return mtaName;
     }
 
     /**
@@ -240,30 +246,7 @@ public final class MultiTopComponent extends TopComponent {
          */
         try {
             if (evt.getClickCount() >= 2) {
-                SingleTopComponent window;
-
-                SpecCollector s = spec_array.get(specList.getSelectedIndex());
-                s.setPath(path);
-//            int index = singleSpecList.indexOf(s);
-
-                //check for window of selected item in map activeWindows 
-                if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
-                    window = new SingleTopComponent();
-                    window.setPath(path);
-                    window.setSpecView(s);
-                    window.setDisplayName("SpecParser for " + s.getName());
-                    window.setId(specList.getSelectedIndex() + "");
-                    window.open();
-                    window.requestActive();
-
-                    activeSingleWindows.put(specList.getSelectedIndex() + "", window);
-                    window.addPropertyChangeListener("CLOSE", new MyPropertyChangeListener());
-                } else {
-                    window = activeSingleWindows.get(specList.getSelectedIndex() + "");
-                    window.setSpecView(s);
-                    window.open();
-                    window.requestActive();
-                }
+                openSingleWindow();
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             //daneben geklickt
@@ -385,6 +368,8 @@ public final class MultiTopComponent extends TopComponent {
             path = fc.getSelectedFile().getAbsolutePath().replaceAll(name, "");
             name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
 
+            mtaName = name;
+
             wsItem.setDisplayName(name);
             this.setDisplayName("SpecParser for " + name);
             this.repaint();
@@ -428,10 +413,10 @@ public final class MultiTopComponent extends TopComponent {
                     Exceptions.printStackTrace(ex);
                 }
             } catch (FileNotFoundException ex) {
-                JOptionPane.showMessageDialog(null, "File doesn't exist\n" + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "File doesn't exist");
             }
         } else {
-            JOptionPane.showMessageDialog(null, "File istn't loaded");
+            JOptionPane.showMessageDialog(this, "File isn't loaded");
         }
     }//GEN-LAST:event_loadMtaFiles
 
@@ -469,16 +454,24 @@ public final class MultiTopComponent extends TopComponent {
         // TODO add your handling code here:
 
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            SingleTopComponent window;
+            openSingleWindow();
+        }
+    }//GEN-LAST:event_specListKeyPressed
 
-            SpecCollector s = spec_array.get(specList.getSelectedIndex());
+    private void openSingleWindow() {
+
+        SingleTopComponent window;
+
+        SpecCollector s = spec_array.get(specList.getSelectedIndex());
+        if (s.getTs() != null && s.getTs().getTsData() != null) {
+            s.setPath(path);
 
             //check for window of selected item in map activeWindows 
             if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
                 //create new one
                 window = new SingleTopComponent();
                 window.setSpecView(s);
-                window.setDisplayName(s.getName());
+                window.setDisplayName("SpecParser for " + s.getName());
                 window.setPath(path);
                 window.setId(specList.getSelectedIndex() + "");
                 window.open();
@@ -494,8 +487,10 @@ public final class MultiTopComponent extends TopComponent {
                 window.open();
                 window.requestActive();
             }
+        } else {
+            JOptionPane.showMessageDialog(this, "No Data");
         }
-    }//GEN-LAST:event_specListKeyPressed
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -550,17 +545,17 @@ public final class MultiTopComponent extends TopComponent {
         return path;
     }
 
+
     /*INNER CLASSES*/
     //inner class, because of access to spec_array
     class ThreadMethod extends Thread {
 
         @Override
-        public void run() {
+        public void run(){
 
             while (!mta_files.isEmpty()) {
-                try {
-                    ThreadObject object = mta_files.getSpec();
-                    FileReader spec_FileReader = new FileReader(new File(path + (object.getSpecName()) + ".SPC"));
+                ThreadObject object = mta_files.getSpec();
+                try (FileReader spec_FileReader = new FileReader(new File(path + (object.getSpecName()) + ".SPC"))) {
 
                     try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
                         StringBuilder spec_StringBuilder = new StringBuilder();
@@ -573,10 +568,9 @@ public final class MultiTopComponent extends TopComponent {
                         SpecCollector spec = new SpecCollector(wsItem, object.getIndex());
                         spec.setPath(path);
                         spec.setWinX12Spec(spec_StringBuilder.toString());
+                        spec.setName(object.getSpecName());
+                        spec.setNameForWS(MultiTopComponent.this.getMtaName());
                         spec.translate(TranslationTo_Type.JDSpec);
-
-//                        spec.setName(object.getSpecName());
-                        spec.setName(MultiTopComponent.this.getDisplayName());
 
                         if (spec.getTs() != null) {
                             SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
@@ -585,10 +579,10 @@ public final class MultiTopComponent extends TopComponent {
 
                         spec_array.add(spec);
 
-                    } catch (IOException ex) {
-                        Exceptions.printStackTrace(ex);
                     }
                 } catch (FileNotFoundException ex) {
+                    
+                } catch (IOException ex) {
                     Exceptions.printStackTrace(ex);
                 }
             }

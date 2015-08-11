@@ -33,8 +33,8 @@ public class DataLoader {
     public TsFrequency getPeriod() {
         return period;
     }
-    
-    public boolean isStartDefault(){
+
+    public boolean isStartDefault() {
         return startDefault;
     }
 
@@ -44,7 +44,7 @@ public class DataLoader {
 
     public void setStart(Day d) {
         start = d;
-        startDefault=false;
+        startDefault = false;
     }
 
     public void setPeriod(TsFrequency p) {
@@ -88,7 +88,7 @@ public class DataLoader {
         }
     }
 
-    protected double[] loadDat(BufferedReader br) throws IOException {
+    protected double[] loadDat(BufferedReader br) throws IOException, FileNotFoundException {
         String line;
         ArrayList<String> v = new ArrayList();
         double[] values;
@@ -104,7 +104,7 @@ public class DataLoader {
                 if (year > Integer.parseInt(split[0])) {
                     year = Integer.parseInt(split[0]);
                     start = DateConverter.toJD(split[0] + "." + split[1]);
-                    startDefault=false;
+                    startDefault = false;
                 }
                 //calculate max period
                 if (periode < Integer.parseInt(split[1])) {
@@ -127,7 +127,7 @@ public class DataLoader {
         return values;
     }
 
-    protected double[] loadSer(BufferedReader br) throws IOException {
+    protected double[] loadSer(BufferedReader br) throws IOException, FileNotFoundException {
         String line;
         ArrayList<String> v = new ArrayList();
         double[] values;
@@ -151,10 +151,14 @@ public class DataLoader {
     }
 
     public TsData getData() {
-        return new TsData(new TsPeriod(period, start), values, false);
+        if (values != null) {
+            return new TsData(new TsPeriod(period, start), values, false);
+        } else {
+            return null;
+        }
     }
-    
-    public double[] getValues(){
+
+    public double[] getValues() {
         return values;
     }
 }

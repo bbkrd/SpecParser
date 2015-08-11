@@ -222,7 +222,7 @@ public final class SingleTopComponent extends TopComponent {
 
                     String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
                     wsItem.setDisplayName(name);
-                    setDisplayName("SpecParser for "+name);
+                    setDisplayName("SpecParser for " + name);
 
 //                    if(sp.getRegressorName()!=null){
 //                        WorkspaceItem<TsVariables> create=VariablesDocumentManager.create(ws.getWorkspace());
@@ -252,6 +252,7 @@ public final class SingleTopComponent extends TopComponent {
         @Override
         public void actionPerformed(ActionEvent e) {
 
+            //ebenso regression file noch einbauen
             JFileChooser chooser = new JFileChooser(path);
             chooser.setFileFilter(new MyFilter(".spc"));
             chooser.setAcceptAllFileFilterUsed(false);
@@ -265,6 +266,13 @@ public final class SingleTopComponent extends TopComponent {
                     }
                     if (!file.toString().endsWith(".spc")) {
                         file.renameTo(new File(file.toString() + ".spc"));
+                    }
+
+                    if (specViewer.getSpecCollector().getRegData() != null) {
+                        File regFile = new File(chooser.getCurrentDirectory() + "\\dataRegressors.rgr");
+                        try (FileWriter fw = new FileWriter(regFile)) {
+                            fw.write(specViewer.getSpecCollector().getRegData());
+                        }
                     }
                 } catch (IOException ex) {
                     Exceptions.printStackTrace(ex);

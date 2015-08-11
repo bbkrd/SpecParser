@@ -44,6 +44,7 @@ public class JDSpecSeparator {
     private LinkedHashMap<SpecificationPart, LinkedHashMap<String, String>> result = new LinkedHashMap();
     private ArrayList<String> errors = new ArrayList();
     private ArrayList<String> messages = new ArrayList<>();
+    private DataWriterRegression regCollector; 
 
     private boolean transformAuto = false;
     private boolean transformLog = false;
@@ -459,7 +460,8 @@ public class JDSpecSeparator {
             StringBuilder user = new StringBuilder();
 
             //regression parameters
-            DataWriterRegression regCollector = new DataWriterRegression();
+            regCollector = new DataWriterRegression();
+            regCollector.setTsStart(ts.getTsData().getStart());
 
             //const
             if (!spec.getRegArimaSpecification().getAutoModel().isEnabled() && spec.getRegArimaSpecification().getArima().isMean()) {
@@ -476,40 +478,30 @@ public class JDSpecSeparator {
              *   - UserDefined   if tdSpec!= null + UserVariables != null
              */
             if (tdSpec.isUsed()) {
-               if (tdSpec.getUserVariables() != null) {
-                   for(String regName : tdSpec.getUserVariables()){
-                       // context.getTsVariableDictionary()
-                       messages.add(regName);
-                   }
+                if (tdSpec.getUserVariables() != null) {
                     //GUI option: UserDefined
-                   /* for (String regName : tdSpec.getUserVariables()) {
-                        context.getTsVariable(regName);
-                        TsVariables var = context.getTsVariableManagers().get(regName.split("\\.")[0]);//Fehlerhaft: var ist immer null
-
-//                        1) user name
-                        if (regCollector.addRegressorName(regName)) {
-                            //new user defined variable
-
-//                    2)data
-                            TsData regData = extractData(((DynamicTsVariable) var.variables().toArray()[0]));
-                            int length = regData.getValues().getLength();
-                            String[] data = new String[length];
-                            for (int i = 0; i < length; i++) {
-                                data[i] = regData.getValues().get(i) + "";
-                            }
-                            regCollector.addRegValues(data);
-
-//                    3)start
-//                            regression.put("start", regData.getStart().getYear() + "." + regData.getStart().getPosition() + 1);
-                            regCollector.addStart(regData.getStart());
-                            regCollector.addEnd(regData.getEnd());
-
-                        }//else: already exist 
-//                        4) add user name to spec
-                        user.append(regName.substring(regName.lastIndexOf(".") + 1)).append(" ");
-//                           3)usertype (WinX need this information)
+                    for (String regName : tdSpec.getUserVariables()) {
+                       // context.getTsVariableDictionary()
                         usertype.append("td ");
-                    }*/
+                        user.append(regName.substring(regName.indexOf(".")+1)).append(" ");
+                        regCollector.addRegressorName(regName);
+                        
+                        ITsVariable var = context.getTsVariable(regName);
+                        if (var instanceof TsVariable) {
+                            TsData dataVar = ((TsVariable) var).getTsData();
+
+                            regCollector.addStart(dataVar.getStart());
+                            regCollector.addEnd(dataVar.getEnd());
+                            
+                            String[] values = new String[dataVar.getValues().getLength()];
+                            for (int i = 0; i < dataVar.getValues().getLength(); i++) {
+                                values[i] = dataVar.getValues().get(i) + "";
+                            }
+                            regCollector.addRegValues(values);
+                        }
+
+                    }
+                    regression.put("file", "'regData.rgr'");
                 } else {
                     if (tdSpec.getHolidays() != null) {
                         //GUI option: Holidays
@@ -658,25 +650,23 @@ public class JDSpecSeparator {
             TsVariableDescriptor[] userDef = reg.getUserDefinedVariables();
             if (userDef.length != 0) {
                 String[] values;
-                
+
                 for (TsVariableDescriptor t : userDef) {
-                    messages.add("userdef: "+t.getName());
+//                    messages.add("userdef: " + t.getName());
 //                    1)Name
                     user.append(t.getName()).append(" ");
                     usertype.append("user ");
                     if (regCollector.addRegressorName(t.getName())) {
                         //if not exist 
-//                    2)start
+//                    2)start & end
                         TsData data = extractData(t.toTsVariable(context));
                         regCollector.addStart(data.getStart());
                         regCollector.addEnd(data.getEnd());
 
 //                    3)data
                         values = new String[data.getValues().getLength()];
-                        
                         for (int i = 0; i < data.getValues().getLength(); i++) {
-                            values[i]=data.getValues().get(i)+"";
-                           
+                            values[i] = data.getValues().get(i) + "";
                         }
                         regCollector.addRegValues(values);
 
@@ -692,12 +682,15 @@ public class JDSpecSeparator {
                         if (!t.getEffect().equals(UserComponentType.Series)) {
                             errors.add("REGRESSION: Component type in user-defined variables is not supported");
                         }
+                        if(!regression.containsKey("file")){
+                            regression.put("file", "'regData.rgr'");
+                        }
                     }
                 }
             }
             if (user.length() > 0) {
                 regression.put("user", "( " + user.append(")").toString());
-                regression.put("file", "'regressordata.rgr'");
+                regression.put("file", "'dataRegressors.rgr'");
             }
             if (usertype.length() > 0) {
                 regression.put("usertype", "( " + usertype.append(")").toString());
@@ -815,11 +808,18 @@ public class JDSpecSeparator {
         series.put("period", period + "");
 
 //        4) data
-        int lineCounter = 8; // "data = (" -> #8
-        StringBuilder data = new StringBuilder("(");
-        int counter = ts.getTsData().getStart().getPosition() + 1;
+//        int lineCounter = 8; // "data = (" -> #8
+        StringBuilder data = new StringBuilder("(\n");
+        int counter = 1;//ts.getTsData().getStart().getPosition() + 1;
         for (int i = 0; i < ts.getTsData().getValues().getLength(); i++) {
-            if (i == 0) {
+            
+            data.append(ts.getTsData().getValues().get(i)).append("     ");
+            counter++;
+            if(counter>4){
+                data.append("\n");
+                counter=1;
+            }
+           /* if (i == 0) {
                 for (int j = 0; j < counter; j++) {
                     if (lineCounter < 133) {
                         data.append(" \t");
@@ -851,7 +851,7 @@ public class JDSpecSeparator {
                     lineCounter = 2 * "\t".length();
                 }
             }
-            counter++;
+            counter++;*/
         }
         data.append(")");
         series.put("data", data.toString());
@@ -1067,10 +1067,11 @@ public class JDSpecSeparator {
         return text.toString();
     }
 
-    public void gerRegressors() {
-        ts.getTsData().getDomain();//Periode
-        spec.getX11Specification().getMode(); //mode
-
+    public String getRegressors() {
+        if(regCollector == null){
+            return null;
+        }
+        return regCollector.getRegString();
     }
 
     public String[] getErrorList() {

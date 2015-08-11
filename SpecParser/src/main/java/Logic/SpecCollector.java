@@ -49,12 +49,14 @@ public class SpecCollector {
      *   name    -   */
     private int index;
     private String name;
+    private String nameForWS;
 
     /*       wsItem      -   WorspaceItem, to modify the item in the GUI (name, data, spec)
      *       path        -   to open the a directory for loading and saving, notice the last directory by loading   */
     private WorkspaceItem wsItem;
     private String path;
 
+    private String regData;
 
     /*Constructor for Single Documents*/
     public SpecCollector(WorkspaceItem w) {
@@ -119,6 +121,10 @@ public class SpecCollector {
         }
         return messages;
     }
+    
+    public String getRegData(){
+        return regData;
+    }
 
     public void setName(String name) {
 
@@ -129,10 +135,15 @@ public class SpecCollector {
                     ts = ts.rename(name);
                 }
             }
+            nameForWS=this.name;
         } else {
             //multi document: Name of mta?
             this.name = name;
         }
+    }
+    
+    public void setNameForWS(String name){
+        nameForWS=name;
     }
 
     public String getName() {
@@ -159,19 +170,23 @@ public class SpecCollector {
 
             WinX12SpecSeparator separator = new WinX12SpecSeparator();
             separator.setPath(path);
+            separator.setMtaName(nameForWS);
             separator.buildSpec(winX12SpecText);
 
             if (separator.getTs().getTsData() != null) {
                 ts = separator.getTs();
                 jdSpec = separator.getResult();
 
-                //regressor
+                //regressors
                 if (separator.getRegressorName() != null && separator.getRegressor() != null) {
+                    
+                    String reg_name = "reg_"+nameForWS; 
+                    
                     TsVariable[] regressor = separator.getRegressor();
                     String[] regName = separator.getRegressorName();
 
                     if (wsItem.getOwner() != null) {
-                        WorkspaceItem<TsVariables> wsVariables = (WorkspaceItem<TsVariables>) wsItem.getOwner().searchDocumentByName(VariablesDocumentManager.ID, "reg_" + name);
+                        WorkspaceItem<TsVariables> wsVariables = (WorkspaceItem<TsVariables>) wsItem.getOwner().searchDocumentByName(VariablesDocumentManager.ID, reg_name);
 //                        if (wsVariables==null || !wsVariables.getIdentifier().equals("reg_"+name)) {
 //                            //new regressors
 //                            IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
@@ -186,32 +201,36 @@ public class SpecCollector {
                             wsVariables = mgr.create(wsItem.getOwner());
                         }
 
-                        if (!wsVariables.getIdentifier().equals("reg_" + name)) {
+                        
+                        if (!wsVariables.getIdentifier().equals(reg_name)) {
 //                            wsItem.getOwner().getContext().getTsVariableManagers().rename(wsVariables.getDisplayName(), "reg_" + name);
 
-                            wsVariables.setIdentifier("reg_" + name);
-                            wsVariables.setDisplayName("reg_" + name);//wsItem + tab
+                            wsVariables.setIdentifier(reg_name);
+                            wsVariables.setDisplayName(reg_name);//wsItem + tab
                             wsVariables.getElement().clear();
-                            wsItem.getOwner().getContext().getTsVariableManagers().set("reg_" + name, wsVariables.getElement());
+                            wsItem.getOwner().getContext().getTsVariableManagers().set(reg_name, wsVariables.getElement());
 
                             for (int i = 0; i < regressor.length; i++) {
-                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains("reg_" + name + "." + regName[i])) {
+                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + regName[i])) {
                                     wsVariables.getElement().set(regName[i], regressor[i]);
+                                    System.out.println("1 "+name+": "+reg_name + "." + regName[i]);
                                 }
                             }
                         } else {
                             //refresh regression
                             for (int i = 0; i < regressor.length; i++) {
 
-                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains("reg_" + name + "." + regName[i])) {
+                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + regName[i])) {
                                     //regressor ex. noch nicht
                                     wsVariables.getElement().set(regName[i], regressor[i]);
+                                    System.out.println("2 "+name+": "+reg_name + "." + regName[i]);
                                 } else {
-                                    //existiert bereits, Werte aktuallisieren
-                                    ArrayList<DataBlock> data = new ArrayList();
+                                    System.out.println("3 "+name+": "+reg_name + "." + regName[i]);
+                                    //existiert bereits, Werte aktualisieren
+                                   /* ArrayList<DataBlock> data = new ArrayList();
                                     DataBlock d = new DataBlock(regressor[i].getTsData().rextract(0, regressor[i].getTsData().getLength()));
                                     data.add(d);
-                                    wsVariables.getElement().get(regName[i]).data(regressor[i].getDefinitionDomain(), data);
+                                    wsVariables.getElement().get(regName[i]).data(regressor[i].getDefinitionDomain(), data);*/
                                 }
                             }
                         }
@@ -243,6 +262,9 @@ public class SpecCollector {
                     separator.build();
                     winX12SpecText = separator.getResult();
 
+                    //anfrage machen
+                    regData = separator.getRegressors();
+                    
                     refreshWS();
 
                     errors = separator.getErrorList();
