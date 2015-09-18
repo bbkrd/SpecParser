@@ -37,12 +37,9 @@
     </repositories>
 
     <dependencies>
-
-
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-api-annotations-common</artifactId>
-
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -72,17 +69,23 @@
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-sa</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-core</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-ui</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>org-netbeans-api-progress</artifactId>
+            <groupId>org.netbeans.api</groupId>
+            <type>jar</type>
+            <version>RELEASE802</version>
         </dependency>
     </dependencies>
 
@@ -93,6 +96,11 @@
                 <artifactId>nbm-maven-plugin</artifactId>
 
                 <extensions>true</extensions>
+                <configuration>
+                    <publicPackages>
+                        <publicPackage>WriteAndRead</publicPackage>
+                    </publicPackages>
+                </configuration>
             </plugin>
 
             <plugin>

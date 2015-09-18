@@ -6,12 +6,14 @@
 
 package WriteAndRead;
 
+import ec.tstoolkit.design.ServiceDefinition;
 import ec.tstoolkit.timeseries.simplets.TsData;
 
 /**
  *
  * @author Nina Gonschorreck
  */
+@ServiceDefinition
 public interface Izisl {
     
     public TsData getData(String id);

@@ -21,17 +21,24 @@ import java.util.ArrayList;
  */
 public class DataLoader {
 
-    private String errormessage = "";
+    protected String messages = "";
 
     private TsFrequency period = TsFrequency.Monthly;
     private Day start = new Day(1970, Month.January, 0);
     private boolean startDefault = true;
+    private TsData dataFromWebService;
 
     private double[] values;
 
 //    private TsData rslt;
     public TsFrequency getPeriod() {
         return period;
+    }
+
+    public String getMessages() {
+        String toReturn = messages;
+        messages = "";
+        return toReturn;
     }
 
     public boolean isStartDefault() {
@@ -62,6 +69,10 @@ public class DataLoader {
 //        rslt = ;
     }
 
+    public void setDataFromWebService(TsData data) {
+        dataFromWebService = data;
+    }
+
     public void load(File file) {
 
         try {
@@ -77,14 +88,14 @@ public class DataLoader {
 //                    rslt = new TsData(new TsPeriod(period, start), loadSer(new BufferedReader(new FileReader(file))), false);
                     break;
                 default:
-                    errormessage = "File extension are not supported";
+                    messages = "File extension are not supported";
                     break;
             }
 
         } catch (FileNotFoundException ex) {
-            errormessage = "File not found";
+            messages = "File not found";
         } catch (IOException ex) {
-            errormessage = "File is not readable";
+            messages = "File is not readable";
         }
     }
 
@@ -146,19 +157,27 @@ public class DataLoader {
         return values;
     }
 
-    public String getErrormessage() {
-        return errormessage;
-    }
-
     public TsData getData() {
-        if (values != null) {
-            return new TsData(new TsPeriod(period, start), values, false);
+        if (dataFromWebService == null) {
+            if (values != null) {
+                return new TsData(new TsPeriod(period, start), values, false);
+            } else {
+                return null;
+            }
         } else {
-            return null;
+            return dataFromWebService;
         }
     }
 
     public double[] getValues() {
         return values;
+    }
+
+    public boolean isDataFromWebserviceSet() {
+        if (dataFromWebService == null) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

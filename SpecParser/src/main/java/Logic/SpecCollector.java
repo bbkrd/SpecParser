@@ -17,10 +17,13 @@ import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
-import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariables;
+import java.awt.Cursor;
+import java.awt.Frame;
 import java.util.ArrayList;
+import javax.swing.JFrame;
 
 /**
  *
@@ -121,8 +124,8 @@ public class SpecCollector {
         }
         return messages;
     }
-    
-    public String getRegData(){
+
+    public String getRegData() {
         return regData;
     }
 
@@ -135,15 +138,15 @@ public class SpecCollector {
                     ts = ts.rename(name);
                 }
             }
-            nameForWS=this.name;
+            nameForWS = this.name;
         } else {
             //multi document: Name of mta?
             this.name = name;
         }
     }
-    
-    public void setNameForWS(String name){
-        nameForWS=name;
+
+    public void setNameForWS(String name) {
+        nameForWS = name;
     }
 
     public String getName() {
@@ -171,72 +174,20 @@ public class SpecCollector {
             WinX12SpecSeparator separator = new WinX12SpecSeparator();
             separator.setPath(path);
             separator.setMtaName(nameForWS);
+            separator.setName(name);
             separator.buildSpec(winX12SpecText);
 
             if (separator.getTs().getTsData() != null) {
                 ts = separator.getTs();
-                jdSpec = separator.getResult();
 
                 //regressors
                 if (separator.getRegressorName() != null && separator.getRegressor() != null) {
-                    
-                    String reg_name = "reg_"+nameForWS; 
-                    
-                    TsVariable[] regressor = separator.getRegressor();
-                    String[] regName = separator.getRegressorName();
-
                     if (wsItem.getOwner() != null) {
-                        WorkspaceItem<TsVariables> wsVariables = (WorkspaceItem<TsVariables>) wsItem.getOwner().searchDocumentByName(VariablesDocumentManager.ID, reg_name);
-//                        if (wsVariables==null || !wsVariables.getIdentifier().equals("reg_"+name)) {
-//                            //new regressors
-//                            IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
-//                            wsVariables = mgr.create(wsItem.getOwner());
-//                            wsItem.getOwner().getContext().getTsVariableManagers().rename(wsVariables.getDisplayName(), "reg_" + name);
-//                            wsVariables.setIdentifier("reg_" + name);
-//                            wsVariables.setDisplayName("reg_" + name);
-
-                        if (wsVariables == null) {
-                            IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
-
-                            wsVariables = mgr.create(wsItem.getOwner());
-                        }
-
-                        
-                        if (!wsVariables.getIdentifier().equals(reg_name)) {
-//                            wsItem.getOwner().getContext().getTsVariableManagers().rename(wsVariables.getDisplayName(), "reg_" + name);
-
-                            wsVariables.setIdentifier(reg_name);
-                            wsVariables.setDisplayName(reg_name);//wsItem + tab
-                            wsVariables.getElement().clear();
-                            wsItem.getOwner().getContext().getTsVariableManagers().set(reg_name, wsVariables.getElement());
-
-                            for (int i = 0; i < regressor.length; i++) {
-                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + regName[i])) {
-                                    wsVariables.getElement().set(regName[i], regressor[i]);
-                                    System.out.println("1 "+name+": "+reg_name + "." + regName[i]);
-                                }
-                            }
-                        } else {
-                            //refresh regression
-                            for (int i = 0; i < regressor.length; i++) {
-
-                                if (!wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + regName[i])) {
-                                    //regressor ex. noch nicht
-                                    wsVariables.getElement().set(regName[i], regressor[i]);
-                                    System.out.println("2 "+name+": "+reg_name + "." + regName[i]);
-                                } else {
-                                    System.out.println("3 "+name+": "+reg_name + "." + regName[i]);
-                                    //existiert bereits, Werte aktualisieren
-                                   /* ArrayList<DataBlock> data = new ArrayList();
-                                    DataBlock d = new DataBlock(regressor[i].getTsData().rextract(0, regressor[i].getTsData().getLength()));
-                                    data.add(d);
-                                    wsVariables.getElement().get(regName[i]).data(regressor[i].getDefinitionDomain(), data);*/
-                                }
-                            }
-                        }
+                        writeRegressors(separator);
                     }
                 }
 
+                jdSpec = separator.getResult();
                 refreshWS();
 
                 errors = separator.getErrorList();
@@ -245,12 +196,12 @@ public class SpecCollector {
 //              if data are missing
                 errors = new String[1];
                 errors[0] = "NO DATA";
-                messages = new String[1];
-                messages[0] = "NO DATA";
+                messages = separator.getMessageList();
             }
+
         } else {
+            //Translation from JDemetra+Spec to WinX12Spec 
             if (ts != null) {
-                //Translation from JDemetra+Spec to WinX12Spec           
                 if (wsItem.getElement() instanceof X13Document) {
                     ts = ((X13Document) wsItem.getElement()).getInput();
                 } else {
@@ -264,7 +215,7 @@ public class SpecCollector {
 
                     //anfrage machen
                     regData = separator.getRegressors();
-                    
+
                     refreshWS();
 
                     errors = separator.getErrorList();
@@ -307,5 +258,83 @@ public class SpecCollector {
                 }
             }
         }//wsItem == null : do nothing
+    }
+
+    private void writeRegressors(WinX12SpecSeparator separator) {
+
+        String reg_name = "reg_" + nameForWS;
+        String curName;
+        TsVariable[] regressor = separator.getRegressor();
+        String[] regName = separator.getRegressorName();
+
+        WorkspaceItem<TsVariables> wsVariables = (WorkspaceItem<TsVariables>) wsItem.getOwner().searchDocumentByName(VariablesDocumentManager.ID, reg_name);
+
+        if (wsVariables == null) {
+            IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
+            wsVariables = mgr.create(wsItem.getOwner());
+        }
+
+        String[] regTyp = separator.getRegressorTyp();
+        ArrayList<String> td = new ArrayList();
+        ArrayList<TsVariableDescriptor> user = new ArrayList();
+
+        //1. exists var list with name reg_name?
+        if (!wsVariables.getIdentifier().equals(reg_name)) {
+            wsVariables.setIdentifier(reg_name);
+            wsVariables.setDisplayName(reg_name);
+            wsVariables.getElement().clear();
+            wsItem.getOwner().getContext().getTsVariableManagers().set(reg_name, wsVariables.getElement());
+        }
+
+        for (int i = 0; i < regressor.length; i++) {
+            curName = regName[i];
+
+            //is there a regressor with this curName?
+            if (wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + curName)) {
+
+                //check: are data not equal?
+                if (!((TsVariable) wsVariables.getElement().get(curName)).getTsData().equals(regressor[i].getTsData())) {
+
+                    //create curname= curname + [i]
+                    boolean found = false;
+                    int iterator = 1;
+                    String ends;
+                    while (found == false) {
+                        ends = "[" + iterator + "]";
+                        //wenn bereits curname[...] existiert
+                        if (wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + curName + ends)) {
+                            //guck ob Daten gleich sind
+                            if (((TsVariable) wsVariables.getElement().get(curName + ends)).getTsData().equals(regressor[i].getTsData())) {
+                                //Daten sind gleich
+                                found = true;
+                            } else {
+                                iterator++;
+                            }
+                        } else {
+                            //wenn noch nicht existiert dann kann neu angelegt werden
+                            curName = curName.concat(ends);
+                            wsVariables.getElement().set(curName, regressor[i]);
+                            found = true;
+                        }
+                    }
+                }
+            } else {
+
+                wsVariables.getElement().set(curName, regressor[i]);
+            }
+
+            switch (regTyp[i].toUpperCase()) {
+                case "TD":
+                    td.add(reg_name + "." + curName);
+                    break;
+                case "USER":
+                    TsVariableDescriptor userVar = new TsVariableDescriptor();
+                    userVar.setName(reg_name + "." + curName);
+                    userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+                    user.add(userVar);
+                    break;
+            }
+        }
+        separator.setRegressorsInSpec(td.toArray(new String[0]), user.toArray(new TsVariableDescriptor[0]));
     }
 }

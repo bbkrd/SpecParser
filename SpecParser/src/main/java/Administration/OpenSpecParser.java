@@ -47,19 +47,11 @@ public class OpenSpecParser implements ActionListener {
 
         //search in actually Workspace MultiProcessingDocument or X13Document (both implement IModifiable)
         WorkspaceItem w = (WorkspaceItem) context.getWorkspace().searchDocument(context.lookup(), IModifiable.class);
-
+        w.closeView();
         if (w.getElement() instanceof X13Document) {
-
-            w.closeView();
             SingleSpec s = new SingleSpec(context);
-            w.closeView();
-            
         } else if (w.getElement() instanceof MultiProcessingDocument) {
-
-            w.closeView();
-            MultiSpec m = new MultiSpec(context);
-            w.closeView();
-        
+            MultiSpec m = new MultiSpec(context);    
         } else {
             JOptionPane.showMessageDialog(null, "nix");
         }

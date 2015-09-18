@@ -10,10 +10,12 @@ import Administration.SingleSpec;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tss.sa.documents.SaDocument;
+import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,8 +26,12 @@ import java.io.IOException;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.util.Exceptions;
@@ -70,6 +76,8 @@ public final class SingleTopComponent extends TopComponent {
      *       wsNode      -   get WorkspaceItem and to show the rename of the WorkspaceItem  */
     private WsNode wsNode;
     private WorkspaceItem wsItem;
+    
+    private ProgressHandle progressHandle;
 
     /*CONSTRUCTORS*/
     public SingleTopComponent() {
@@ -88,6 +96,8 @@ public final class SingleTopComponent extends TopComponent {
         this.wsNode = ws;
         this.wsItem = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
 
+        progressHandle = ProgressHandleFactory.createHandle("calculate ...");
+        
         initComponents();
         setName(Bundle.CTL_SingleSpecWindowTopComponent());
         setToolTipText(Bundle.HINT_SingleSpecWindowTopComponent());
@@ -197,52 +207,11 @@ public final class SingleTopComponent extends TopComponent {
 
                 path = file.getAbsolutePath().replaceAll(file.getName(), "");
 
-                try {
-                    FileReader f = new FileReader(file);
-                    StringBuilder s;
-                    try (BufferedReader br = new BufferedReader(f)) {
-                        s = new StringBuilder();
-                        String zeile;
-                        while ((zeile = br.readLine()) != null) {
-                            s.append(zeile);
-                            s.append("\n");
-                        }
-                    }
+                progressHandle.start();
+                LoadRunnable load = new LoadRunnable();
+                load.setSpc_File(file);
+                load.run();
 
-                    SpecCollector sp = specViewer.getSpecCollector();
-                    sp.setWinX12Spec(s.toString());
-                    sp.setPath(path);
-                    sp.setName(file.getName());
-                    sp.translate(TranslationTo_Type.JDSpec);
-                    specViewer.refresh(sp);
-
-                    refreshJD.setEnabled(true);
-                    save.setEnabled(true);
-                    refreshJD.setForeground(Color.black);
-
-                    String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
-                    wsItem.setDisplayName(name);
-                    setDisplayName("SpecParser for " + name);
-
-//                    if(sp.getRegressorName()!=null){
-//                        WorkspaceItem<TsVariables> create=VariablesDocumentManager.create(ws.getWorkspace());
-//                        WorkspaceItem<TsVariables> item = new WorkspaceItem<TsVariables>(null, sp.getRegressorName(), sp.getRegressor());
-//                        w.getOwner().add();
-//                        ((VariablesDocument) w.setElement(name));
-//                    }
-//                    if (ws.getOwner().getContext().getTsVariableManagers().get(separator.getRegressorName()) == null) {
-//                        TsVariables var = new TsVariables();
-//                        var.set(separator.getRegressorName(), separator.getRegressor());
-//                        ws.getOwner().getContext().getTsVariableManagers().set(separator.getRegressorName(), var);
-//                    }
-                    repaint();
-                    wsNode.getWorkspace().sortFamily(wsNode.lookup());
-
-                } catch (FileNotFoundException ex) {
-                    Exceptions.printStackTrace(ex);
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
             }
         }
     }
@@ -287,11 +256,18 @@ public final class SingleTopComponent extends TopComponent {
         public void actionPerformed(ActionEvent e) {
             SpecCollector sp = specViewer.getSpecCollector();
 //            sp.setPath(path);
+            //Default wiederherstellen
+            sp.setJDSpec(new X13Document());
             sp.setWinX12Spec(specViewer.getWinX12Text());
             sp.translate(TranslationTo_Type.JDSpec);
             specViewer = specViewer.refresh(sp);
             refreshJD.setForeground(Color.black);
             wsNode.getWorkspace().sortFamily(wsNode.lookup());
+            if (wsItem.getView() != null) {
+                wsItem.getView().close();
+            }
+//            wsItem.getView();
+//            wsItem.reload();
         }
     }
 
@@ -361,5 +337,66 @@ public final class SingleTopComponent extends TopComponent {
         public void changedUpdate(DocumentEvent e) {
             refreshJD.setForeground(Color.blue);
         }
+    }
+
+    private class LoadRunnable implements Runnable {
+
+        private File file;
+
+        public void setSpc_File(File spec_File) {
+            this.file = spec_File;
+        }
+
+        @Override
+        public void run() {
+            try {
+                FileReader f = new FileReader(file);
+                StringBuilder s;
+                try (BufferedReader br = new BufferedReader(f)) {
+                    s = new StringBuilder();
+                    String zeile;
+                    while ((zeile = br.readLine()) != null) {
+                        s.append(zeile);
+                        s.append("\n");
+                    }
+                }
+
+                SpecCollector sp = specViewer.getSpecCollector();
+                sp.setWinX12Spec(s.toString());
+                sp.setPath(path);
+                sp.setName(file.getName());
+                sp.translate(TranslationTo_Type.JDSpec);
+                specViewer.refresh(sp);
+
+                refreshJD.setEnabled(true);
+                save.setEnabled(true);
+                refreshJD.setForeground(Color.black);
+
+                String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
+                wsItem.setDisplayName(name);
+                setDisplayName("SpecParser for " + name);
+
+//                    if(sp.getRegressorName()!=null){
+//                        WorkspaceItem<TsVariables> create=VariablesDocumentManager.create(ws.getWorkspace());
+//                        WorkspaceItem<TsVariables> item = new WorkspaceItem<TsVariables>(null, sp.getRegressorName(), sp.getRegressor());
+//                        w.getOwner().add();
+//                        ((VariablesDocument) w.setElement(name));
+//                    }
+//                    if (ws.getOwner().getContext().getTsVariableManagers().get(separator.getRegressorName()) == null) {
+//                        TsVariables var = new TsVariables();
+//                        var.set(separator.getRegressorName(), separator.getRegressor());
+//                        ws.getOwner().getContext().getTsVariableManagers().set(separator.getRegressorName(), var);
+//                    }
+                repaint();
+                wsNode.getWorkspace().sortFamily(wsNode.lookup());
+
+            } catch (FileNotFoundException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+            progressHandle.finish();
+        }
+
     }
 }

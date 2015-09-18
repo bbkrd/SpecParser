@@ -88,7 +88,7 @@ public class JDSpecSeparator {
                 }
 
             } else {
-                errors.add("MISSING VALUES ARE NOT ALLOWED IN WINX12");
+                messages.add("MISSING VALUES ARE NOT ALLOWED IN WINX12");
             }
         }
     }
@@ -217,7 +217,7 @@ public class JDSpecSeparator {
 
 //        4)Mean
         if (reg.isMean()) {
-            errors.add(SpecificationPart.ARIMA + ": Mean is not supported in WinX12");
+            messages.add(SpecificationPart.ARIMA + ": Mean is not supported in WinX12");
         }
 
         result.put(SpecificationPart.ARIMA, arima);
@@ -253,7 +253,7 @@ public class JDSpecSeparator {
         automdl.put("balanced", balanced);
 
 //        3)cancelation limit
-        errors.add(SpecificationPart.AUTOMDL + ": No Translation for Cancelation limit");
+        messages.add(SpecificationPart.AUTOMDL + ": No Translation for Cancelation limit");
 
         //4)checkmu
         String checkmu;
@@ -283,7 +283,7 @@ public class JDSpecSeparator {
         automdl.put("urfinal", reg.getUnitRootLimit() + "");
 
 //        9)final + initial unit root limit
-        errors.add(SpecificationPart.AUTOMDL + ": There is no translation for final and initial unit root limit");
+        messages.add(SpecificationPart.AUTOMDL + ": There is no translation for final and initial unit root limit");
 
 //        10)hrinitial
         String hr;
@@ -419,7 +419,7 @@ public class JDSpecSeparator {
                             types.append(s.getType()).append(" ");
                             break;
                         default:
-                            errors.add(SpecificationPart.OUTLIER + ": No Translation for " + s.getType().name());
+                            messages.add(SpecificationPart.OUTLIER + ": No Translation for " + s.getType().name());
                             break;
                     }
                 }
@@ -505,19 +505,19 @@ public class JDSpecSeparator {
                 } else {
                     if (tdSpec.getHolidays() != null) {
                         //GUI option: Holidays
-                        errors.add("REGRESSION: Holidays are not supported in WinX12");
+                        messages.add("REGRESSION: Holidays are not supported in WinX12");
 
                     } else {
                         //GUI option: Default
                         switch (tdSpec.getTradingDaysType()) {
                             case WorkingDays:
-                                errors.add("REGRESSION: WorkingDays are not supported in WinX12");
+                                messages.add("REGRESSION: WorkingDays are not supported in WinX12");
                                 break;
                             case TradingDays: {
                                 if (tdSpec.isAutoAdjust()) {
                                     variables.append("td\n\t\t");
                                 } else {
-                                    errors.add("REGRESSION: autoadjusted has to be enabled");
+                                    messages.add("REGRESSION: autoadjusted has to be enabled");
                                 }
                                 break;
                             }
@@ -544,7 +544,7 @@ public class JDSpecSeparator {
             if (mov != null) {
                 if (mov.getType().equals(Type.Easter)) {
                     if (!mov.getTest().equals(RegressionTestSpec.None)) {
-                        errors.add("REGRESSION: Pre-Test for easter are not supported in WinX12");
+                        messages.add("REGRESSION: Pre-Test for easter are not supported in WinX12");
                     } else {
                         variables.append("easter[");
                         variables.append(mov.getW()).append("]\n\t\t");
@@ -588,7 +588,7 @@ public class JDSpecSeparator {
             }
 //            D) Intervention variables
             if (reg.getInterventionVariablesCount() != 0) {
-                errors.add("REGRESSION: Intervention variables are not possible in WinX");
+                messages.add("REGRESSION: Intervention variables are not possible in WinX");
             }
 //            E) Ramps
             if (reg.getRampsCount() != 0) {
@@ -672,15 +672,15 @@ public class JDSpecSeparator {
 
                         //4)Firstlag
                         if (t.getFirstLag() != 0) {
-                            errors.add("REGRESSION: Firstlag in user-defined variables is not supported");
+                            messages.add("REGRESSION: Firstlag in user-defined variables is not supported");
                         }
 //                    5)Lastlag
                         if (t.getLastLag() != 0) {
-                            errors.add("REGRESSION: Lastlag in user-defined variables is not supported");
+                            messages.add("REGRESSION: Lastlag in user-defined variables is not supported");
                         }
 //                    6)Component type
                         if (!t.getEffect().equals(UserComponentType.Series)) {
-                            errors.add("REGRESSION: Component type in user-defined variables is not supported");
+                            messages.add("REGRESSION: Component type in user-defined variables is not supported");
                         }
                         if(!regression.containsKey("file")){
                             regression.put("file", "'regData.rgr'");
@@ -757,7 +757,7 @@ public class JDSpecSeparator {
                         }
                         break;
                     default:
-                        errors.add(SpecificationPart.TRANSFORM + ": No translation for " + t.getAdjust());
+                        messages.add(SpecificationPart.TRANSFORM + ": No translation for " + t.getAdjust());
                         adjust = null;
                         break;
                 }
@@ -878,7 +878,7 @@ public class JDSpecSeparator {
             switch (x11.getMode()) {
                 case Additive:
                     if (transformLog) {
-                        errors.add(SpecificationPart.TRANSFORM + ": For transform function = log is decompostion mode add not possible");
+                        messages.add(SpecificationPart.TRANSFORM + ": For transform function = log is decompostion mode add not possible");
                     } else {
                         mode = "add";
                         x11Result.put("mode", mode);
@@ -889,7 +889,7 @@ public class JDSpecSeparator {
                         mode = "logadd";
                         x11Result.put("mode", mode);
                     } else {
-                        errors.add(SpecificationPart.TRANSFORM + ": For transform function = none is only decomposition mode = add possible");
+                        messages.add(SpecificationPart.TRANSFORM + ": For transform function = none is only decomposition mode = add possible");
                     }
                     break;
                 case Multiplicative:
@@ -897,7 +897,7 @@ public class JDSpecSeparator {
                         mode = "mult";
                         x11Result.put("mode", mode);
                     } else {
-                        errors.add(SpecificationPart.TRANSFORM + ": For transform function = none is only decomposition mode = add possible");
+                        messages.add(SpecificationPart.TRANSFORM + ": For transform function = none is only decomposition mode = add possible");
                     }
                     break;
                 case Undefined:
@@ -1103,7 +1103,7 @@ public class JDSpecSeparator {
             case First:
             case Last:
                 result = null;
-                errors.add(specPart + ": There is no transformation for the span type");
+                messages.add(specPart + ": There is no transformation for the span type");
                 break;
             default:
                 result = null;

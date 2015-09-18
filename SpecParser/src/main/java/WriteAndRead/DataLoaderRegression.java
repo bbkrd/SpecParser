@@ -26,10 +26,16 @@ public class DataLoaderRegression extends DataLoader {
     private ArrayList<String> regressorName = new ArrayList();
     private double[] values;
 
+    private ArrayList<TsData> regressorsFromWebService = new ArrayList();
+
     @Override
     public void load(String data) {
         super.load(data);
         values = super.getValues();
+    }
+
+    public void addRegFromWebServive(TsData data) {
+        regressorsFromWebService.add(data);
     }
 
     public void setRegressorName(String regressorName) {
@@ -62,6 +68,7 @@ public class DataLoaderRegression extends DataLoader {
                     break;
                 default:
                     //File extension are not supported
+                    messages = ("Dateiendung wird nicht unterstützt");
                     break;
             }
         } catch (FileNotFoundException ex) {
@@ -98,27 +105,43 @@ public class DataLoaderRegression extends DataLoader {
     public TsVariable[] getRegressors() {
 
         /**/
-        if (values != null) {
-            ArrayList<TsVariable> r = new ArrayList();
-            if (regressorName.isEmpty()) {
-                regressorName.add("NoName");
-            }
-            int lengthOfRegressors = values.length / regressorName.size();
-            double[] tmp = new double[lengthOfRegressors];
-            TsData data;
-
-            for (int regressor = 0; regressor < regressorName.size(); regressor++) {
-                for (int i = 0; i < lengthOfRegressors; i++) {
-                    tmp[i] = values[i * regressorName.size() + regressor];
+        if (regressorsFromWebService.isEmpty()) {
+            if (values != null) {
+                ArrayList<TsVariable> r = new ArrayList();
+                if (regressorName.isEmpty()) {
+                    regressorName.add("NoName");
                 }
+                int lengthOfRegressors = values.length / regressorName.size();
+                double[] tmp = new double[lengthOfRegressors];
+                TsData data;
 
-                data = new TsData(getPeriod(), getStart().getYear(), getStart().getMonth(), tmp, true);
-                //Name und startwert pruefen
+                for (int regressor = 0; regressor < regressorName.size(); regressor++) {
+                    for (int i = 0; i < lengthOfRegressors; i++) {
+                        tmp[i] = values[i * regressorName.size() + regressor];
+                    }
+
+                    data = new TsData(getPeriod(), getStart().getYear(), getStart().getMonth(), tmp, true);
+                    //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
-                r.add(new TsVariable(regressorName.get(regressor),data));
+                    r.add(new TsVariable(regressorName.get(regressor), data));
+                }
+                return r.toArray(new TsVariable[0]);
             }
-            return r.toArray(new TsVariable[0]);
+            //Fehlermeldung: Keine Werte vorhanden
+//            messages = "Keine Werte vorhanden";
+            return null;
+        } else {
+            if (regressorName.size() == regressorsFromWebService.size()) {
+                ArrayList<TsVariable> r = new ArrayList();
+                for (int regressor = 0; regressor < regressorName.size(); regressor++) {
+                    r.add(new TsVariable(regressorName.get(regressor), regressorsFromWebService.get(regressor)));
+                }
+                return r.toArray(new TsVariable[0]);
+            } else {
+                //Fehlermeldung: unterschiedliche Längen bei Namen und Daten
+                messages = "Unterschiedliche Anzahl an Regressornamen und -daten";
+                return null;
+            }
         }
-        return null;
     }
 }
