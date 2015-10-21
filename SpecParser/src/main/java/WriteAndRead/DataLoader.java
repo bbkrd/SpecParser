@@ -35,6 +35,11 @@ public class DataLoader {
         return period;
     }
 
+    
+    public int getNumberValues(){
+        return values.length;
+    }
+    
     public String getMessages() {
         String toReturn = messages;
         messages = "";
@@ -94,7 +99,9 @@ public class DataLoader {
 
         } catch (FileNotFoundException ex) {
             messages = "File not found";
+            //eig error
         } catch (IOException ex) {
+            //error
             messages = "File is not readable";
         }
     }
@@ -102,7 +109,7 @@ public class DataLoader {
     protected double[] loadDat(BufferedReader br) throws IOException, FileNotFoundException {
         String line;
         ArrayList<String> v = new ArrayList();
-        double[] values;
+        double[] val;
         String[] split;
         int periode = 0;
         int year = 10000; //
@@ -127,21 +134,21 @@ public class DataLoader {
         }
 
         //calculate values
-        values = new double[v.size()];
+        val = new double[v.size()];
         for (int i = 0; i < v.size(); i++) {
-            values[i] = Double.parseDouble(v.get(i));
+            val[i] = Double.parseDouble(v.get(i));
         }
 
         if (periode <= 4) {
             period = TsFrequency.Quarterly;
         }
-        return values;
+        return val;
     }
 
     protected double[] loadSer(BufferedReader br) throws IOException, FileNotFoundException {
         String line;
         ArrayList<String> v = new ArrayList();
-        double[] values;
+        double[] val;
 
         while ((line = br.readLine()) != null) {
             line = line.trim();
@@ -149,12 +156,12 @@ public class DataLoader {
                 v.add(line);
             }
         }
-        values = new double[v.size()];
+        val = new double[v.size()];
 
         for (int i = 0; i < v.size(); i++) {
-            values[i] = Double.parseDouble(v.get(i));
+            val[i] = Double.parseDouble(v.get(i));
         }
-        return values;
+        return val;
     }
 
     public TsData getData() {
@@ -174,7 +181,7 @@ public class DataLoader {
     }
 
     public boolean isDataFromWebserviceSet() {
-        if (dataFromWebService == null) {
+        if(dataFromWebService == null) {
             return false;
         } else {
             return true;

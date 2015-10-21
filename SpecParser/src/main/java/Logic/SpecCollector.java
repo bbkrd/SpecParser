@@ -11,6 +11,8 @@ import ec.nbdemetra.ui.variables.VariablesDocumentManager;
 import ec.nbdemetra.ws.IWorkspaceItemManager;
 import ec.nbdemetra.ws.WorkspaceFactory;
 import ec.nbdemetra.ws.WorkspaceItem;
+import ec.nbdemetra.ws.nodes.ManagerWsNode;
+import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
@@ -20,10 +22,9 @@ import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariables;
-import java.awt.Cursor;
-import java.awt.Frame;
+import ec.tstoolkit.utilities.LinearId;
 import java.util.ArrayList;
-import javax.swing.JFrame;
+import org.openide.nodes.Node;
 
 /**
  *
@@ -47,12 +48,13 @@ public class SpecCollector {
      *   messages    -   collects messages which appear by translating   */
     private String[] errors;
     private String[] messages;
+    private String[] warnings;
 
     /*  index   -   reference to each single item in a multi doc the corresponding SpecCollector (only for multi docs important)
      *   name    -   */
     private int index;
     private String name;
-    private String nameForWS;
+//    private String nameForWS;
 
     /*       wsItem      -   WorspaceItem, to modify the item in the GUI (name, data, spec)
      *       path        -   to open the a directory for loading and saving, notice the last directory by loading   */
@@ -125,6 +127,13 @@ public class SpecCollector {
         return messages;
     }
 
+    public String[] getWarnings(){
+        if (warnings == null) {
+            warnings = new String[]{};
+        }
+        return warnings;
+    }
+    
     public String getRegData() {
         return regData;
     }
@@ -138,16 +147,16 @@ public class SpecCollector {
                     ts = ts.rename(name);
                 }
             }
-            nameForWS = this.name;
+//            nameForWS = this.name;
         } else {
             //multi document: Name of mta?
             this.name = name;
         }
     }
 
-    public void setNameForWS(String name) {
-        nameForWS = name;
-    }
+//    public void setNameForWS(String name) {
+//        nameForWS = name;
+//    }
 
     public String getName() {
         return name;
@@ -173,7 +182,7 @@ public class SpecCollector {
 
             WinX12SpecSeparator separator = new WinX12SpecSeparator();
             separator.setPath(path);
-            separator.setMtaName(nameForWS);
+//            separator.setMtaName(nameForWS);
             separator.setName(name);
             separator.buildSpec(winX12SpecText);
 
@@ -191,12 +200,13 @@ public class SpecCollector {
                 refreshWS();
 
                 errors = separator.getErrorList();
+                warnings=separator.getWarningList();
                 messages = separator.getMessageList();
             } else {
 //              if data are missing
                 errors = new String[1];
                 errors[0] = "NO DATA";
-                messages = separator.getMessageList();
+//                messages = separator.getMessageList();
             }
 
         } else {
@@ -224,16 +234,16 @@ public class SpecCollector {
                     //if data are missing
                     errors = new String[1];
                     errors[0] = "NO DATA No Work";
-                    messages = new String[1];
-                    messages[0] = "NO DATA!!!";
+//                    messages = new String[1];
+//                    messages[0] = "NO DATA!!!";
                 }
 
             } else {
                 //if data are missing
                 errors = new String[1];
                 errors[0] = "NO DATA No Work";
-                messages = new String[1];
-                messages[0] = "NO DATA!!!";
+//                messages = new String[1];
+//                messages[0] = "NO DATA!!!";
             }
         }
     }
@@ -262,7 +272,8 @@ public class SpecCollector {
 
     private void writeRegressors(WinX12SpecSeparator separator) {
 
-        String reg_name = "reg_" + nameForWS;
+//        String reg_name = "reg_" + nameForWS;
+        String reg_name = "reg_SpecParser";
         String curName;
         TsVariable[] regressor = separator.getRegressor();
         String[] regName = separator.getRegressorName();
@@ -336,5 +347,7 @@ public class SpecCollector {
             }
         }
         separator.setRegressorsInSpec(td.toArray(new String[0]), user.toArray(new TsVariableDescriptor[0]));
+        
+
     }
 }

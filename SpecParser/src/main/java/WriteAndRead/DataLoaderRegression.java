@@ -61,6 +61,7 @@ public class DataLoaderRegression extends DataLoader {
                     loadRgr(br);
                     break;
                 case "dat":
+                case "txt":
                     values = super.loadDat(br);
                     break;
                 case "ser":
@@ -68,13 +69,15 @@ public class DataLoaderRegression extends DataLoader {
                     break;
                 default:
                     //File extension are not supported
-                    messages = ("Dateiendung wird nicht unterstützt");
+                    messages = "File extension are not supported";
                     break;
             }
         } catch (FileNotFoundException ex) {
             //fehler
+            messages = "File not found";
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+//            Exceptions.printStackTrace(ex);
+            messages = "File is not readable";
         }
     }
 

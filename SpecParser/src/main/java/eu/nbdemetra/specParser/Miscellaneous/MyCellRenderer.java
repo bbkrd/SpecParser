@@ -29,7 +29,7 @@ public class MyCellRenderer extends JLabel implements ListCellRenderer {
         SpecCollector spec = (SpecCollector) value;
         String s = (index + 1) + "      " + spec.getName();
         setText(s);
-
+        
         if (isSelected) {
             setBackground(list.getSelectionBackground());
             setForeground(list.getSelectionForeground());
@@ -37,11 +37,16 @@ public class MyCellRenderer extends JLabel implements ListCellRenderer {
             //display red or green logic because of the translation has errors or not
             String[] errorlist = spec.getErrors();
             if (errorlist.length == 0) {
-                String[] messagesList = spec.getMessages();
-                if (messagesList.length == 0) {
-                    setBackground(Color.green);
+                String[] warningList = spec.getWarnings();
+                if (warningList.length == 0) {
+                    String[] messagesList = spec.getMessages();
+                    if (messagesList.length == 0) {
+                        setBackground(Color.green);
+                    } else {
+                        setBackground(Color.yellow);
+                    }
                 } else {
-                    setBackground(Color.ORANGE);
+                    setBackground(Color.orange);
                 }
             } else {
                 setBackground(Color.red);
@@ -52,7 +57,7 @@ public class MyCellRenderer extends JLabel implements ListCellRenderer {
         setFont(list.getFont());
         setOpaque(true);
         return this;
-
+        
     }
-
+    
 }

@@ -82,18 +82,18 @@ public final class MultiTopComponent extends TopComponent {
     private WorkspaceItem wsItem;
     private WsNode wsNode;
     private static String path = System.getProperty("user.home");
-    
+
     private String mtaName;
-    
+
     private ProgressHandle progressHandle;
 
     /*CONSTRUCTORS*/
     public MultiTopComponent() {
         //never used, but important for TopComponent
     }
-    
+
     public MultiTopComponent(WsNode w) {
-        
+
         wsNode = w;
         initComponents();
         setToolTipText(Bundle.HINT_MultiDocSpecWindowTopComponent());
@@ -103,27 +103,27 @@ public final class MultiTopComponent extends TopComponent {
 
     /*METHODS TO FILL THE LIST OF SINGLE SPECS IN THE GUI*/
     public void setSpecArray(ArrayList<SpecCollector> list) {
-        
+
         this.spec_array = list;
         this.setSpecList();
     }
-    
+
     private void setSpecList() {
-        
+
         DefaultListModel model = new DefaultListModel();
         for (SpecCollector item : spec_array) {
             model.addElement(item);
         }
-        
+
         specList.setModel(model);
         specList.setCellRenderer(new MyCellRenderer());
-        
+
         if (!spec_array.isEmpty()) {
             saveAll.setEnabled(true);
             saveGreen.setEnabled(true);
         }
     }
-    
+
     public String getMtaName() {
         return mtaName;
     }
@@ -165,6 +165,7 @@ public final class MultiTopComponent extends TopComponent {
         });
         jScrollPane1.setViewportView(specList);
 
+        errorText.setEditable(false);
         errorText.setColumns(20);
         errorText.setRows(5);
         errorText.setText(org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.errorText.text")); // NOI18N
@@ -262,12 +263,12 @@ public final class MultiTopComponent extends TopComponent {
          * Thid method saves all (in WinX13) transformed (single) Specs of 
          * the MultiDocument list in a folder.
          */
-        
+
         JFileChooser chooser = new JFileChooser(path);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle("Create target directory");
         int result = chooser.showSaveDialog(null);
-        
+
         if (result == JFileChooser.APPROVE_OPTION) {
             try {
                 File mta_file = chooser.getSelectedFile();
@@ -279,12 +280,12 @@ public final class MultiTopComponent extends TopComponent {
                     String file_name;
                     int counter = 1;
                     for (SpecCollector c : spec_array) {
-                        
+
                         file_name = mta_file.getName() + counter + "";
                         counter++;
                         mta_fw.write(file_name);
                         mta_fw.write("\n");
-                        
+
                         spc_file = new File(newPath + "\\" + file_name + ".spc");
                         if (!spc_file.exists()) {
                             spc_file.createNewFile();
@@ -310,12 +311,12 @@ public final class MultiTopComponent extends TopComponent {
     }//GEN-LAST:event_saveAllActionPerformed
 
     private void saveGreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveGreenActionPerformed
-        
+
         JFileChooser chooser = new JFileChooser(path);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle("Create target directory");
         int result = chooser.showSaveDialog(null);
-        
+
         if (result == JFileChooser.APPROVE_OPTION) {
             try {
                 File mta_file = chooser.getSelectedFile();
@@ -327,13 +328,13 @@ public final class MultiTopComponent extends TopComponent {
                     String file_name;
                     int counter = 1;
                     for (SpecCollector c : spec_array) {
-                        
+
                         if (c.getErrors().length == 0) {
                             file_name = mta_file.getName() + counter + "";
                             counter++;
                             mta_fw.write(file_name);
                             mta_fw.write("\n");
-                            
+
                             spc_file = new File(newPath + "\\" + file_name + ".spc");
                             if (!spc_file.exists()) {
                                 spc_file.createNewFile();
@@ -360,32 +361,32 @@ public final class MultiTopComponent extends TopComponent {
     }//GEN-LAST:event_saveGreenActionPerformed
 
     private void loadMtaFiles(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_loadMtaFiles
-        
-        JFileChooser fc = new JFileChooser(path);
-        fc.setFileFilter(new MyFilter(".mta"));
-        fc.setAcceptAllFileFilterUsed(false);
 
-        //for choosing a mta file
-        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            progressHandle.start();
-            File mta_File = fc.getSelectedFile();
-            String name = mta_File.getName();
-            path = fc.getSelectedFile().getAbsolutePath().replaceAll(name, "");
-            name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
-            
-            mtaName = name;
-            
-            wsItem.setDisplayName(name);
-            MultiTopComponent.this.setDisplayName("SpecParser for " + name);
-            MultiTopComponent.this.repaint();
-            
-            LoadRunnable loadProcess = new LoadRunnable();
-            loadProcess.setMta_File(mta_File);
-            Thread thread = new Thread(loadProcess);
-            thread.start();
-            wsNode.getWorkspace().sortFamily(wsNode.lookup());
-        } else {
-            JOptionPane.showMessageDialog(this, "File isn't loaded");
+        if (load.isEnabled()) {
+            JFileChooser fc = new JFileChooser(path);
+            fc.setFileFilter(new MyFilter(".mta"));
+            fc.setAcceptAllFileFilterUsed(false);
+
+            //for choosing a mta file
+            if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                progressHandle.start();
+                File mta_File = fc.getSelectedFile();
+                String name = mta_File.getName();
+                path = fc.getSelectedFile().getAbsolutePath().replaceAll(name, "");
+                name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
+
+                mtaName = name;
+
+                LoadRunnable loadProcess = new LoadRunnable();
+                loadProcess.setMta_File(mta_File);
+                Thread thread = new Thread(loadProcess);
+                thread.start();
+                wsItem.setDisplayName(name);
+                MultiTopComponent.this.setDisplayName("SpecParser for " + name);
+                MultiTopComponent.this.repaint();
+            } else {
+                JOptionPane.showMessageDialog(this, "File isn't loaded");
+            }
         }
     }//GEN-LAST:event_loadMtaFiles
 
@@ -395,7 +396,8 @@ public final class MultiTopComponent extends TopComponent {
             singleSpecName.setText(specList.getSelectedIndex() + 1 + "    " + spec_array.get(specList.getSelectedIndex()).getName());
             String[] errors = spec_array.get(specList.getSelectedIndex()).getErrors();
             String[] messages = spec_array.get(specList.getSelectedIndex()).getMessages();
-            
+            String[] warnings = spec_array.get(specList.getSelectedIndex()).getWarnings();
+
             if (errors.length != 0) {
                 errorText.setText("ERRORS:\n"
                         + "******\n");
@@ -403,16 +405,25 @@ public final class MultiTopComponent extends TopComponent {
                     errorText.append(tmp + "\n");
                 }
             } else {
-                errorText.setText("No errors");
+                errorText.setText("No errors\n");
+            }
+             if (warnings.length != 0) {
+                errorText.append("\nWARNINGS:\n"
+                        + "*********\n");
+                for (String tmp : warnings) {
+                    errorText.append(tmp + "\n");
+                }
+            } else {
+                errorText.append("\nNo warnings\n");
             }
             if (messages.length != 0) {
                 errorText.append("\nMESSAGES:\n"
-                        + "******\n");
+                        + "*********\n");
                 for (String tmp : messages) {
                     errorText.append(tmp + "\n");
                 }
             } else {
-                errorText.append("\nNo messages");
+                errorText.append("\nNo messages\n");
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             //click not on item
@@ -426,11 +437,11 @@ public final class MultiTopComponent extends TopComponent {
             openSingleWindow();
         }
     }//GEN-LAST:event_specListKeyPressed
-    
+
     private void openSingleWindow() {
-        
+
         SingleTopComponent window;
-        
+
         SpecCollector s = spec_array.get(specList.getSelectedIndex());
         if (s.getTs() != null && s.getTs().getTsData() != null) {
             s.setPath(path);
@@ -479,7 +490,7 @@ public final class MultiTopComponent extends TopComponent {
     @Override
     public void componentOpened() {
     }
-    
+
     @Override
     public void componentClosed() {
 //
@@ -488,98 +499,57 @@ public final class MultiTopComponent extends TopComponent {
         }
         MultiSpec.deleteWindow(wsItem.getId());
     }
-    
+
     protected void deleteWindow(String id) {
         //if STC is closing, delete STC from list
         activeSingleWindows.remove(id);
     }
-    
+
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at
         // http://wiki.apidesign.org/wiki/PropertyFiles
         p.setProperty("version", "1.0");
         // TODO store your settings
     }
-    
+
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         // TODO read your settings according to their version
     }
-    
+
     public WorkspaceItem getWs() {
         return (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
     }
-    
+
     public String getPath() {
         return path;
     }
 
-
-    /*INNER CLASSES*/
-    //inner class, because of access to spec_array
-  /*  class ThreadMethod extends Thread {
-
-     @Override
-     public void run() {
-
-     while (!mta_files.isEmpty()) {
-     ThreadObject object = mta_files.getSpec();
-     try (FileReader spec_FileReader = new FileReader(new File(path + (object.getSpecName()) + ".SPC"))) {
-
-     try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
-     StringBuilder spec_StringBuilder = new StringBuilder();
-     String spec_line;
-     while ((spec_line = brSpec.readLine()) != null) {
-     spec_StringBuilder.append(spec_line);
-     spec_StringBuilder.append("\n");
-     }
-
-     SpecCollector spec = new SpecCollector(wsItem, object.getIndex());
-     spec.setPath(path);
-     spec.setWinX12Spec(spec_StringBuilder.toString());
-     spec.setName(object.getSpecName());
-     spec.setNameForWS(MultiTopComponent.this.getMtaName());
-     spec.translate(TranslationTo_Type.JDSpec);
-
-     if (spec.getTs() != null) {
-     SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
-     spec.setJDSpec(item.toDocument());
-     }
-
-     spec_array.add(spec);
-
-     }
-     } catch (FileNotFoundException ex) {
-
-     } catch (IOException ex) {
-     Exceptions.printStackTrace(ex);
-     }
-     }
-     }
-     }*/
     public class MyPropertyChangeListener implements PropertyChangeListener {
-        
+
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String s = evt.getPropertyName();
-            
+
             if (s.equals("CLOSE")) {
                 deleteWindow(((SingleTopComponent) evt.getSource()).getId());
             }
         }
     }
-    
+
     private class LoadRunnable implements Runnable {
-        
+
         private File mta_File;
-        
+
         public void setMta_File(File mta_File) {
             this.mta_File = mta_File;
         }
-        
+
         @Override
         public void run() {
-            
+
+            int counter_mta=0;
+            int counter_trans=0;
             try {
                 //open this mta file
                 FileReader mta_FileReader = new FileReader(mta_File);
@@ -599,6 +569,7 @@ public final class MultiTopComponent extends TopComponent {
                         if (!mta_line.isEmpty()) {
 //                            mta_files.addSpec(mta_line); 
                             specFromMTA.addLast(mta_line);
+                            counter_mta++;
                         }
                     }
                     int counter = 0;
@@ -608,7 +579,7 @@ public final class MultiTopComponent extends TopComponent {
                         current = specFromMTA.pollFirst();
                         counter++;
                         try (FileReader spec_FileReader = new FileReader(new File(path + (current) + ".SPC"))) {
-                            
+
                             try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
                                 StringBuilder spec_StringBuilder = new StringBuilder();
                                 String spec_line;
@@ -616,39 +587,52 @@ public final class MultiTopComponent extends TopComponent {
                                     spec_StringBuilder.append(spec_line);
                                     spec_StringBuilder.append("\n");
                                 }
-                                
+
                                 SpecCollector spec = new SpecCollector(wsItem, counter);
                                 spec.setPath(path);
                                 spec.setWinX12Spec(spec_StringBuilder.toString());
                                 spec.setName(current);
-                                spec.setNameForWS(MultiTopComponent.this.getMtaName());
+//                                spec.setNameForWS(MultiTopComponent.this.getMtaName());
                                 spec.translate(TranslationTo_Type.JDSpec);
-                                
+
                                 if (spec.getTs() != null) {
                                     SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
                                     spec.setJDSpec(item.toDocument());
                                 }
-                                
+
                                 spec_array.add(spec);
-                                
+                                counter_trans++;
+
                             }
                         } catch (FileNotFoundException ex) {
-                            
+
                         } catch (IOException ex) {
                             Exceptions.printStackTrace(ex);
                         }
                     }
                     setSpecList();
                     load.setEnabled(false);
-                    
+
                 } catch (IOException ex) {
                     Exceptions.printStackTrace(ex);
                 }
             } catch (FileNotFoundException ex) {
                 JOptionPane.showMessageDialog(MultiTopComponent.this, "File doesn't exist");
+            } finally {
+                progressHandle.finish();
+                wsNode.updateUI();
+//                for (Node item : WsNode.items(wsItem.getOwner(), new LinearId("Utilities"))) {
+//                     ((WsNode)item).updateUI();
+//                    if (item instanceof ManagerWsNode && item.getDisplayName().equals("Variables")) {
+//                        Node[] temp = ((ManagerWsNode) item).getChildren().getNodes();
+//                        for (Node node : temp) {
+//                            ((WsNode)node).updateUI();
+//                        }
+//                    }
+//                }
+                wsNode.getWorkspace().sort();
+                JOptionPane.showMessageDialog(null, "Translation completed: "+counter_trans+"/"+counter_mta+" specs");
             }
-            progressHandle.finish();
         }
-        
     }
 }

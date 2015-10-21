@@ -91,6 +91,11 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
             for (String a : this.spec.getErrors()) {
                 errormessage.append(a + "\n");
             }
+            errormessage.append("\nWARNINGS\n"
+                    + "********\n");
+            for (String a : this.spec.getWarnings()) {
+                errormessage.append(a + "\n");
+            }
             errormessage.append("\nMESSAGES\n"
                     + "********\n");
             for (String a : this.spec.getMessages()) {
