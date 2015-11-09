@@ -6,6 +6,7 @@
 
 package WriteAndRead;
 
+import ec.tss.TsMoniker;
 import ec.tstoolkit.design.ServiceDefinition;
 import ec.tstoolkit.timeseries.simplets.TsData;
 
@@ -16,5 +17,7 @@ import ec.tstoolkit.timeseries.simplets.TsData;
 @ServiceDefinition
 public interface Izisl {
     
-    public TsData getData(String id);
+    public void setId(String id);
+    public TsData getData();
+    public TsMoniker getMoniker();
 }

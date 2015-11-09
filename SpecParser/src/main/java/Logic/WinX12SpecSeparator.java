@@ -17,6 +17,7 @@ import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
 import ec.tss.TsFactory;
+import ec.tss.TsMoniker;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
@@ -151,7 +152,7 @@ public class WinX12SpecSeparator {
     }
 
     public Ts getTs() {
-        return TsFactory.instance.createTs(tsName, null, dataLoader.getData());
+        return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, dataLoader.getData());
     }
 
     public String[] getRegressorName() {
@@ -669,7 +670,7 @@ public class WinX12SpecSeparator {
     }
 
     private void read_format(SpecificationPart partName, String content) {
-        errors.add(partName + ": Argument FORMAT is ignored. Please have a look in SpecParser UserGuide");
+        messages.add(partName + ": Argument FORMAT is ignored. Please have a look in SpecParser UserGuide");
     }
 
     private void read_file(SpecificationPart partName, String content) {
@@ -1449,12 +1450,12 @@ public class WinX12SpecSeparator {
 
             if (setGroup1) {
                 spec.getX11Specification().setSigmavec(vec);
-            }else{
-                messages.add(partName+": For argument SIGMACVEC group 1 contains no element.");
+            } else {
+                messages.add(partName + ": For argument SIGMACVEC group 1 contains no element.");
             }
 
-        }else{
-            messages.add(partName+": Argument SIGMAVEC needs argument CALENDARSIGMA=select");
+        } else {
+            messages.add(partName + ": Argument SIGMAVEC needs argument CALENDARSIGMA=select");
         }
     }
 
@@ -1740,7 +1741,7 @@ public class WinX12SpecSeparator {
                 m.setAccessible(true);
                 m.invoke(this, partName, assign);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-                messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value "+assign+ " is not supported"));
+                messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + assign + " is not supported"));
             }
 
             //dynamisch mit method und string, exception handling
@@ -1748,24 +1749,24 @@ public class WinX12SpecSeparator {
     }
 
     private void read_zewil(SpecificationPart partName, String content) {
-
-        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
-        StringBuilder zislContent = new StringBuilder("bbk01:");
-        zislContent.append(content);
-        read_zisl(partName, zislContent.toString());
+        read_zisl(partName, content);
     }
 
     private void read_zisl(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
-        Izisl test = Lookup.getDefault().lookup(Izisl.class);
-        if (test != null) {
-            TsData dataFromWebServive = test.getData(content);
+        Izisl zisl = Lookup.getDefault().lookup(Izisl.class);
+        if (zisl != null) {
+            zisl.setId(content);
+            TsData dataFromWebServive = zisl.getData();
+            TsMoniker moniker = zisl.getMoniker();
+
             if (dataFromWebServive != null) {
                 switch (partName) {
                     case SERIES:
                         if (!dataLoader.isDataFromWebserviceSet()) {
                             dataLoader.setDataFromWebService(dataFromWebServive);
+                            dataLoader.setMoniker(moniker);
                             dataLoader.setPeriod(dataFromWebServive.getFrequency());
                             if (!dataLoader.getMessages().isEmpty()) {
                                 errors.add(partName + ": " + dataLoader.getMessages());
@@ -1774,6 +1775,7 @@ public class WinX12SpecSeparator {
                         break;
                     case REGRESSION:
                         regressionLoader.addRegFromWebServive(dataFromWebServive);
+                        regressionLoader.setMoniker(moniker);
                         regressionLoader.setPeriod(dataFromWebServive.getFrequency());
 //                    regressionLoader.setRegressorName(content);
                         if (!regressionLoader.getMessages().isEmpty()) {

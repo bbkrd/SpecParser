@@ -6,6 +6,7 @@
 package WriteAndRead;
 
 import com.google.common.io.Files;
+import ec.tss.TsMoniker;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.Month;
 import ec.tstoolkit.timeseries.simplets.TsData;
@@ -27,6 +28,8 @@ public class DataLoader {
     private Day start = new Day(1970, Month.January, 0);
     private boolean startDefault = true;
     private TsData dataFromWebService;
+    
+    private TsMoniker moniker = null;
 
     private double[] values;
 
@@ -34,8 +37,15 @@ public class DataLoader {
     public TsFrequency getPeriod() {
         return period;
     }
-
     
+    public TsMoniker getMoniker(){
+        return moniker;
+    }
+    
+    public void setMoniker(TsMoniker moniker) {
+        this.moniker = moniker;
+    }
+  
     public int getNumberValues(){
         return values.length;
     }

@@ -6,6 +6,7 @@
 package WriteAndRead;
 
 import com.google.common.io.Files;
+import ec.tss.DynamicTsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import java.io.BufferedReader;
@@ -15,7 +16,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import org.openide.util.Exceptions;
 
 /**
  *
@@ -126,7 +126,7 @@ public class DataLoaderRegression extends DataLoader {
                     data = new TsData(getPeriod(), getStart().getYear(), getStart().getMonth(), tmp, true);
                     //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
-                    r.add(new TsVariable(regressorName.get(regressor), data));
+                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));
                 }
                 return r.toArray(new TsVariable[0]);
             }

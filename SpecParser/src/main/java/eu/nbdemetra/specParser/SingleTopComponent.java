@@ -267,10 +267,9 @@ public final class SingleTopComponent extends TopComponent {
             sp.translate(TranslationTo_Type.JDSpec);
             specViewer = specViewer.refresh(sp);
             refreshJD.setForeground(Color.black);
+//            setSpecView(sp);
             if(wsNode!=null){
                 wsNode.getWorkspace().sort();
-            }else{
-               
             }
 //            wsNode.getWorkspace().sortFamily(wsNode.lookup());
 //            if (wsItem.getView() != null) {
