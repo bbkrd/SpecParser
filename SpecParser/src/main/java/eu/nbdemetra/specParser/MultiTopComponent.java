@@ -552,6 +552,7 @@ public final class MultiTopComponent extends TopComponent {
 
             int counter_mta = 0;
             int counter_trans = 0;
+            ArrayList<String> missingTranslation = new ArrayList();
             try {
                 //open this mta file
                 FileReader mta_FileReader = new FileReader(mta_File);
@@ -609,7 +610,8 @@ public final class MultiTopComponent extends TopComponent {
                         } catch (IOException ex) {
                             //spc konnte nicht uebersetzt werden
                             //merke dir current
-                        } 
+                            missingTranslation.add(current);
+                        }
                     }
                     setSpecList();
                     load.setEnabled(false);
@@ -632,7 +634,15 @@ public final class MultiTopComponent extends TopComponent {
 //                    }
 //                }
                 wsNode.getWorkspace().sort();
-                JOptionPane.showMessageDialog(null, "Translation completed: " + counter_trans + "/" + counter_mta + " specs");
+                JOptionPane.showMessageDialog(null, "Translation completed: " + counter_trans + " / " + counter_mta + " specs");
+                if (!missingTranslation.isEmpty()) {
+
+                    StringBuilder tmp = new StringBuilder("Not translated spc-files: \n");
+                    for (String s : missingTranslation) {
+                        tmp.append(s).append("\n");
+                    }
+                    JOptionPane.showMessageDialog(null, tmp.toString());
+                }
             }
         }
     }
