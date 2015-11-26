@@ -603,7 +603,7 @@ public class WinX12SpecSeparator {
 
 //        content = content.replaceAll(";", "").trim().toUpperCase();
 //        if (content.equals("SEASONAL")) {
-        warnings.add(partName + ": No suppport for argument CENTERUSER. Please use the Plugin Centeruser");
+        warnings.add(partName + ": No suppport for argument CENTERUSER. Please use a centred regressoin variable.");
 //        }
     }
 
@@ -1862,12 +1862,14 @@ public class WinX12SpecSeparator {
 
         OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.LS, true);
         spec.getRegArimaSpecification().getRegression().add(o);
+        warnings.add(partName+": It is possible WinX13 an d JD+ have different results for the value LS in argument VARIABLES.");
     }
 
     private void do_tc(SpecificationPart partName, String content) {
 
         OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.TC, true);
         spec.getRegArimaSpecification().getRegression().add(o);
+        warnings.add(partName+": It is possible WinX13 an d JD+ have different results for the value TC in argument VARIABLES.");
     }
 
     private void do_so(SpecificationPart partName, String content) {
