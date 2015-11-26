@@ -264,6 +264,7 @@ public final class MultiTopComponent extends TopComponent {
          * the MultiDocument list in a folder.
          */
 
+        //Regressoren fehlen hier
         JFileChooser chooser = new JFileChooser(path);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setDialogTitle("Create target directory");

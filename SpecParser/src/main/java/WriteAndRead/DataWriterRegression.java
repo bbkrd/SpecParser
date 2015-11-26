@@ -53,6 +53,12 @@ public class DataWriterRegression {
     }
 
     /**/
+
+    /**
+     *
+     * @return
+     */
+    
     public String getRegString() {
         //unbedingt testen mit verschieden langen regressoren
 
@@ -74,9 +80,9 @@ public class DataWriterRegression {
             int counter = 0;
             //#Werte auf die die Regressoren verkürzt werden
             int lengthForReg = minRegLength.minus(tsStart);
-            //
+            //zu verifizieren
             for (int i = 0; i < lengthForReg; i++) {
-                for (String[] values : regressors) {
+                for (String[] values : regressors) {  
                     sb.append(values[indexOfStartTs.get(counter) + i]);
                     sb.append("\t\t");
                     counter++;

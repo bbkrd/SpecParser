@@ -603,7 +603,7 @@ public class WinX12SpecSeparator {
 
 //        content = content.replaceAll(";", "").trim().toUpperCase();
 //        if (content.equals("SEASONAL")) {
-        warnings.add(partName + ": No suppport for argument CENTERUSER. Please use a centred regressoin variable.");
+        warnings.add(partName + ": No suppport for argument CENTERUSER. Please use a centred regression variable.");
 //        }
     }
 

@@ -39,8 +39,6 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Top component which displays the SpecViewer.
  */
-
-
 @ConvertAsProperties(
         dtd = "-//eu.nbdemetra.x13spec//SingleSpecWindow//EN",
         autostore = false
@@ -168,8 +166,8 @@ public final class SingleTopComponent extends TopComponent {
     @Override
     public void componentClosed() {
 
-        SingleSpec.deleteWindow(id);
-        firePropertyChange("CLOSE", null, null);
+            SingleSpec.deleteWindow(id);
+            firePropertyChange("CLOSE", null, null);
 //        MultiTopComponent.deleteWindow(id);
     }
 
@@ -268,7 +266,7 @@ public final class SingleTopComponent extends TopComponent {
             specViewer = specViewer.refresh(sp);
             refreshJD.setForeground(Color.black);
 //            setSpecView(sp);
-            if(wsNode!=null){
+            if (wsNode != null) {
                 wsNode.getWorkspace().sort();
             }
 //            wsNode.getWorkspace().sortFamily(wsNode.lookup());

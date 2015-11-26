@@ -222,7 +222,7 @@ public class SpecCollector {
                     winX12SpecText = separator.getResult();
 
                     //anfrage machen
-                    regData = separator.getRegressors();
+//                    regData = separator.getRegressors();
 
                     refreshWS();
 
