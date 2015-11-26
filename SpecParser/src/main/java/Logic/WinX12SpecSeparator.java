@@ -153,6 +153,9 @@ public class WinX12SpecSeparator {
     }
 
     public Ts getTs() {
+        if(tsName==null){
+            tsName=name;
+        }
         return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, dataLoader.getData());
     }
 
@@ -291,32 +294,32 @@ public class WinX12SpecSeparator {
             }
             noArgument = false;
         }  //if regression user defined variables are in the spec
-        if (regressionTyp != null) {
-            ArrayList<String> td = new ArrayList();
-            ArrayList<TsVariableDescriptor> user = new ArrayList();
-            String[] regNames = regressionLoader.getRegressorName();
-
-            for (int i = 0; i < regressionTyp.length; i++) {
-                switch (regressionTyp[i]) {
-                    case "TD":
-                        td.add("reg_" + mtaName + "." + name + "_" + regNames[i]);
-                        break;
-                    case "USER":
-                        TsVariableDescriptor userVar = new TsVariableDescriptor();
-                        userVar.setName("reg_" + mtaName + "." + name + "_" + regNames[i]);
-                        if (isFinalUser()) {
-                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
-                        } else {
-                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
-                        }
-                        user.add(userVar);
-                        break;
-                    default: //darf eig nicht auftreten 
-                        break;
-                }
-            }
-
-        }
+//        if (regressionTyp != null) {
+//            ArrayList<String> td = new ArrayList();
+//            ArrayList<TsVariableDescriptor> user = new ArrayList();
+//            String[] regNames = regressionLoader.getRegressorName();
+//
+//            for (int i = 0; i < regressionTyp.length; i++) {
+//                switch (regressionTyp[i]) {
+//                    case "TD":
+//                        td.add("reg_" + mtaName + "." + name + "_" + regNames[i]);
+//                        break;
+//                    case "USER":
+//                        TsVariableDescriptor userVar = new TsVariableDescriptor();
+//                        userVar.setName("reg_" + mtaName + "." + name + "_" + regNames[i]);
+//                        if (isFinalUser()) {
+//                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+//                        } else {
+//                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
+//                        }
+//                        user.add(userVar);
+//                        break;
+//                    default: //darf eig nicht auftreten 
+//                        break;
+//                }
+//            }
+//
+//        }
     }
 
     public void setRegressorsInSpec(String[] td, TsVariableDescriptor[] user) {
@@ -598,7 +601,7 @@ public class WinX12SpecSeparator {
 
     private void read_centeruser(SpecificationPart partName, String content) {
 
-        content = content.replaceAll(";", "").trim().toUpperCase();
+//        content = content.replaceAll(";", "").trim().toUpperCase();
 //        if (content.equals("SEASONAL")) {
         warnings.add(partName + ": No suppport for argument CENTERUSER. Please use the Plugin Centeruser");
 //        }
@@ -1197,19 +1200,19 @@ public class WinX12SpecSeparator {
 
     private void read_name(SpecificationPart partName, String content) {
 
-        content = content.replaceAll(";", "").trim();
-        switch (partName) {
-            case SERIES:
-                tsName = content.replaceAll("'", "");
-                if (mtaName == null) {
-                    mtaName = tsName;
-                }
-                break;
-            case REGRESSION:
-            default:
-                messages.add(partName + ": No support for argument NAME");
-                break;
-        }
+//        content = content.replaceAll(";", "").trim();
+//        switch (partName) {
+//            case SERIES:
+//                tsName = content.replaceAll("'", "");
+////                if (mtaName == null) {
+////                    mtaName = tsName;
+////                }
+//                break;
+//            case REGRESSION:
+//            default:
+//                messages.add(partName + ": No support for argument NAME");
+//                break;
+//        }
     }
 
     private void read_period(SpecificationPart partName, String content) {

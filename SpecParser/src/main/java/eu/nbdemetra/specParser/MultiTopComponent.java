@@ -398,27 +398,29 @@ public final class MultiTopComponent extends TopComponent {
             String[] messages = spec_array.get(specList.getSelectedIndex()).getMessages();
             String[] warnings = spec_array.get(specList.getSelectedIndex()).getWarnings();
 
+            errorText.setText("ERRORS:\n"
+                    + "******\n");
             if (errors.length != 0) {
-                errorText.setText("ERRORS:\n"
-                        + "******\n");
                 for (String tmp : errors) {
                     errorText.append(tmp + "\n");
                 }
             } else {
                 errorText.setText("No errors\n");
             }
-             if (warnings.length != 0) {
-                errorText.append("\nWARNINGS:\n"
-                        + "*********\n");
+
+            errorText.append("\nWARNINGS:\n"
+                    + "*********\n");
+            if (warnings.length != 0) {
                 for (String tmp : warnings) {
                     errorText.append(tmp + "\n");
                 }
             } else {
                 errorText.append("\nNo warnings\n");
             }
+
+            errorText.append("\nMESSAGES:\n"
+                    + "*********\n");
             if (messages.length != 0) {
-                errorText.append("\nMESSAGES:\n"
-                        + "*********\n");
                 for (String tmp : messages) {
                     errorText.append(tmp + "\n");
                 }
@@ -548,8 +550,8 @@ public final class MultiTopComponent extends TopComponent {
         @Override
         public void run() {
 
-            int counter_mta=0;
-            int counter_trans=0;
+            int counter_mta = 0;
+            int counter_trans = 0;
             try {
                 //open this mta file
                 FileReader mta_FileReader = new FileReader(mta_File);
@@ -604,11 +606,10 @@ public final class MultiTopComponent extends TopComponent {
                                 counter_trans++;
 
                             }
-                        } catch (FileNotFoundException ex) {
-
                         } catch (IOException ex) {
-                            Exceptions.printStackTrace(ex);
-                        }
+                            //spc konnte nicht uebersetzt werden
+                            //merke dir current
+                        } 
                     }
                     setSpecList();
                     load.setEnabled(false);
@@ -631,7 +632,7 @@ public final class MultiTopComponent extends TopComponent {
 //                    }
 //                }
                 wsNode.getWorkspace().sort();
-                JOptionPane.showMessageDialog(null, "Translation completed: "+counter_trans+"/"+counter_mta+" specs");
+                JOptionPane.showMessageDialog(null, "Translation completed: " + counter_trans + "/" + counter_mta + " specs");
             }
         }
     }

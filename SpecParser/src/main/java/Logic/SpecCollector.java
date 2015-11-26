@@ -260,7 +260,7 @@ public class SpecCollector {
 //                    replace a single Item to the workspace
                     ((MultiProcessingDocument) wsItem.getElement()).getCurrent().replace(((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index), new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
                 } else {
-//                    add a new singl item to the workspace
+//                    add a new single item to the workspace
                     ((MultiProcessingDocument) wsItem.getElement()).getCurrent().add(new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
                     index = ((MultiProcessingDocument) wsItem.getElement()).getCurrent().size() - 1;
                 }
