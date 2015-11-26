@@ -11,8 +11,6 @@ import ec.nbdemetra.ui.variables.VariablesDocumentManager;
 import ec.nbdemetra.ws.IWorkspaceItemManager;
 import ec.nbdemetra.ws.WorkspaceFactory;
 import ec.nbdemetra.ws.WorkspaceItem;
-import ec.nbdemetra.ws.nodes.ManagerWsNode;
-import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
@@ -22,9 +20,7 @@ import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariables;
-import ec.tstoolkit.utilities.LinearId;
 import java.util.ArrayList;
-import org.openide.nodes.Node;
 
 /**
  *
@@ -127,13 +123,13 @@ public class SpecCollector {
         return messages;
     }
 
-    public String[] getWarnings(){
+    public String[] getWarnings() {
         if (warnings == null) {
             warnings = new String[]{};
         }
         return warnings;
     }
-    
+
     public String getRegData() {
         return regData;
     }
@@ -157,7 +153,6 @@ public class SpecCollector {
 //    public void setNameForWS(String name) {
 //        nameForWS = name;
 //    }
-
     public String getName() {
         return name;
     }
@@ -199,16 +194,19 @@ public class SpecCollector {
                 jdSpec = separator.getResult();
                 refreshWS();
 
-                errors = separator.getErrorList();
-                warnings=separator.getWarningList();
-                messages = separator.getMessageList();
-            } else {
-//              if data are missing
-                errors = new String[1];
-                errors[0] = "NO DATA";
+//                errors = separator.getErrorList();
+//                warnings=separator.getWarningList();
 //                messages = separator.getMessageList();
             }
-
+//            else {
+////              if data are missing
+//                errors = new String[1];
+//                errors[0] = "NO DATA";
+////                messages = separator.getMessageList();
+//            }
+            errors = separator.getErrorList();
+            warnings = separator.getWarningList();
+            messages = separator.getMessageList();
         } else {
             //Translation from JDemetra+Spec to WinX12Spec 
             if (ts != null) {
@@ -341,13 +339,25 @@ public class SpecCollector {
                 case "USER":
                     TsVariableDescriptor userVar = new TsVariableDescriptor();
                     userVar.setName(reg_name + "." + curName);
-                    userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+                    //unterscheidung je nach final = user
+                    if (separator.isFinalUser()) {
+                        userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+
+                    } else {
+                        userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
+                    }
                     user.add(userVar);
+                    break;
+                default:
+                    TsVariableDescriptor userVar2 = new TsVariableDescriptor();
+                    userVar2.setName(reg_name + "." + curName);
+                    //unterscheidung je nach final = user
+                    userVar2.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
+                    user.add(userVar2);
                     break;
             }
         }
         separator.setRegressorsInSpec(td.toArray(new String[0]), user.toArray(new TsVariableDescriptor[0]));
-        
 
     }
 }

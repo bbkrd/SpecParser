@@ -80,6 +80,7 @@ public class WinX12SpecSeparator {
     private boolean outlierDefaults = false;
     private boolean automdlDefault = false;
     private boolean calendarsigmaSelect = false;
+    private boolean finalIsUser = false;
 
     public WinX12SpecSeparator() {
 //        setDefaults();
@@ -173,6 +174,10 @@ public class WinX12SpecSeparator {
         return regressionTyp;
     }
 
+    public boolean isFinalUser() {
+        return finalIsUser;
+    }
+
     public void buildSpec(String winX13Text) {
 
         //0. delete all comments and empty lines
@@ -245,7 +250,7 @@ public class WinX12SpecSeparator {
 //                //4. for each line split on "=" to separate arguments and values
                         for (String tmp : lines) {
                             if (tmp.contains("=")) {
-                                lineSplitted = tmp.split("=");
+                                lineSplitted = tmp.split("=", 2);
                                 lineSplitted[0] = lineSplitted[0].replaceAll("\\s", "");
                                 method = new StringBuilder("read_");
                                 method.append(lineSplitted[0].toLowerCase());
@@ -299,7 +304,11 @@ public class WinX12SpecSeparator {
                     case "USER":
                         TsVariableDescriptor userVar = new TsVariableDescriptor();
                         userVar.setName("reg_" + mtaName + "." + name + "_" + regNames[i]);
-                        userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+                        if (isFinalUser()) {
+                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+                        } else {
+                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
+                        }
                         user.add(userVar);
                         break;
                     default: //darf eig nicht auftreten 
@@ -705,6 +714,17 @@ public class WinX12SpecSeparator {
             default:
                 messages.add(partName + ": No support for argument FILE in " + partName.name().toUpperCase());
                 break;
+        }
+    }
+
+    private void read_final(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim().toLowerCase();
+
+        if (content.equals("user")) {
+            finalIsUser = true;
+        } else {
+            warnings.add(partName + ": No support for value " + content.toUpperCase() + " in argument FINAL.");
         }
     }
 
@@ -1667,7 +1687,7 @@ public class WinX12SpecSeparator {
             regressionTyp = new String[regressors.length];
             for (int i = 0; i < regressionTyp.length; i++) {
                 //default usertype
-                regressionTyp[i] = "TD";
+                regressionTyp[i] = "USER";
             }
         }
         regressionSpec = true;
@@ -1741,7 +1761,7 @@ public class WinX12SpecSeparator {
                 m.setAccessible(true);
                 m.invoke(this, partName, assign);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-                messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + assign + " is not supported"));
+                messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + content.toUpperCase() + " is not supported"));
             }
 
             //dynamisch mit method und string, exception handling

@@ -51,9 +51,7 @@ public class DataLoader {
     }
     
     public String getMessages() {
-        String toReturn = messages;
-        messages = "";
-        return toReturn;
+        return messages;
     }
 
     public boolean isStartDefault() {

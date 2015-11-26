@@ -9,7 +9,7 @@
 
     <groupId>eu.nbdemetra</groupId>
     <artifactId>SpecParser</artifactId>
-    <version>1.2.5</version>
+    <version>1.2.6</version>
     <packaging>nbm</packaging>
 
     <name>SpecParser</name>

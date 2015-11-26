@@ -126,7 +126,9 @@ public class DataLoaderRegression extends DataLoader {
                     data = new TsData(getPeriod(), getStart().getYear(), getStart().getMonth(), tmp, true);
                     //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
-                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));
+//                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));
+                    r.add(new TsVariable(regressorName.get(regressor), data));
+
                 }
                 return r.toArray(new TsVariable[0]);
             }
@@ -137,7 +139,9 @@ public class DataLoaderRegression extends DataLoader {
             if (regressorName.size() == regressorsFromWebService.size()) {
                 ArrayList<TsVariable> r = new ArrayList();
                 for (int regressor = 0; regressor < regressorName.size(); regressor++) {
-                    r.add(new TsVariable(regressorName.get(regressor), regressorsFromWebService.get(regressor)));
+//                    r.add(new TsVariable(regressorName.get(regressor), regressorsFromWebService.get(regressor)));
+                    r.add(new DynamicTsVariable(regressorName.get(regressor), getMoniker(), regressorsFromWebService.get(regressor)));
+
                 }
                 return r.toArray(new TsVariable[0]);
             } else {
