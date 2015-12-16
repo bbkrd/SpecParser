@@ -64,7 +64,7 @@ public class WinX12SpecSeparator {
     private boolean regressionSpec = false;
     private DataLoaderRegression regressionLoader = new DataLoaderRegression();
     private String[] regressionTyp;
-    private String mtaName;
+//    private String mtaName;
     private String name;
 
     //nessecary for File loading
@@ -122,14 +122,25 @@ public class WinX12SpecSeparator {
         spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(1.05);
     }
 
+    private void setX11Defaults() {
+        System.out.println("X11");
+
+        spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+        spec.getX11Specification().setSeasonal(true);
+        spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
+
+        spec.getX11Specification().setSigma(1.5, 2.5);
+        spec.getX11Specification().setForecastHorizon(-1);
+
+    }
+
     public void setPath(String path) {
         this.path = path;
     }
 
-    public void setMtaName(String name) {
-        mtaName = name;
-    }
-
+//    public void setMtaName(String name) {
+//        mtaName = name;
+//    }
     public void setName(String name) {
         this.name = name;
     }
@@ -153,8 +164,8 @@ public class WinX12SpecSeparator {
     }
 
     public Ts getTs() {
-        if(tsName==null){
-            tsName=name;
+        if (tsName == null) {
+            tsName = name;
         }
         return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, dataLoader.getData());
     }
@@ -335,26 +346,15 @@ public class WinX12SpecSeparator {
 
     private void setDefaults() {
 
+        setX11Defaults();
+
         if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
-
             //X11
-            spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
-            spec.getX11Specification().setSeasonal(true);
-            spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
-
-            spec.getX11Specification().setSigma(1.5, 2.5);
-            spec.getX11Specification().setForecastHorizon(0);
             spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
 
         } else {
-//X13
-
+            //X13
 //            x11
-            spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
-            spec.getX11Specification().setSeasonal(true);
-            spec.getX11Specification().setSeasonalFilter(SeasonalFilterOption.Msr);
-            spec.getX11Specification().setSigma(1.5, 2.5);
-            spec.getX11Specification().setForecastHorizon(-1);
             spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
 
             //arima: default is airline model
@@ -671,8 +671,11 @@ public class WinX12SpecSeparator {
             case REGRESSION:
                 regressionSpec = true;
                 regressionLoader.load(content);
+                if (regressionLoader.isStartDefault()) {
+                    regressionLoader.setStart(dataLoader.getStart());
+                }
                 if (regressionTyp == null) {
-                    regressionTyp = new String[]{"TD"};
+                    regressionTyp = new String[]{"USER"};
                 }
                 break;
             default: //Fehler
@@ -682,7 +685,27 @@ public class WinX12SpecSeparator {
     }
 
     private void read_format(SpecificationPart partName, String content) {
-        messages.add(partName + ": Argument FORMAT is ignored. Please have a look in SpecParser UserGuide");
+
+        content = content.replaceAll("[;'\"]", "").trim();
+
+        switch (partName) {
+            case SERIES:
+                dataLoader.setFormat(content.toUpperCase());
+                break;
+            case REGRESSION:
+                regressionLoader.setFormat(content.toUpperCase());
+                break;
+            default:
+                messages.add(partName + ": No support for argument FORMAT in " + partName);
+                break;
+        }
+
+//        if(content.toUpperCase().equals("FREE") || content.toUpperCase().equals("DATEVALUE")){
+//            
+//        }else{
+//            errors.add(partName+": Format "+content.toUpperCase() + " is not supported. Data will be not loaded. ");
+//        }  
+//        messages.add(partName + ": Argument FORMAT is ignored. Please have a look in SpecParser UserGuide");
     }
 
     private void read_file(SpecificationPart partName, String content) {
@@ -705,13 +728,18 @@ public class WinX12SpecSeparator {
                 dataLoader.load(file);
                 if (!dataLoader.getMessages().isEmpty()) {
                     errors.add(partName + ": " + dataLoader.getMessages());
+                    dataLoader.setMessage();
                 }
                 break;
             case REGRESSION:
                 regressionSpec = true;
                 regressionLoader.load(file);
+                if (regressionLoader.isStartDefault()) {
+                    regressionLoader.setStart(dataLoader.getStart());
+                }
                 if (!regressionLoader.getMessages().isEmpty()) {
                     errors.add(partName + ": " + regressionLoader.getMessages());
+                    regressionLoader.setMessage();
                 }
                 break;
             default:
@@ -1552,6 +1580,7 @@ public class WinX12SpecSeparator {
             case REGRESSION:
                 content = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
                 regressionLoader.setStart(DateConverter.toJD(content, regressionLoader.getPeriod()));
+                regressionLoader.changeStartDefault();
                 break;
             default:
                 messages.add(partName + ": No support for argument START");
@@ -1606,6 +1635,17 @@ public class WinX12SpecSeparator {
         }
     }
 
+    private void read_type(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").trim();
+
+        if (content.toUpperCase().equals("SUMMARY")) {
+            spec.getX11Specification().setSeasonal(false);
+        } else {
+            messages.add(partName + ": No support for value " + content.toUpperCase() + " in argument TYPE.");
+        }
+    }
+
     private void read_types(SpecificationPart partName, String content) {
 
         if (!outlierDefaults) {
@@ -1644,14 +1684,18 @@ public class WinX12SpecSeparator {
                     break;
                 case "LS":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
+                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument VARIABLES.");
+
 //                        value.add(new SingleOutlierSpec(OutlierType.LS));
                     break;
                 case "TC":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
 //                        value.add(new SingleOutlierSpec(OutlierType.TC));
+                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument VARIABLES.");
+
                     break;
                 default:
-                    messages.add(partName + ": No support for value " + t + " in argument TYPES");
+                    messages.add(partName + ": No support for value " + t.toUpperCase() + " in argument TYPES");
                     break;
             }
         }
@@ -1700,17 +1744,33 @@ public class WinX12SpecSeparator {
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         String[] regressors = content.split("\\s+");
 
-        for (int i = 0; i < regressors.length; i++) {
-            switch (regressors[i].toUpperCase().trim()) {
+        if (regressionTyp == null) {
+            regressionTyp = new String[1];
+        }
+
+        String[] reg = new String[regressionTyp.length];
+        for (int j = 0; j < reg.length; j++) {
+            if (j < regressors.length) {
+                reg[j] = regressors[j];
+            } else {
+                reg[j]=regressors[0];
+            }
+        }
+
+        for (int i = 0; i < reg.length; i++) {
+            switch (reg[i].toUpperCase().trim()) {
                 case "TD":
                     regressionTyp[i] = "TD";
                     break;
                 case "USER":
                     regressionTyp[i] = "USER";
                     break;
-                default:
+                case "SEASONAL":
+                    regressionTyp[i] = "SEASONAL";
+                    break;
+                default: //holiday, easter, etc. 
                     warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER");
-                    regressionTyp[i] = "USER";
+                    regressionTyp[i] = "TD";
                     break;
             }
         }
@@ -1764,7 +1824,7 @@ public class WinX12SpecSeparator {
                 m.setAccessible(true);
                 m.invoke(this, partName, assign);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-                messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + content.toUpperCase() + " is not supported"));
+                messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + content.toUpperCase() + " in VARIABLES is not supported"));
             }
 
             //dynamisch mit method und string, exception handling
@@ -1862,14 +1922,14 @@ public class WinX12SpecSeparator {
 
         OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.LS, true);
         spec.getRegArimaSpecification().getRegression().add(o);
-        warnings.add(partName+": It is possible WinX13 an d JD+ have different results for the value LS in argument VARIABLES.");
+        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument VARIABLES.");
     }
 
     private void do_tc(SpecificationPart partName, String content) {
 
         OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.TC, true);
         spec.getRegArimaSpecification().getRegression().add(o);
-        warnings.add(partName+": It is possible WinX13 an d JD+ have different results for the value TC in argument VARIABLES.");
+        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument VARIABLES.");
     }
 
     private void do_so(SpecificationPart partName, String content) {
@@ -1912,6 +1972,4 @@ public class WinX12SpecSeparator {
     private void read_savelog(SpecificationPart partName, String content) {
     }
 
-    private void read_type(SpecificationPart partName, String content) {
-    }
 }

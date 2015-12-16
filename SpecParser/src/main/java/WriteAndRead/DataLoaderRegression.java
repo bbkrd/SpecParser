@@ -5,15 +5,10 @@
  */
 package WriteAndRead;
 
-import com.google.common.io.Files;
 import ec.tss.DynamicTsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.simplets.TsData;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -24,15 +19,15 @@ import java.util.Arrays;
 public class DataLoaderRegression extends DataLoader {
 
     private ArrayList<String> regressorName = new ArrayList();
-    private double[] values;
+//    private double[] values;
 
     private ArrayList<TsData> regressorsFromWebService = new ArrayList();
 
-    @Override
-    public void load(String data) {
-        super.load(data);
-        values = super.getValues();
-    }
+//    @Override
+//    public void load(String data) {
+//        super.load(data);
+//        values = super.getValues();
+//    }
 
     public void addRegFromWebServive(TsData data) {
         regressorsFromWebService.add(data);
@@ -50,80 +45,88 @@ public class DataLoaderRegression extends DataLoader {
         return regressorName.toArray(new String[0]);
     }
 
-    @Override
-    public void load(File file) {
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String extension = Files.getFileExtension(file.toString());
-
-            switch (extension.toLowerCase()) {
-                case "rgr":
-                    loadRgr(br);
-                    break;
-                case "dat":
-                case "txt":
-                    values = super.loadDat(br);
-                    break;
-                case "ser":
-                    values = super.loadSer(br);
-                    break;
-                default:
-                    //File extension are not supported
-                    messages = "File extension are not supported";
-                    break;
-            }
-        } catch (FileNotFoundException ex) {
-            //fehler
-            messages = "File not found";
-        } catch (IOException ex) {
-//            Exceptions.printStackTrace(ex);
-            messages = "File is not readable";
-        }
-    }
-
-    private void loadRgr(BufferedReader br) throws IOException {
-
-        /*Idea from WinX12:
-         load all values successiv
-         split values to their regressor in method getRegressors()
-         */
-        ArrayList<String> rslt = new ArrayList();
-
-        //evt. ist erste zeile Namen von regressoren
-        String line;
-        String[] single;
-        while ((line = br.readLine()) != null) {
-            line = line.replaceAll("D", "E").trim();
-            if (!line.isEmpty()) {
-                single = line.split("\\s+");
-                rslt.addAll(Arrays.asList(single));
-            }
-        }
-        values = new double[rslt.size()];
-        for (int i = 0; i < rslt.size(); i++) {
-            values[i] = Double.parseDouble(rslt.get(i));
-        }
-    }
+//    @Override
+//    public void load(File file) {
+//        try {
+//            BufferedReader br = new BufferedReader(new FileReader(file));
+//            String extension = Files.getFileExtension(file.toString());
+//
+//            switch (extension.toLowerCase()) {
+//                case "rgr":
+//                    loadRgr(br);
+//                    break;
+//                case "dat":
+//                case "txt":
+//                    values = super.loadDat(br);
+//                    break;
+//                case "ser":
+//                    values = super.loadSer(br);
+//                    break;
+//                default:
+//                    //File extension are not supported
+//                    messages = "File extension are not supported";
+//                    break;
+//            }
+//        } catch (FileNotFoundException ex) {
+//            //fehler
+//            messages = "File not found";
+//        } catch (IOException ex) {
+////            Exceptions.printStackTrace(ex);
+//            messages = "File is not readable";
+//        }
+//    }
+//
+//    private void loadRgr(BufferedReader br) throws IOException {
+//
+//        /*Idea from WinX12:
+//         load all values successiv
+//         split values to their regressor in method getRegressors()
+//         */
+//        ArrayList<String> rslt = new ArrayList();
+//
+//        //evt. ist erste zeile Namen von regressoren
+//        String line;
+//        String[] single;
+//        while ((line = br.readLine()) != null) {
+//            line = line.replaceAll("D", "E").trim();
+//            if (!line.isEmpty()) {
+//                single = line.split("\\s+");
+//                rslt.addAll(Arrays.asList(single));
+//            }
+//        }
+//        values = new double[rslt.size()];
+//        for (int i = 0; i < rslt.size(); i++) {
+//            values[i] = Double.parseDouble(rslt.get(i));
+//        }
+//    }
 
     public TsVariable[] getRegressors() {
 
         /**/
         if (regressorsFromWebService.isEmpty()) {
-            if (values != null) {
+            if(super.getValues()==null){
+                super.generateValues();
+            }
+            
+            if (super.getValues() != null) {
                 ArrayList<TsVariable> r = new ArrayList();
                 if (regressorName.isEmpty()) {
                     regressorName.add("NoName");
                 }
-                int lengthOfRegressors = values.length / regressorName.size();
+                int lengthOfRegressors = super.getValues().length / regressorName.size();
                 double[] tmp = new double[lengthOfRegressors];
                 TsData data;
 
                 for (int regressor = 0; regressor < regressorName.size(); regressor++) {
                     for (int i = 0; i < lengthOfRegressors; i++) {
-                        tmp[i] = values[i * regressorName.size() + regressor];
+                        tmp[i] = super.getValues()[i * regressorName.size() + regressor];
                     }
-
-                    data = new TsData(getPeriod(), getStart().getYear(), getStart().getMonth(), tmp, true);
+//month geht nicht wenn größer als 3
+                    int p = getStart().getMonth();
+                    if(getPeriod().equals(TsFrequency.Quarterly)){
+                        p=(p/3);
+                    }
+                    data = new TsData(getPeriod(), getStart().getYear(), p, tmp, true);
                     //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
 //                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));

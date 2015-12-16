@@ -203,8 +203,9 @@ public final class SingleTopComponent extends TopComponent {
             if (state == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
 
-                path = file.getAbsolutePath().replaceAll(file.getName(), "");
-
+//                path = file.getAbsolutePath().replace(file.getName(), "");
+                path= file.getParent()+"\\";
+                
                 progressHandle.start();
                 LoadRunnable load = new LoadRunnable();
                 load.setSpc_File(file);
@@ -354,6 +355,8 @@ public final class SingleTopComponent extends TopComponent {
 
         @Override
         public void run() {
+            String message=null;
+            int counter = 0;
             try {
                 FileReader f = new FileReader(file);
                 StringBuilder s;
@@ -376,16 +379,21 @@ public final class SingleTopComponent extends TopComponent {
                 refreshJD.setEnabled(true);
                 save.setEnabled(true);
                 refreshJD.setForeground(Color.black);
+                counter++;
 
             } catch (FileNotFoundException ex) {
-                Exceptions.printStackTrace(ex);
+                message="File not found";
             } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
+                message="File is not readable";
             } finally {
                 progressHandle.finish();
 //                wsNode.updateUI();
                 wsNode.getWorkspace().sort();
-                JOptionPane.showMessageDialog(null, "Ready!");
+                JOptionPane.showMessageDialog(null, "Translation completed: "+ counter +" / 1 specs");
+           
+                if(counter==0){
+                    JOptionPane.showMessageDialog(null, "Not translated spc file: "+file.getName()+" "+message);
+                }
             }
         }
 

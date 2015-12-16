@@ -223,7 +223,6 @@ public class SpecCollector {
 
                     //anfrage machen
 //                    regData = separator.getRegressors();
-
                     refreshWS();
 
                     errors = separator.getErrorList();
@@ -326,6 +325,9 @@ public class SpecCollector {
                             found = true;
                         }
                     }
+                }else{
+                    //startdate gleich, refresh datum
+                    
                 }
             } else {
 
@@ -347,6 +349,12 @@ public class SpecCollector {
                         userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
                     }
                     user.add(userVar);
+                    break;
+                case "SEASONAL":
+                    TsVariableDescriptor var = new TsVariableDescriptor();
+                    var.setName(reg_name + "." + curName);
+                    var.setEffect(TsVariableDescriptor.UserComponentType.Seasonal);
+                    user.add(var);
                     break;
                 default:
                     TsVariableDescriptor userVar2 = new TsVariableDescriptor();
