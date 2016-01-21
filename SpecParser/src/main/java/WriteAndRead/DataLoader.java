@@ -23,7 +23,7 @@ public class DataLoader {
 
     protected String messages = "";
     protected String format = "FREE";
-    protected String fileInput;
+    protected String fileInput = "";
 
     private TsFrequency period = TsFrequency.Monthly;
     private Day start = new Day(1970, Month.January, 0);
