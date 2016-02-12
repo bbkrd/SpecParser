@@ -230,7 +230,7 @@ public class SpecCollector {
                 } else {
                     //if data are missing
                     errors = new String[1];
-                    errors[0] = "NO DATA No Work";
+                    errors[0] = "NO DATA No Work "+" (Code:3001)";
 //                    messages = new String[1];
 //                    messages[0] = "NO DATA!!!";
                 }
@@ -238,7 +238,7 @@ public class SpecCollector {
             } else {
                 //if data are missing
                 errors = new String[1];
-                errors[0] = "NO DATA No Work";
+                errors[0] = "NO DATA No Work"+" (Code:3002)";
 //                messages = new String[1];
 //                messages[0] = "NO DATA!!!";
             }

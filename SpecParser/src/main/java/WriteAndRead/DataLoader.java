@@ -115,7 +115,7 @@ public class DataLoader {
                 //because regression variables
                 fileInput = fileInput.replaceAll("D", "E");
             } else {
-                messages = "File is empty";
+                messages = "File is empty"+" (Code:2001)";
             }
 
         } catch (FileNotFoundException ex) {
@@ -123,7 +123,7 @@ public class DataLoader {
             //eig error
         } catch (IOException ex) {
             //error
-            messages = "File is not readable";
+            messages = "File is not readable"+" (Code:2002)";
         }
     }
 
@@ -144,7 +144,7 @@ public class DataLoader {
             }
 
         } catch (NumberFormatException ex) {
-            messages = "Format is not correct.";
+            messages = "Format is not correct."+" (Code:2003)";
 
         }
         return val;
@@ -193,7 +193,7 @@ public class DataLoader {
                 period = TsFrequency.Quarterly;
             }
         } catch (NumberFormatException ex) {
-            messages = "Format is not correct. Try with free format";
+            messages = "Format is not correct. Try with free format"+" (Code:2004)";
             loadFreeFormat();
         }
         return val;
@@ -237,7 +237,7 @@ public class DataLoader {
             }
         } catch (NumberFormatException ex) {
 
-            messages = "Format is not correct";
+            messages = "Format is not correct"+" (Code:2005)";
         }
 
         return val;
@@ -344,7 +344,7 @@ public class DataLoader {
                     values = loadX12SaveFormat();
                     break;
                 default:
-                    messages = "No support for format " + format.toUpperCase();
+                    messages = "No support for format " + format.toUpperCase()+" (Code:2006)";
                     values = null;
                     break;
             }

@@ -149,7 +149,7 @@ public class DataLoaderRegression extends DataLoader {
                 return r.toArray(new TsVariable[0]);
             } else {
                 //Fehlermeldung: unterschiedliche Längen bei Namen und Daten
-                messages = "Unterschiedliche Anzahl an Regressornamen und -daten";
+                messages = "Unterschiedliche Anzahl an Regressornamen und -daten"+" (Code:2101)";
                 return null;
             }
         }
