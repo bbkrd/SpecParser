@@ -173,7 +173,7 @@ public class SpecCollector {
     public void translate(TranslationTo_Type type) {
 
         if (type == TranslationTo_Type.JDSpec) {
-            // Translation from WinX12Spec to JDemetra+Spec   
+            // Translation from WinX12Spec to JDemetra+ Spec   
 
             WinX12SpecSeparator separator = new WinX12SpecSeparator();
             separator.setPath(path);
@@ -181,7 +181,7 @@ public class SpecCollector {
             separator.setName(name);
             separator.buildSpec(winX12SpecText);
 
-            if (separator.getTs().getTsData() != null) {
+            
                 ts = separator.getTs();
 
                 //regressors
@@ -194,17 +194,13 @@ public class SpecCollector {
                 jdSpec = separator.getResult();
                 refreshWS();
 
-//                errors = separator.getErrorList();
-//                warnings=separator.getWarningList();
-//                messages = separator.getMessageList();
-            }
-//            else {
-////              if data are missing
-//                errors = new String[1];
-//                errors[0] = "NO DATA";
-////                messages = separator.getMessageList();
-//            }
+            
+
             errors = separator.getErrorList();
+            if (separator.getTs().getTsData() == null) {
+                errors = new String[1];
+                errors[0] = "NO DATA";
+            }
             warnings = separator.getWarningList();
             messages = separator.getMessageList();
         } else {
@@ -230,7 +226,7 @@ public class SpecCollector {
                 } else {
                     //if data are missing
                     errors = new String[1];
-                    errors[0] = "NO DATA No Work "+" (Code:3001)";
+                    errors[0] = "NO DATA"+" (Code:3001)";
 //                    messages = new String[1];
 //                    messages[0] = "NO DATA!!!";
                 }
@@ -238,7 +234,7 @@ public class SpecCollector {
             } else {
                 //if data are missing
                 errors = new String[1];
-                errors[0] = "NO DATA No Work"+" (Code:3002)";
+                errors[0] = "NO DATA"+" (Code:3002)";
 //                messages = new String[1];
 //                messages[0] = "NO DATA!!!";
             }

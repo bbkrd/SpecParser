@@ -446,7 +446,7 @@ public final class MultiTopComponent extends TopComponent {
         SingleTopComponent window;
 
         SpecCollector s = spec_array.get(specList.getSelectedIndex());
-        if (s.getTs() != null && s.getTs().getTsData() != null) {
+
             s.setPath(path);
 
             //check for window of selected item in map activeWindows 
@@ -470,9 +470,9 @@ public final class MultiTopComponent extends TopComponent {
                 window.open();
                 window.requestActive();
             }
-        } else {
+        /*} else {
             JOptionPane.showMessageDialog(this, "No Data");
-        }
+        }*/
     }
 
 

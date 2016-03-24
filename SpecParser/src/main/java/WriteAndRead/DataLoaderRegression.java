@@ -29,7 +29,7 @@ public class DataLoaderRegression extends DataLoader {
 //        values = super.getValues();
 //    }
 
-    public void addRegFromWebServive(TsData data) {
+    public void addRegFromWebServive(TsData data) {    
         regressorsFromWebService.add(data);
     }
 

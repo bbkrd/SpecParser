@@ -97,6 +97,7 @@ public class WinX12SpecSeparator {
     private void setOUTLIERDefaults() {
 
         outlierDefaults = true;
+        setX12Part();
 
         spec.getRegArimaSpecification().getOutliers().setLSRun(0);
         spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
@@ -111,6 +112,7 @@ public class WinX12SpecSeparator {
         //automdl
 
         automdlDefault = true;
+        setX12Part();
 
         spec.getRegArimaSpecification().getAutoModel().setEnabled(true);
         spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
@@ -125,7 +127,6 @@ public class WinX12SpecSeparator {
     }
 
     private void setX11Defaults() {
-        System.out.println("X11");
 
         spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
         spec.getX11Specification().setSeasonal(true);
@@ -658,7 +659,7 @@ public class WinX12SpecSeparator {
             }
 //        errors.add(partName + ": No support for more than one critical value , critical value is set to " + s[0]);
         } else {
-            messages.add(partName + ": argument TYPES have to be defined before argument CRITICAL" + " (Code:1810)");
+            messages.add(partName + ": Argument TYPES have to be defined before argument CRITICAL" + " (Code:1810)");
         }
     }
 
@@ -684,6 +685,23 @@ public class WinX12SpecSeparator {
                 messages.add(partName + ": No support for argument DATA in " + partName.name().toUpperCase() + " (Code:1101)");
                 break;
         }
+    }
+    
+     private void read_excludefcst(SpecificationPart partName, String content) {
+
+        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toUpperCase();
+
+        if(content.equals("YES")){
+            spec.getX11Specification().setExcludefcst(true);
+        }else{
+            if(content.equals("NO")){
+                spec.getX11Specification().setExcludefcst(false);
+            }else{
+                //Fehler
+                messages.add(partName+": No support  for value "+content+" in argument EXCLUDEFCST."+ " (Code:1841)");
+            }
+        }
+       
     }
 
     private void read_format(SpecificationPart partName, String content) {
@@ -1738,14 +1756,14 @@ public class WinX12SpecSeparator {
                     break;
                 case "LS":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
-                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument VARIABLES." + " (Code:1837)");
+                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument TYPES." + " (Code:1837)");
 
 //                        value.add(new SingleOutlierSpec(OutlierType.LS));
                     break;
                 case "TC":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
 //                        value.add(new SingleOutlierSpec(OutlierType.TC));
-                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument VARIABLES." + " (Code:1838)");
+                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument TYPES." + " (Code:1838)");
 
                     break;
                 default:
@@ -1894,7 +1912,7 @@ public class WinX12SpecSeparator {
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         Izisl zisl = Lookup.getDefault().lookup(Izisl.class);
         if (zisl != null) {
-            zisl.setId(content);
+            zisl.setId(content.toUpperCase());
             TsData dataFromWebServive = zisl.getData();
             TsMoniker moniker = zisl.getMoniker();
 
