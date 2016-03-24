@@ -1904,7 +1904,15 @@ public class WinX12SpecSeparator {
     }
 
     private void read_zewil(SpecificationPart partName, String content) {
-        read_zisl(partName, content);
+        
+        content = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        if(content.endsWith(";")){
+            content = content.substring(0, content.lastIndexOf(";"));
+        }
+        String[] zewil_reihen = content.split(";");
+        for (String reihe : zewil_reihen) {
+            read_zisl(partName, reihe);
+        }
     }
 
     private void read_zisl(SpecificationPart partName, String content) {
