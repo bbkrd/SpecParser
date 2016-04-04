@@ -181,23 +181,20 @@ public class SpecCollector {
             separator.setName(name);
             separator.buildSpec(winX12SpecText);
 
-            
-                ts = separator.getTs();
+            ts = separator.getTs();
 
-                //regressors
-                if (separator.getRegressorName() != null && separator.getRegressor() != null) {
-                    if (wsItem.getOwner() != null) {
-                        writeRegressors(separator);
-                    }
+            //regressors
+            if (separator.getRegressorName() != null && separator.getRegressor() != null) {
+                if (wsItem.getOwner() != null) {
+                    writeRegressors(separator);
                 }
+            }
 
-                jdSpec = separator.getResult();
-                refreshWS();
-
-            
+            jdSpec = separator.getResult();
+            refreshWS();
 
             errors = separator.getErrorList();
-            if (separator.getTs().getTsData() == null) {
+            if (ts.getTsData() == null) {
                 errors = new String[1];
                 errors[0] = "NO DATA";
             }
@@ -226,7 +223,7 @@ public class SpecCollector {
                 } else {
                     //if data are missing
                     errors = new String[1];
-                    errors[0] = "NO DATA"+" (Code:3001)";
+                    errors[0] = "NO DATA" + " (Code:3001)";
 //                    messages = new String[1];
 //                    messages[0] = "NO DATA!!!";
                 }
@@ -234,7 +231,7 @@ public class SpecCollector {
             } else {
                 //if data are missing
                 errors = new String[1];
-                errors[0] = "NO DATA"+" (Code:3002)";
+                errors[0] = "NO DATA" + " (Code:3002)";
 //                messages = new String[1];
 //                messages[0] = "NO DATA!!!";
             }
@@ -316,18 +313,43 @@ public class SpecCollector {
                             }
                         } else {
                             //wenn noch nicht existiert dann kann neu angelegt werden
-                            curName = curName.concat(ends);
-                            wsVariables.getElement().set(curName, regressor[i]);
+                            String newName = curName.concat(ends);
+                            wsVariables.getElement().set(newName, regressor[i]);
                             found = true;
+                            //in Spec umsetzen
+
+                            //falls in td
+                            String[] tdVars = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().getUserVariables();
+                            if(tdVars.length!=0){
+                                for(int j=0; j<tdVars.length; j++){
+                                    if(tdVars[j].equals(curName)){
+                                        tdVars[j]=newName;
+                                    }
+                                }
+                                separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().setUserVariables(tdVars);
+                            }
+                            
+                            //falls in userdefined
+                            if (separator.getCurrentSpec().getRegArimaSpecification().getRegression().getUserDefinedVariablesCount() != 0) {
+                                
+                                TsVariableDescriptor[] tmp = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getUserDefinedVariables();
+                                
+                                for (int j = 0; j<tmp.length; j++){
+                                    if(tmp[j].getName().equals(curName)){
+                                        tmp[j].setName(newName);
+                                    }
+                                }
+                                separator.getCurrentSpec().getRegArimaSpecification().getRegression().setUserDefinedVariables(tmp);
+                            }
+                            curName=newName;
                         }
                     }
-                }else{
+                } else {
                     //startdate gleich, refresh datum
-                    
                 }
             } else {
-
                 wsVariables.getElement().set(curName, regressor[i]);
+                
             }
 
             switch (regTyp[i].toUpperCase()) {

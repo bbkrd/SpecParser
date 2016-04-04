@@ -12,6 +12,7 @@ import Logic.SpecCollector;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tstoolkit.utilities.IModifiable;
 import java.util.HashMap;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -34,13 +35,13 @@ public class SingleSpec {
         WorkspaceItem w = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
 
         if (w.getElement() instanceof X13Document) {
-            id = w.getId() + "";
+                id = w.getId() + "";
 
             if (!activeSingleWindows.containsKey(id)) {
                 window = new SingleTopComponent(ws);
                 window.setId(id);
 
-                SpecCollector spec = new SpecCollector((WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class));
+                SpecCollector spec = new SpecCollector(w/*(WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class)*/);
                 spec.setPath(window.getPath());
                 window.setSpecView(spec);
 
@@ -52,7 +53,7 @@ public class SingleSpec {
             displayName = w.getDisplayName();
             window.setName("SpecParser for " + displayName);
             window.open();
-            window.requestActive();
+            window.requestActive();            
         }
     }
 

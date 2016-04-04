@@ -31,6 +31,7 @@ public class DataLoader {
     private TsData dataFromWebService;
 
     private TsMoniker moniker = null;
+    private String zislId=null;
 
     private double[] values;
 
@@ -41,6 +42,13 @@ public class DataLoader {
 
     public TsMoniker getMoniker() {
         return moniker;
+    }
+    
+    public void setZislId(String id){
+        zislId=id;
+    }
+    public String getZislId(){
+        return zislId;
     }
 
     public void setMoniker(TsMoniker moniker) {
@@ -58,7 +66,7 @@ public class DataLoader {
     public void setMessage() {
         messages = "";
     }
-
+    
     public boolean isStartDefault() {
         return startDefault;
     }
@@ -72,6 +80,7 @@ public class DataLoader {
     }
 
     public void setStart(Day d) {
+        changeStartDefault();
         start = d;
     }
 
@@ -85,6 +94,7 @@ public class DataLoader {
 
     public void load(String data) {
 
+        data=data.replaceAll("D", "E");
         String[] split = data.split("\\s+");
 
         values = new double[split.length];
@@ -106,7 +116,7 @@ public class DataLoader {
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (!line.isEmpty()) {
-                    sb.append(line).append(" ");
+                    sb.append(line).append(";");
                 }
             }
 
@@ -119,7 +129,7 @@ public class DataLoader {
             }
 
         } catch (FileNotFoundException ex) {
-            messages = "File not found";
+            messages = "File not found (Code:2007)";
             //eig error
         } catch (IOException ex) {
             //error
@@ -132,7 +142,7 @@ public class DataLoader {
         try {
 
             if (!fileInput.isEmpty()) {
-                String[] split = fileInput.split("\\s+");
+                String[] split = fileInput.split(";");
 
                 val = new double[split.length];
                 for (int i = 0; i < val.length; i++) {
@@ -153,7 +163,7 @@ public class DataLoader {
     protected double[] loadDatevalueFormat() {
 
         //splin on linebreak
-        String[] lineSplit = fileInput.split("\\n");
+        String[] lineSplit = fileInput.split(";");
         String[] split;
 
         int periode = 0;
@@ -242,63 +252,6 @@ public class DataLoader {
 
         return val;
     }
-//    protected double[] loadDat(BufferedReader br) throws IOException, FileNotFoundException {
-//        String line;
-//        ArrayList<String> v = new ArrayList();
-//        double[] val;
-//        String[] split;
-//        int periode = 0;
-//        int year = 10000; //
-//
-//        while ((line = br.readLine()) != null) {
-//            line = line.trim();
-//            if (!line.isEmpty()) {
-//
-//                split = line.split("\\s+");
-//                if (year > Integer.parseInt(split[0])) {
-//                    year = Integer.parseInt(split[0]);
-//                    start = DateConverter.toJD(split[0] + "." + split[1]);
-//                    startDefault = false;
-//                }
-//                //calculate max period
-//                if (periode < Integer.parseInt(split[1])) {
-//                    periode = Integer.parseInt(split[1]);
-//                }
-//                //collect values
-//                v.add(split[2]);
-//            }
-//        }
-//
-//        //calculate values
-//        val = new double[v.size()];
-//        for (int i = 0; i < v.size(); i++) {
-//            val[i] = Double.parseDouble(v.get(i));
-//        }
-//
-//        if (periode <= 4) {
-//            period = TsFrequency.Quarterly;
-//        }
-//        return val;
-//    }
-//
-//    protected double[] loadSer(BufferedReader br) throws IOException, FileNotFoundException {
-//        String line;
-//        ArrayList<String> v = new ArrayList();
-//        double[] val;
-//
-//        while ((line = br.readLine()) != null) {
-//            line = line.trim();
-//            if (!line.isEmpty()) {
-//                v.add(line);
-//            }
-//        }
-//        val = new double[v.size()];
-//
-//        for (int i = 0; i < v.size(); i++) {
-//            val[i] = Double.parseDouble(v.get(i));
-//        }
-//        return val;
-//    }
 
     public TsData getData() {
 

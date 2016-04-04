@@ -19,6 +19,7 @@ import java.util.Arrays;
 public class DataLoaderRegression extends DataLoader {
 
     private ArrayList<String> regressorName = new ArrayList();
+    private ArrayList<String> regressorZislId = new ArrayList();
 //    private double[] values;
 
     private ArrayList<TsData> regressorsFromWebService = new ArrayList();
@@ -28,8 +29,7 @@ public class DataLoaderRegression extends DataLoader {
 //        super.load(data);
 //        values = super.getValues();
 //    }
-
-    public void addRegFromWebServive(TsData data) {    
+    public void addRegFromWebServive(TsData data) {
         regressorsFromWebService.add(data);
     }
 
@@ -45,6 +45,13 @@ public class DataLoaderRegression extends DataLoader {
         return regressorName.toArray(new String[0]);
     }
 
+    public void setRegressorZisl(String zisl) {
+        this.regressorZislId.add(zisl);
+    }
+
+//     public String[] getRegressorZislIds() {
+//        return regressorZislId.toArray(new String[0]);
+//    }
 //    @Override
 //    public void load(File file) {
 //        try {
@@ -99,15 +106,14 @@ public class DataLoaderRegression extends DataLoader {
 //            values[i] = Double.parseDouble(rslt.get(i));
 //        }
 //    }
-
     public TsVariable[] getRegressors() {
 
         /**/
         if (regressorsFromWebService.isEmpty()) {
-            if(super.getValues()==null){
+            if (super.getValues() == null) {
                 super.generateValues();
             }
-            
+
             if (super.getValues() != null) {
                 ArrayList<TsVariable> r = new ArrayList();
                 if (regressorName.isEmpty()) {
@@ -123,8 +129,8 @@ public class DataLoaderRegression extends DataLoader {
                     }
 //month geht nicht wenn größer als 3
                     int p = getStart().getMonth();
-                    if(getPeriod().equals(TsFrequency.Quarterly)){
-                        p=(p/3);
+                    if (getPeriod().equals(TsFrequency.Quarterly)) {
+                        p = (p / 3);
                     }
                     data = new TsData(getPeriod(), getStart().getYear(), p, tmp, true);
                     //Name und startwert pruefen
@@ -139,19 +145,22 @@ public class DataLoaderRegression extends DataLoader {
 //            messages = "Keine Werte vorhanden";
             return null;
         } else {
-            if (regressorName.size() == regressorsFromWebService.size()) {
-                ArrayList<TsVariable> r = new ArrayList();
-                for (int regressor = 0; regressor < regressorName.size(); regressor++) {
+            if (regressorName != null) {
+                if (regressorName.size() == regressorsFromWebService.size()) {
+                    ArrayList<TsVariable> r = new ArrayList();
+                    for (int regressor = 0; regressor < regressorName.size(); regressor++) {
 //                    r.add(new TsVariable(regressorName.get(regressor), regressorsFromWebService.get(regressor)));
-                    r.add(new DynamicTsVariable(regressorName.get(regressor), getMoniker(), regressorsFromWebService.get(regressor)));
+                        r.add(new DynamicTsVariable(regressorZislId.get(regressor), getMoniker(), regressorsFromWebService.get(regressor)));
 
+                    }
+                    return r.toArray(new TsVariable[0]);
+                } else {
+                    //Fehlermeldung: unterschiedliche Längen bei Namen und Daten
+                    messages = "Unterschiedliche Anzahl an Regressornamen und -daten " + " (Code:2101).";
+                    return null;
                 }
-                return r.toArray(new TsVariable[0]);
-            } else {
-                //Fehlermeldung: unterschiedliche Längen bei Namen und Daten
-                messages = "Unterschiedliche Anzahl an Regressornamen und -daten"+" (Code:2101)";
-                return null;
             }
         }
+        return null;
     }
 }

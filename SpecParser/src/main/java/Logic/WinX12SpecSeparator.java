@@ -167,8 +167,15 @@ public class WinX12SpecSeparator {
     }
 
     public Ts getTs() {
+        if(dataLoader.isStartDefault()){
+            messages.add("SERIES: Start date is set to 01/01/1970. (Code: 1409)");
+        }
         if (tsName == null) {
             tsName = name;
+        }
+        
+        if(dataLoader.getZislId()!=null){
+            tsName = tsName + " from "+dataLoader.getZislId();
         }
         return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, dataLoader.getData());
     }
@@ -176,6 +183,9 @@ public class WinX12SpecSeparator {
     public String[] getRegressorName() {
         return regressionLoader.getRegressorName();
     }
+//     public String[] getRegressorZislId() {
+//        return regressionLoader.getRegressorZislIds();
+//    }
 
     public TsVariable[] getRegressor() {
         if (regressionSpec) {
@@ -195,6 +205,10 @@ public class WinX12SpecSeparator {
         return finalIsUser;
     }
 
+    public X13Specification getCurrentSpec(){
+        return spec;
+    }
+    
     public void buildSpec(String winX13Text) {
 
         //0. delete all comments and empty lines
@@ -653,6 +667,7 @@ public class WinX12SpecSeparator {
             } else {
                 try {
                     spec.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(Double.parseDouble(s[0]));
+                    messages.add(partName+": It isn't possible to set more than one critical value. The global critical value will be set to "+s[0]+" (Code:1842)");
                 } catch (NumberFormatException e) {
                     messages.add(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1809)");
                 }
@@ -746,10 +761,10 @@ public class WinX12SpecSeparator {
         switch (partName) {
             case SERIES:
                 dataLoader.load(file);
-                if (!dataLoader.getMessages().isEmpty()) {
+/*                if (!dataLoader.getMessages().isEmpty()) {
                     errors.add(partName + ": " + dataLoader.getMessages());
                     dataLoader.setMessage();
-                }
+                }*/
                 break;
             case REGRESSION:
                 regressionSpec = true;
@@ -757,10 +772,10 @@ public class WinX12SpecSeparator {
                 if (regressionLoader.isStartDefault()) {
                     regressionLoader.setStart(dataLoader.getStart());
                 }
-                if (!regressionLoader.getMessages().isEmpty()) {
+                /*if (!regressionLoader.getMessages().isEmpty()) {
                     errors.add(partName + ": " + regressionLoader.getMessages());
                     regressionLoader.setMessage();
-                }
+                }*/
                 break;
             default:
                 messages.add(partName + ": No support for argument FILE in " + partName.name().toUpperCase() + " (Code:1103)");
@@ -771,6 +786,7 @@ public class WinX12SpecSeparator {
     private void read_final(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").trim().toLowerCase();
+        content = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
 
         if (content.equals("user")) {
             finalIsUser = true;
@@ -984,7 +1000,8 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
                 break;
             case "ADDALL":
-                warnings.add(partName + ": No support for value " + content.toUpperCase() + " in argument METHOD" + " (Code:1816)");
+//                warnings.add(partName + ": No support for value " + content.toUpperCase() + " in argument METHOD" + " (Code:1816)");
+                spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddAll);
 //                spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddAll);
                 break;
             default:
@@ -1059,7 +1076,7 @@ public class WinX12SpecSeparator {
                     break;
             }
         } else {
-            messages.add(SpecificationPart.TRANSFORM + ": For transform function = auto it is not possible to set a decomposition mode" + " (Code:1825)");
+            warnings.add(SpecificationPart.TRANSFORM + ": For transform function = auto it is not possible to set a decomposition mode" + " (Code:1825)");
             spec.getX11Specification().setMode(DecompositionMode.Undefined);
         }
     }
@@ -1579,7 +1596,7 @@ public class WinX12SpecSeparator {
             }
 
             switch (partName.toString().toUpperCase()) {
-                case "OUTLIERS":
+                case "OUTLIER":
                     if (!outlierDefaults) {
                         setOUTLIERDefaults();
                     }
@@ -1859,6 +1876,7 @@ public class WinX12SpecSeparator {
             int beginIndex = content.indexOf("sincos");
             int endIndex = content.indexOf("]", beginIndex);
             content = content.substring(beginIndex, endIndex).replaceAll(",", ";");
+            warnings.add(partName+": Value SINCOS in argument VARIABLES is not supported (Code:1604).");
         }
 
         String[] variables;
@@ -1931,6 +1949,7 @@ public class WinX12SpecSeparator {
                             dataLoader.setDataFromWebService(dataFromWebServive);
                             dataLoader.setMoniker(moniker);
                             dataLoader.setPeriod(dataFromWebServive.getFrequency());
+                            dataLoader.setZislId(content);
                             if (!dataLoader.getMessages().isEmpty()) {
                                 errors.add(partName + ": " + dataLoader.getMessages());
                             }
@@ -1941,6 +1960,7 @@ public class WinX12SpecSeparator {
                         regressionLoader.setMoniker(moniker);
                         regressionLoader.setPeriod(dataFromWebServive.getFrequency());
 //                    regressionLoader.setRegressorName(content);
+                        regressionLoader.setRegressorZisl(content);
                         if (!regressionLoader.getMessages().isEmpty()) {
                             errors.add(partName + ": " + regressionLoader.getMessages());
                         }

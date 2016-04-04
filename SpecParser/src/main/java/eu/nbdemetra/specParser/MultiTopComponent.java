@@ -385,6 +385,8 @@ public final class MultiTopComponent extends TopComponent {
                 wsItem.setDisplayName(name);
                 MultiTopComponent.this.setDisplayName("SpecParser for " + name);
                 MultiTopComponent.this.repaint();
+                
+                load.setFocusable(false);
             } else {
                 JOptionPane.showMessageDialog(this, "File isn't loaded");
             }
@@ -406,7 +408,7 @@ public final class MultiTopComponent extends TopComponent {
                     errorText.append(tmp + "\n");
                 }
             } else {
-                errorText.setText("No errors\n");
+                errorText.append("No errors\n");
             }
 
             errorText.append("\nWARNINGS:\n"
