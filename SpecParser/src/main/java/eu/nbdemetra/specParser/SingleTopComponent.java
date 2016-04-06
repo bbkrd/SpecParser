@@ -206,7 +206,7 @@ public final class SingleTopComponent extends TopComponent {
 //                path = file.getAbsolutePath().replace(file.getName(), "");
                 path= file.getParent()+"\\";
                 
-                progressHandle.start();
+                progressHandle.start(10);
                 LoadRunnable load = new LoadRunnable();
                 load.setSpc_File(file);
                 Thread thread = new Thread(load);
@@ -368,12 +368,15 @@ public final class SingleTopComponent extends TopComponent {
                         s.append("\n");
                     }
                 }
+                progressHandle.progress(2);
 
                 SpecCollector sp = specViewer.getSpecCollector();
                 sp.setWinX12Spec(s.toString());
                 sp.setPath(path);
                 sp.setName(file.getName());
+                progressHandle.progress(3);
                 sp.translate(TranslationTo_Type.JDSpec);
+                progressHandle.progress(9);
                 specViewer.refresh(sp);
 
                 refreshJD.setEnabled(true);

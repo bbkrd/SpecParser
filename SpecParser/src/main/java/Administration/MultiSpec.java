@@ -42,7 +42,7 @@ public class MultiSpec {
             window.setName("SpecParser for " + ws.getDisplayName());
 
             /*if the list of items in a multi doc has contents */
-            if (!((MultiProcessingDocument) ws.getElement()).getCurrent().isEmpty()) {
+           /* if (!((MultiProcessingDocument) ws.getElement()).getCurrent().isEmpty()) {
                 SpecCollector specCollector;
                 int counter = 0;
                 for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
@@ -50,14 +50,15 @@ public class MultiSpec {
 //                        it is possible that here are also tramo docs in the list
                         specCollector = new SpecCollector((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class), counter);
                         specCollector.setPath(window.getPath());
-                        specCollector.translate(TranslationTo_Type.WinX12Spec);
+//                        specCollector.translate(TranslationTo_Type.WinX12Spec);
                         specCollector.setName(item.getTs().getRawName());
                         specList.add(specCollector);
                     }
                     counter++;
+                    
                 }
                 window.setSpecArray(specList);
-            }
+            }*/
             
             activeMultiWindows.put(this.id, window);
 

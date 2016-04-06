@@ -191,16 +191,17 @@ public class SpecCollector {
             }
 
             jdSpec = separator.getResult();
-            refreshWS();
-
             errors = separator.getErrorList();
             if (ts.getTsData() == null) {
                 errors = new String[1];
-                errors[0] = "NO DATA";
+                errors[0] = "NO DATA (Code:3003)";
+            }else{
+                refreshWS();
             }
             warnings = separator.getWarningList();
             messages = separator.getMessageList();
-        } else {
+        } 
+        /*else {
             //Translation from JDemetra+Spec to WinX12Spec 
             if (ts != null) {
                 if (wsItem.getElement() instanceof X13Document) {
@@ -235,7 +236,7 @@ public class SpecCollector {
 //                messages = new String[1];
 //                messages[0] = "NO DATA!!!";
             }
-        }
+        }*/
     }
 
     private void refreshWS() {
@@ -320,28 +321,28 @@ public class SpecCollector {
 
                             //falls in td
                             String[] tdVars = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().getUserVariables();
-                            if(tdVars.length!=0){
-                                for(int j=0; j<tdVars.length; j++){
-                                    if(tdVars[j].equals(curName)){
-                                        tdVars[j]=newName;
+                            if (tdVars.length != 0) {
+                                for (int j = 0; j < tdVars.length; j++) {
+                                    if (tdVars[j].equals(curName)) {
+                                        tdVars[j] = newName;
                                     }
                                 }
                                 separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().setUserVariables(tdVars);
                             }
-                            
+
                             //falls in userdefined
                             if (separator.getCurrentSpec().getRegArimaSpecification().getRegression().getUserDefinedVariablesCount() != 0) {
-                                
+
                                 TsVariableDescriptor[] tmp = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getUserDefinedVariables();
-                                
-                                for (int j = 0; j<tmp.length; j++){
-                                    if(tmp[j].getName().equals(curName)){
+
+                                for (int j = 0; j < tmp.length; j++) {
+                                    if (tmp[j].getName().equals(curName)) {
                                         tmp[j].setName(newName);
                                     }
                                 }
                                 separator.getCurrentSpec().getRegArimaSpecification().getRegression().setUserDefinedVariables(tmp);
                             }
-                            curName=newName;
+                            curName = newName;
                         }
                     }
                 } else {
@@ -349,7 +350,7 @@ public class SpecCollector {
                 }
             } else {
                 wsVariables.getElement().set(curName, regressor[i]);
-                
+
             }
 
             switch (regTyp[i].toUpperCase()) {

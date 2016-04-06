@@ -105,6 +105,8 @@ public class DataLoader {
 
     public void setDataFromWebService(TsData data) {
         dataFromWebService = data;
+        changeStartDefault();
+        start= dataFromWebService.getStart().firstday();
     }
 
     public void load(File file) {

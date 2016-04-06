@@ -370,7 +370,7 @@ public final class MultiTopComponent extends TopComponent {
 
             //for choosing a mta file
             if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                progressHandle.start();
+                
                 File mta_File = fc.getSelectedFile();
                 String name = mta_File.getName();
                 path = fc.getSelectedFile().getParent()+"\\";
@@ -578,12 +578,14 @@ public final class MultiTopComponent extends TopComponent {
                             counter_mta++;
                         }
                     }
+                    progressHandle.start(counter_mta);
                     int counter = 0;
                     String current;
                     while (!specFromMTA.isEmpty()) {
 //                        ThreadObject object = mta_files.getSpec();
                         current = specFromMTA.pollFirst();
                         counter++;
+                     
                         try (FileReader spec_FileReader = new FileReader(new File(path + (current) + ".SPC"))) {
 
                             try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
@@ -615,6 +617,7 @@ public final class MultiTopComponent extends TopComponent {
                             //merke dir current
                             missingTranslation.add(current);
                         }
+                        progressHandle.progress(counter);
                     }
                     setSpecList();
                     load.setEnabled(false);

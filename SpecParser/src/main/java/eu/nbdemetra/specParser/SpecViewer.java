@@ -10,6 +10,7 @@ import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import Logic.SpecCollector;
 import ec.tstoolkit.algorithm.IActiveProcDocument;
 import ec.tstoolkit.algorithm.IProcSpecification;
+import ec.tstoolkit.timeseries.TsException;
 import static ec.ui.view.tsprocessing.DefaultProcessingViewer.BUTTON_APPLY;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -112,7 +113,7 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         IActiveProcDocument doc = getDocument();
         IProcSpecification pspec = specDescriptor.getCore();
         doc.setSpecification(pspec.clone());
-        setDirty(null, false);
+        setDirty(false);
         firePropertyChange(BUTTON_APPLY, null, null);
         refreshView();
         if (isHeaderVisible()) {
