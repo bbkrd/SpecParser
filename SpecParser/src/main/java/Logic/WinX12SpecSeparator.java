@@ -19,8 +19,10 @@ import ec.tss.Ts;
 import ec.tss.TsFactory;
 import ec.tss.TsMoniker;
 import ec.tss.sa.documents.X13Document;
+import ec.tstoolkit.MetaData;
 import ec.tstoolkit.Parameter;
 import ec.tstoolkit.ParameterType;
+import ec.tstoolkit.information.InformationSet;
 import ec.tstoolkit.modelling.DefaultTransformationType;
 import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
@@ -81,6 +83,9 @@ public class WinX12SpecSeparator {
     private boolean automdlDefault = false;
     private boolean calendarsigmaSelect = false;
     private boolean finalIsUser = false;
+
+    //ZISD
+    private MetaData meta = new MetaData();
 
     public WinX12SpecSeparator() {
 //        setDefaults();
@@ -177,7 +182,9 @@ public class WinX12SpecSeparator {
         if (dataLoader.getZislId() != null) {
             tsName = tsName + " from " + dataLoader.getZislId();
         }
-        return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, dataLoader.getData());
+
+        //MetaData
+        return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), meta, dataLoader.getData());
     }
 
     public String[] getRegressorName() {
@@ -1636,7 +1643,7 @@ public class WinX12SpecSeparator {
                 if (dataLoader.isStartDefault()) {
                     dataLoader.setStart(start);
                 }
-                
+
                 if (start.isNotBefore(dataLoader.getStart())) {
                     TsPeriodSelector p = spec.getRegArimaSpecification().getBasic().getSpan();
 //                if(spec.getRegArimaSpecification().getBasic().getSpan().)
@@ -1652,7 +1659,7 @@ public class WinX12SpecSeparator {
                         case Between:
                         case From:
                             if (p.getD0().isBefore(start)) {
-                            //d0<start 
+                                //d0<start 
                                 //=> Fehler da d0 vor start
                                 p.setD0(start);
                                 warnings.add(partName + ": Start and span are not correct. (Code:1407)");
@@ -1877,8 +1884,8 @@ public class WinX12SpecSeparator {
     private void read_variables(SpecificationPart partName, String content) {
 
         warnings.add(partName + ": It is possible WinX13 and JD+ have different results for argument VARIABLES." + " (Code:1602)");
-        
-        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
+
+        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toLowerCase();
 
         if (content.contains("sincos")) {
             //hier die kommas tauschen durch semikolon
@@ -1986,6 +1993,33 @@ public class WinX12SpecSeparator {
         } else {
             errors.add(partName + ": WebService-Plugin nicht vorhanden" + " (Code:1203)");
         }
+    }
+
+    private void read_zisd(SpecificationPart partName, String content) {
+
+        content = content.replaceAll("\\(", "").replaceAll("\\)", "").replaceAll(";", "").trim();
+        String[] zisd = content.split("-");
+
+        String tmp = "";
+        switch (zisd[0].toUpperCase()) {
+            case "USR":
+                tmp = "calendarfactor";
+                break;
+            case "D10":
+                tmp = "seasonalfactor";
+                break;
+            case "FCT":
+                tmp="forecast";
+                break;
+            default:
+                //nicht unterstützt
+                break;
+        }
+        
+        StringBuilder sb = new StringBuilder("zebene");
+        sb.append(InformationSet.STRSEP).append(tmp).append(InformationSet.STRSEP).append("updateid");
+        
+        meta.put(sb.toString(), zisd[1]);
     }
 
     /*methods for variables*/

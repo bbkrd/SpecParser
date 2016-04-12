@@ -10,7 +10,6 @@ import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import Logic.SpecCollector;
 import ec.tstoolkit.algorithm.IActiveProcDocument;
 import ec.tstoolkit.algorithm.IProcSpecification;
-import ec.tstoolkit.timeseries.TsException;
 import static ec.ui.view.tsprocessing.DefaultProcessingViewer.BUTTON_APPLY;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -18,7 +17,7 @@ import javax.swing.JTextArea;
 import javax.swing.text.Document;
 
 /**
- * This class shows the transformation of a SingleSpec. The WinX13Spec is in the
+ * This class shows the transformation of a SingleSpec. The WinX12Spec is in the
  * front, the JD+Spec on the right and on the bottom the error messages because
  * of the translation between the both specs.
  *

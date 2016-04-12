@@ -12,7 +12,6 @@ import ec.nbdemetra.ws.IWorkspaceItemManager;
 import ec.nbdemetra.ws.WorkspaceFactory;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.satoolkit.ISaSpecification;
-import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
 import ec.tss.sa.SaItem;
 import ec.tss.sa.documents.SaDocument;
@@ -23,6 +22,7 @@ import ec.tstoolkit.timeseries.regression.TsVariables;
 import java.util.ArrayList;
 
 /**
+ * This class collects all information for the specification of a document.
  *
  * @author Nina Gonschorreck
  */
@@ -192,51 +192,53 @@ public class SpecCollector {
 
             jdSpec = separator.getResult();
             errors = separator.getErrorList();
+            warnings = separator.getWarningList();
+            messages = separator.getMessageList();
             if (ts.getTsData() == null) {
                 errors = new String[1];
                 errors[0] = "NO DATA (Code:3003)";
-            }else{
+            } else {
                 refreshWS();
             }
-            warnings = separator.getWarningList();
-            messages = separator.getMessageList();
-        } 
+
+        }
+        //later: reverse direction (translation from JD+ to winx12)
         /*else {
-            //Translation from JDemetra+Spec to WinX12Spec 
-            if (ts != null) {
-                if (wsItem.getElement() instanceof X13Document) {
-                    ts = ((X13Document) wsItem.getElement()).getInput();
-                } else {
-                    ts = ((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index).getTs();
-                }
+         //Translation from JDemetra+Spec to WinX12Spec 
+         if (ts != null) {
+         if (wsItem.getElement() instanceof X13Document) {
+         ts = ((X13Document) wsItem.getElement()).getInput();
+         } else {
+         ts = ((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index).getTs();
+         }
 
-                if (ts.getTsData() != null) {
-                    JDSpecSeparator separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts, wsItem.getOwner().getContext());
-                    separator.build();
-                    winX12SpecText = separator.getResult();
+         if (ts.getTsData() != null) {
+         JDSpecSeparator separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts, wsItem.getOwner().getContext());
+         separator.build();
+         winX12SpecText = separator.getResult();
 
-                    //anfrage machen
-//                    regData = separator.getRegressors();
-                    refreshWS();
+         //anfrage machen
+         //                    regData = separator.getRegressors();
+         refreshWS();
 
-                    errors = separator.getErrorList();
-                    messages = separator.getMessageList();
-                } else {
-                    //if data are missing
-                    errors = new String[1];
-                    errors[0] = "NO DATA" + " (Code:3001)";
-//                    messages = new String[1];
-//                    messages[0] = "NO DATA!!!";
-                }
+         errors = separator.getErrorList();
+         messages = separator.getMessageList();
+         } else {
+         //if data are missing
+         errors = new String[1];
+         errors[0] = "NO DATA" + " (Code:3001)";
+         //                    messages = new String[1];
+         //                    messages[0] = "NO DATA!!!";
+         }
 
-            } else {
-                //if data are missing
-                errors = new String[1];
-                errors[0] = "NO DATA" + " (Code:3002)";
-//                messages = new String[1];
-//                messages[0] = "NO DATA!!!";
-            }
-        }*/
+         } else {
+         //if data are missing
+         errors = new String[1];
+         errors[0] = "NO DATA" + " (Code:3002)";
+         //                messages = new String[1];
+         //                messages[0] = "NO DATA!!!";
+         }
+         }*/
     }
 
     private void refreshWS() {
@@ -248,7 +250,7 @@ public class SpecCollector {
                 wsItem.setElement(jdSpec);
                 ((X13Document) wsItem.getElement()).setInput(ts);
             } else {
-
+                // Does the index already exist in the document? 
                 if (((MultiProcessingDocument) wsItem.getElement()).getCurrent().size() - 1 >= index) {
 //                    replace a single Item to the workspace
                     ((MultiProcessingDocument) wsItem.getElement()).getCurrent().replace(((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index), new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
@@ -264,35 +266,35 @@ public class SpecCollector {
     private void writeRegressors(WinX12SpecSeparator separator) {
 
 //        String reg_name = "reg_" + nameForWS;
-        String reg_name = "reg_SpecParser";
+        String reg_SpecParser = "reg_SpecParser";
         String curName;
+        
         TsVariable[] regressor = separator.getRegressor();
         String[] regName = separator.getRegressorName();
+        String[] regTyp = separator.getRegressorTyp();
+        
+        ArrayList<String> td = new ArrayList();
+        ArrayList<TsVariableDescriptor> user = new ArrayList();
 
-        WorkspaceItem<TsVariables> wsVariables = (WorkspaceItem<TsVariables>) wsItem.getOwner().searchDocumentByName(VariablesDocumentManager.ID, reg_name);
-
+        WorkspaceItem<TsVariables> wsVariables = (WorkspaceItem<TsVariables>) wsItem.getOwner().searchDocumentByName(VariablesDocumentManager.ID, reg_SpecParser);
         if (wsVariables == null) {
             IWorkspaceItemManager mgr = WorkspaceFactory.getInstance().getManager(VariablesDocumentManager.ID);
             wsVariables = mgr.create(wsItem.getOwner());
         }
 
-        String[] regTyp = separator.getRegressorTyp();
-        ArrayList<String> td = new ArrayList();
-        ArrayList<TsVariableDescriptor> user = new ArrayList();
-
         //1. exists var list with name reg_name?
-        if (!wsVariables.getIdentifier().equals(reg_name)) {
-            wsVariables.setIdentifier(reg_name);
-            wsVariables.setDisplayName(reg_name);
+        if (!wsVariables.getIdentifier().equals(reg_SpecParser)) {
+            wsVariables.setIdentifier(reg_SpecParser);
+            wsVariables.setDisplayName(reg_SpecParser);
             wsVariables.getElement().clear();
-            wsItem.getOwner().getContext().getTsVariableManagers().set(reg_name, wsVariables.getElement());
+            wsItem.getOwner().getContext().getTsVariableManagers().set(reg_SpecParser, wsVariables.getElement());
         }
 
         for (int i = 0; i < regressor.length; i++) {
             curName = regName[i];
 
             //is there a regressor with this curName?
-            if (wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + curName)) {
+            if (wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_SpecParser + "." + curName)) {
 
                 //check: are data not equal?
                 if (!((TsVariable) wsVariables.getElement().get(curName)).getTsData().equals(regressor[i].getTsData())) {
@@ -304,7 +306,7 @@ public class SpecCollector {
                     while (found == false) {
                         ends = "[" + iterator + "]";
                         //wenn bereits curname[...] existiert
-                        if (wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_name + "." + curName + ends)) {
+                        if (wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_SpecParser + "." + curName + ends)) {
                             //guck ob Daten gleich sind
                             if (((TsVariable) wsVariables.getElement().get(curName + ends)).getTsData().equals(regressor[i].getTsData())) {
                                 //Daten sind gleich
@@ -319,7 +321,7 @@ public class SpecCollector {
                             found = true;
                             //in Spec umsetzen
 
-                            //falls in td
+                            //if in td
                             String[] tdVars = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().getUserVariables();
                             if (tdVars.length != 0) {
                                 for (int j = 0; j < tdVars.length; j++) {
@@ -330,7 +332,7 @@ public class SpecCollector {
                                 separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().setUserVariables(tdVars);
                             }
 
-                            //falls in userdefined
+                            //if in userdefiend
                             if (separator.getCurrentSpec().getRegArimaSpecification().getRegression().getUserDefinedVariablesCount() != 0) {
 
                                 TsVariableDescriptor[] tmp = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getUserDefinedVariables();
@@ -346,24 +348,23 @@ public class SpecCollector {
                         }
                     }
                 } else {
-                    //startdate gleich, refresh datum
+                    //later: startdate equal, refresh start date
                 }
             } else {
                 wsVariables.getElement().set(curName, regressor[i]);
-
             }
 
             switch (regTyp[i].toUpperCase()) {
                 case "TD":
-                    td.add(reg_name + "." + curName);
+                    td.add(reg_SpecParser + "." + curName);
                     break;
                 case "USER":
                     TsVariableDescriptor userVar = new TsVariableDescriptor();
-                    userVar.setName(reg_name + "." + curName);
-                    //unterscheidung je nach final = user
+                    userVar.setName(reg_SpecParser + "." + curName);
+
+                    // differences for final = user
                     if (separator.isFinalUser()) {
                         userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
-
                     } else {
                         userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
                     }
@@ -371,20 +372,20 @@ public class SpecCollector {
                     break;
                 case "SEASONAL":
                     TsVariableDescriptor var = new TsVariableDescriptor();
-                    var.setName(reg_name + "." + curName);
+                    var.setName(reg_SpecParser + "." + curName);
                     var.setEffect(TsVariableDescriptor.UserComponentType.Seasonal);
                     user.add(var);
                     break;
                 default:
                     TsVariableDescriptor userVar2 = new TsVariableDescriptor();
-                    userVar2.setName(reg_name + "." + curName);
-                    //unterscheidung je nach final = user
+                    userVar2.setName(reg_SpecParser + "." + curName);
+
+                    // differences for final = user
                     userVar2.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
                     user.add(userVar2);
                     break;
             }
         }
         separator.setRegressorsInSpec(td.toArray(new String[0]), user.toArray(new TsVariableDescriptor[0]));
-
     }
 }

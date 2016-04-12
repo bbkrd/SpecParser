@@ -37,7 +37,8 @@ import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * Top component which displays the SpecViewer.
+ * This class is the window for the single mode. 
+ * @author Nina Gonschorreck
  */
 @ConvertAsProperties(
         dtd = "-//eu.nbdemetra.x13spec//SingleSpecWindow//EN",
@@ -63,37 +64,36 @@ import org.openide.util.NbBundle.Messages;
 
 public final class SingleTopComponent extends TopComponent {
 
-    /*   specViewer  -   GUI component
-     *   id          -   to identify a STC window
-     *   path        -   to open the a directory for loading and saving, notice the last directory by loading   */
+    /** GUI component @see SpecViewer */
     private SpecViewer specViewer;
+    /** Identification number of the single window */
     private String id;
+    /** path to open a directory for loading and saving, memorize the last directory */
     private static String path = System.getProperty("user.home");
-
-    /*       wsItem      -   WorspaceItem, to modify the item in the GUI (name, data, spec)
-     *       wsNode      -   get WorkspaceItem and to show the rename of the WorkspaceItem  */
+    /** current workspace node, for refreshing the workspace */
     private WsNode wsNode;
-    private WorkspaceItem wsItem;
 
-    private ProgressHandle progressHandle;
 
-    /*CONSTRUCTORS*/
+    /** 
+     * Creates the single window for a single document in the multi mode
+     */
     public SingleTopComponent() {
-//      for MultiDocuments
+        
         initComponents();
         setName(Bundle.CTL_SingleSpecWindowTopComponent());
         setToolTipText(Bundle.HINT_SingleSpecWindowTopComponent());
 
         setButtons();
+        // button has to be disabled because of overloading the single spec
         load.setEnabled(false);
-
     }
 
+    /** Creates the single window in the single mode
+     * @param ws current Workspace node
+     */
     public SingleTopComponent(WsNode ws) {
-//      for Single Documents
-        this.wsNode = ws;
-        this.wsItem = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
 
+        this.wsNode = ws;
         progressHandle = ProgressHandleFactory.createHandle("calculate ...");
 
         initComponents();
@@ -103,10 +103,18 @@ public final class SingleTopComponent extends TopComponent {
         setButtons();
     }
 
+    /**
+     * Returns the current SpecView
+     * @return current view of the specification
+     */
     public SpecViewer getSpecViewer() {
         return specViewer;
     }
 
+    /**
+     * Sets a SpecView into the window
+     * @param spec current @see SpecCollector
+     */
     public void setSpecView(SpecCollector spec) {
 
         specViewer = SpecViewer.create(spec);
@@ -121,20 +129,34 @@ public final class SingleTopComponent extends TopComponent {
         specViewer.getWinDoc().addDocumentListener(new MyDocumentListener());
     }
 
+    /**
+     * Sets an identification number for the window
+     * @param id identification number for this window
+     */
     public void setId(String id) {
         this.id = id;
     }
 
+    /**
+     * Returns the identification number of this window
+     * @return identificatiion number of this window
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Returns the path of the latest directory
+     * @return path of directory
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * Sets path of directory for the multi mode
+     */
     public void setPath(String path) {
-//        for MTC
         SingleTopComponent.path = path;
     }
 
@@ -168,7 +190,6 @@ public final class SingleTopComponent extends TopComponent {
 
             SingleSpec.deleteWindow(id);
             firePropertyChange("CLOSE", null, null);
-//        MultiTopComponent.deleteWindow(id);
     }
 
     void writeProperties(java.util.Properties p) {
@@ -188,6 +209,9 @@ public final class SingleTopComponent extends TopComponent {
     private JButton save = new JButton(new SaveAction());
     private JButton refreshX12 = new JButton(new RefreshWinAction());
     private JButton refreshJD = new JButton(new RefreshJDAction());
+    
+    /** Fortschrittsbalken */
+    private ProgressHandle progressHandle;
 
     /*ACTIONS FOR BUTTONS*/
     public class LoadAction extends AbstractAction {
@@ -202,8 +226,6 @@ public final class SingleTopComponent extends TopComponent {
 
             if (state == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
-
-//                path = file.getAbsolutePath().replace(file.getName(), "");
                 path= file.getParent()+"\\";
                 
                 progressHandle.start(10);
@@ -212,7 +234,7 @@ public final class SingleTopComponent extends TopComponent {
                 Thread thread = new Thread(load);
                 thread.start();
                 String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
-                wsItem.setDisplayName(name);
+                ((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class)).setDisplayName(name);
                 setDisplayName("SpecParser for " + name);
 
             }
@@ -224,9 +246,7 @@ public final class SingleTopComponent extends TopComponent {
         @Override
         public void actionPerformed(ActionEvent e) {
 
-            //ebenso regression file noch einbauen
             JFileChooser chooser = new JFileChooser(path);
-            //jetzt sind alle endungen erlaubt
             chooser.setAcceptAllFileFilterUsed(false);
             chooser.setFileFilter(new MyFilter(".spc"));
             int result = chooser.showSaveDialog(null);
@@ -399,6 +419,5 @@ public final class SingleTopComponent extends TopComponent {
                 }
             }
         }
-
     }
 }

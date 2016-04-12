@@ -12,44 +12,54 @@ import Logic.SpecCollector;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tstoolkit.utilities.IModifiable;
 import java.util.HashMap;
-import javax.swing.JOptionPane;
 
 /**
- *
+ * This class represents the single mode.
+ * 
  * @author Nina Gonschorreck
+ * 
+ * @param activeSingleWindows list of all active single windows
  */
 public class SingleSpec {
-
-    /*  activeSingleWindows     -   collects all opened STC windows
-    *   window                  -   the current STC window
-    *   id                      -   reference number for the STC window
-    *   displayName             -   name of the STC window               */
-    
+ 
+    /** Collect all open single windows */
     private static HashMap<String, SingleTopComponent> activeSingleWindows = new HashMap();
+    /** current single window */
     private SingleTopComponent window;
+    /** reference number for the single window */
     private String id;
+    /** name of the single window */
     private String displayName;
 
+    /** Creates an object of this class with the workspace node
+     * @param ws current workspace node
+     */
     public SingleSpec(WsNode ws) {
 
         WorkspaceItem w = (WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class);
 
         if (w.getElement() instanceof X13Document) {
+            // Saving id from the current workspace
                 id = w.getId() + "";
 
+                // Is there an active window with this id?
             if (!activeSingleWindows.containsKey(id)) {
+                // creates a new single window
                 window = new SingleTopComponent(ws);
                 window.setId(id);
 
-                SpecCollector spec = new SpecCollector(w/*(WorkspaceItem) ws.getWorkspace().searchDocument(ws.lookup(), IModifiable.class)*/);
+                // Preparation of the window 
+                SpecCollector spec = new SpecCollector(w);
                 spec.setPath(window.getPath());
                 window.setSpecView(spec);
 
+                // put window into the list of active single windows
                 activeSingleWindows.put(id, window);
             } else {
+                // open the window with this id
                 window = activeSingleWindows.get(id);
             }
-
+            // open window
             displayName = w.getDisplayName();
             window.setName("SpecParser for " + displayName);
             window.open();
@@ -57,10 +67,18 @@ public class SingleSpec {
         }
     }
 
+    /**
+     * Returns the identification number of this window
+     * @return identification number of the window
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Returns the current active window
+     * @return the current active single window
+     */
     public SingleTopComponent getActiveWindow() {
         if (activeSingleWindows.containsKey(id)) {
             return activeSingleWindows.get(id);
@@ -69,6 +87,10 @@ public class SingleSpec {
         }
     }
 
+    /**
+     * Removes a single window from the list of active windows
+     * @param id identification number of the window which will be closed
+     */
     public static void deleteWindow(String id) {
         activeSingleWindows.remove(id);
     }

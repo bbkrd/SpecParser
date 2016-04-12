@@ -22,7 +22,8 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 
 /**
- *
+ * This programme opens a SpecParser window depentend of the kind of document. 
+ *  
  * @author Nina Gonschorreck
  */
 @ActionID(category = "Tools",
@@ -36,18 +37,30 @@ import org.openide.util.NbBundle;
 
 public class OpenSpecParser implements ActionListener {
 
+    /**
+     * The current workspace node.
+     */
     private WsNode context;
 
+    /**
+     * Creates an object of this class with a workspace node 
+     */
     public OpenSpecParser(WsNode context) {
         this.context = context;
     }
-
+/**
+ * This method decides which mode of the SpecParser will be opened.
+ * There are single and multi mode. 
+ *
+ * @param e unused
+ */
     @Override
     public void actionPerformed(ActionEvent e) {
 
         //search in actually Workspace MultiProcessingDocument or X13Document (both implement IModifiable)
         WorkspaceItem w = (WorkspaceItem) context.getWorkspace().searchDocument(context.lookup(), IModifiable.class);
         w.closeView();
+        
         if (w.getElement() instanceof X13Document) {
             SingleSpec s = new SingleSpec(context);
         } else if (w.getElement() instanceof MultiProcessingDocument) {

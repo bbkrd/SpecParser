@@ -370,10 +370,10 @@ public final class MultiTopComponent extends TopComponent {
 
             //for choosing a mta file
             if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                
+
                 File mta_File = fc.getSelectedFile();
                 String name = mta_File.getName();
-                path = fc.getSelectedFile().getParent()+"\\";
+                path = fc.getSelectedFile().getParent() + "\\";
                 name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
 
                 mtaName = name;
@@ -385,7 +385,7 @@ public final class MultiTopComponent extends TopComponent {
                 wsItem.setDisplayName(name);
                 MultiTopComponent.this.setDisplayName("SpecParser for " + name);
                 MultiTopComponent.this.repaint();
-                
+
                 load.setFocusable(false);
             } else {
                 JOptionPane.showMessageDialog(this, "File isn't loaded");
@@ -449,32 +449,32 @@ public final class MultiTopComponent extends TopComponent {
 
         SpecCollector s = spec_array.get(specList.getSelectedIndex());
 
-            s.setPath(path);
+        s.setPath(path);
 
-            //check for window of selected item in map activeWindows 
-            if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
-                //create new one
-                window = new SingleTopComponent();
-                window.setSpecView(s);
-                window.setDisplayName("SpecParser for " + s.getName());
-                window.setPath(path);
-                window.setId(specList.getSelectedIndex() + "");
-                window.open();
-                window.requestActive();
-                activeSingleWindows.put(specList.getSelectedIndex() + "", window);
+        //check for window of selected item in map activeWindows 
+        if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
+            //create new one
+            window = new SingleTopComponent();
+            window.setSpecView(s);
+            window.setDisplayName("SpecParser for " + s.getName());
+            window.setPath(path);
+            window.setId(specList.getSelectedIndex() + "");
+            window.open();
+            window.requestActive();
+            activeSingleWindows.put(specList.getSelectedIndex() + "", window);
 
-                //add a listener for closing STC when the corresponding MTC is closing
-                window.addPropertyChangeListener("CLOSE", new MyPropertyChangeListener());
-            } else {
-                //open the old one (with with new SpecCollector, maybe changes) 
-                window = activeSingleWindows.get(specList.getSelectedIndex() + "");
-                window.setSpecView(s);
-                window.open();
-                window.requestActive();
-            }
+            //add a listener for closing STC when the corresponding MTC is closing
+            window.addPropertyChangeListener("CLOSE", new MyPropertyChangeListener());
+        } else {
+            //open the old one (with with new SpecCollector, maybe changes) 
+            window = activeSingleWindows.get(specList.getSelectedIndex() + "");
+            window.setSpecView(s);
+            window.open();
+            window.requestActive();
+        }
         /*} else {
-            JOptionPane.showMessageDialog(this, "No Data");
-        }*/
+         JOptionPane.showMessageDialog(this, "No Data");
+         }*/
     }
 
 
@@ -585,7 +585,7 @@ public final class MultiTopComponent extends TopComponent {
 //                        ThreadObject object = mta_files.getSpec();
                         current = specFromMTA.pollFirst();
                         counter++;
-                     
+
                         try (FileReader spec_FileReader = new FileReader(new File(path + (current) + ".SPC"))) {
 
                             try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
@@ -604,13 +604,15 @@ public final class MultiTopComponent extends TopComponent {
                                 spec.translate(TranslationTo_Type.JDSpec);
 
                                 if (spec.getTs() != null) {
-                                    SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
-                                    spec.setJDSpec(item.toDocument());
+                                    if (spec.getTs().getTsData() != null) {
+                                        SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
+                                        spec.setJDSpec(item.toDocument());
+                                        counter_trans++;
+                                    } else {
+                                        missingTranslation.add(current);
+                                    }
                                 }
-
                                 spec_array.add(spec);
-                                counter_trans++;
-
                             }
                         } catch (IOException ex) {
                             //spc konnte nicht uebersetzt werden
