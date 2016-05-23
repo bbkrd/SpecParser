@@ -1,11 +1,20 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* 
+ * Copyright 2016 Deutsche Bundesbank
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
+ * by the European Commission - subsequent versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ * 
+ * http://ec.europa.eu/idabc/eupl
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the Licence is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Licence for the specific language governing permissions and
+ * limitations under the Licence.
  */
 package Logic;
 
-import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ui.variables.VariablesDocumentManager;
 import ec.nbdemetra.ws.IWorkspaceItemManager;
@@ -14,11 +23,14 @@ import ec.nbdemetra.ws.WorkspaceItem;
 import ec.satoolkit.ISaSpecification;
 import ec.tss.Ts;
 import ec.tss.sa.SaItem;
+import ec.tss.sa.SaProcessing;
 import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
+import ec.tstoolkit.MetaData;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariables;
+import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.util.ArrayList;
 
 /**
@@ -34,6 +46,7 @@ public class SpecCollector {
     private String winX12SpecText;
     private SaDocument jdSpec;
     private Ts ts;
+    private MetaData meta;
 
     /*   regressor   -   object for regression (data, GUI, ...)
      *   regName     -   name of regressor                           */
@@ -81,6 +94,10 @@ public class SpecCollector {
         } else {
             jdSpec = null;
         }
+    }
+
+    public MetaData getMetaData() {
+        return meta;
     }
 
     public void setWinX12Spec(String text) {
@@ -166,14 +183,14 @@ public class SpecCollector {
     }
 
     /*  MAIN METHOD
-     *   
+     *
      *   decided which Separator will be invoked
      *   starts the translation and saves the results
      */
     public void translate(TranslationTo_Type type) {
 
         if (type == TranslationTo_Type.JDSpec) {
-            // Translation from WinX12Spec to JDemetra+ Spec   
+            // Translation from WinX12Spec to JDemetra+ Spec
 
             WinX12SpecSeparator separator = new WinX12SpecSeparator();
             separator.setPath(path);
@@ -182,7 +199,7 @@ public class SpecCollector {
             separator.buildSpec(winX12SpecText);
 
             ts = separator.getTs();
-
+            meta = separator.getMetaData();
             //regressors
             if (separator.getRegressorName() != null && separator.getRegressor() != null) {
                 if (wsItem.getOwner() != null) {
@@ -204,7 +221,7 @@ public class SpecCollector {
         }
         //later: reverse direction (translation from JD+ to winx12)
         /*else {
-         //Translation from JDemetra+Spec to WinX12Spec 
+         //Translation from JDemetra+Spec to WinX12Spec
          if (ts != null) {
          if (wsItem.getElement() instanceof X13Document) {
          ts = ((X13Document) wsItem.getElement()).getInput();
@@ -250,14 +267,17 @@ public class SpecCollector {
                 wsItem.setElement(jdSpec);
                 ((X13Document) wsItem.getElement()).setInput(ts);
             } else {
-                // Does the index already exist in the document? 
-                if (((MultiProcessingDocument) wsItem.getElement()).getCurrent().size() - 1 >= index) {
+                // Does the index already exist in the document?
+                SaProcessing processing = ((MultiProcessingDocument) wsItem.getElement()).getCurrent();
+                SaItem saItem = new SaItem((ISaSpecification) jdSpec.getSpecification(), ts);
+                saItem.setMetaData(jdSpec.getMetaData());
+                if (processing.size() - 1 >= index) {
 //                    replace a single Item to the workspace
-                    ((MultiProcessingDocument) wsItem.getElement()).getCurrent().replace(((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index), new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
+                    processing.replace(processing.get(index), saItem);
                 } else {
 //                    add a new single item to the workspace
-                    ((MultiProcessingDocument) wsItem.getElement()).getCurrent().add(new SaItem((ISaSpecification) jdSpec.getSpecification(), ts));
-                    index = ((MultiProcessingDocument) wsItem.getElement()).getCurrent().size() - 1;
+                    processing.add(saItem);
+                    index = processing.size() - 1;
                 }
             }
         }//wsItem == null : do nothing
@@ -268,11 +288,11 @@ public class SpecCollector {
 //        String reg_name = "reg_" + nameForWS;
         String reg_SpecParser = "reg_SpecParser";
         String curName;
-        
+
         TsVariable[] regressor = separator.getRegressor();
         String[] regName = separator.getRegressorName();
         String[] regTyp = separator.getRegressorTyp();
-        
+
         ArrayList<String> td = new ArrayList();
         ArrayList<TsVariableDescriptor> user = new ArrayList();
 

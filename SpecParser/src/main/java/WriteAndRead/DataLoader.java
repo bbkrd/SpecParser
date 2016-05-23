@@ -1,7 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* 
+ * Copyright 2016 Deutsche Bundesbank
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
+ * by the European Commission - subsequent versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ * 
+ * http://ec.europa.eu/idabc/eupl
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the Licence is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Licence for the specific language governing permissions and
+ * limitations under the Licence.
  */
 package WriteAndRead;
 
@@ -11,8 +21,12 @@ import ec.tstoolkit.timeseries.Month;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
-import java.io.*;
 import eu.nbdemetra.specParser.Miscellaneous.DateConverter;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -31,7 +45,7 @@ public class DataLoader {
     private TsData dataFromWebService;
 
     private TsMoniker moniker = null;
-    private String zislId=null;
+    private String zislId = null;
 
     private double[] values;
 
@@ -43,11 +57,12 @@ public class DataLoader {
     public TsMoniker getMoniker() {
         return moniker;
     }
-    
-    public void setZislId(String id){
-        zislId=id;
+
+    public void setZislId(String id) {
+        zislId = id;
     }
-    public String getZislId(){
+
+    public String getZislId() {
         return zislId;
     }
 
@@ -66,7 +81,7 @@ public class DataLoader {
     public void setMessage() {
         messages = "";
     }
-    
+
     public boolean isStartDefault() {
         return startDefault;
     }
@@ -94,7 +109,7 @@ public class DataLoader {
 
     public void load(String data) {
 
-        data=data.replaceAll("D", "E");
+        data = data.replaceAll("D", "E");
         String[] split = data.split("\\s+");
 
         values = new double[split.length];
@@ -106,7 +121,7 @@ public class DataLoader {
     public void setDataFromWebService(TsData data) {
         dataFromWebService = data;
         changeStartDefault();
-        start= dataFromWebService.getStart().firstday();
+        start = dataFromWebService.getStart().firstday();
     }
 
     public void load(File file) {
@@ -127,7 +142,7 @@ public class DataLoader {
                 //because regression variables
                 fileInput = fileInput.replaceAll("D", "E");
             } else {
-                messages = "File is empty"+" (Code:2001)";
+                messages = "File is empty" + " (Code:2001)";
             }
 
         } catch (FileNotFoundException ex) {
@@ -135,7 +150,7 @@ public class DataLoader {
             //eig error
         } catch (IOException ex) {
             //error
-            messages = "File is not readable"+" (Code:2002)";
+            messages = "File is not readable" + " (Code:2002)";
         }
     }
 
@@ -156,7 +171,7 @@ public class DataLoader {
             }
 
         } catch (NumberFormatException ex) {
-            messages = "Format is not correct."+" (Code:2003)";
+            messages = "Format is not correct." + " (Code:2003)";
 
         }
         return val;
@@ -205,7 +220,7 @@ public class DataLoader {
                 period = TsFrequency.Quarterly;
             }
         } catch (NumberFormatException ex) {
-            messages = "Format is not correct. Try with free format"+" (Code:2004)";
+            messages = "Format is not correct. Try with free format" + " (Code:2004)";
             loadFreeFormat();
         }
         return val;
@@ -215,7 +230,7 @@ public class DataLoader {
         double[] val = null;
         int year = 10000;
         int periode = 0;
-        
+
         try {
             if (!fileInput.isEmpty()) {
                 String[] lines = fileInput.split("\\n");
@@ -249,7 +264,7 @@ public class DataLoader {
             }
         } catch (NumberFormatException ex) {
 
-            messages = "Format is not correct"+" (Code:2005)";
+            messages = "Format is not correct" + " (Code:2005)";
         }
 
         return val;
@@ -263,7 +278,14 @@ public class DataLoader {
 
         if (dataFromWebService == null) {
             if (values != null) {
-                return new TsData(new TsPeriod(period, start), values, false);
+                switch (period) {
+                    case Quarterly:
+                        return new TsData(new TsPeriod(period, DateConverter.changeToQuarter(getStart())), values, false);
+                    case Monthly:
+                        return new TsData(new TsPeriod(period, start), values, false);
+                    default:
+                        return null;
+                }
             } else {
                 return null;
             }
@@ -299,7 +321,7 @@ public class DataLoader {
                     values = loadX12SaveFormat();
                     break;
                 default:
-                    messages = "No support for format " + format.toUpperCase()+" (Code:2006)";
+                    messages = "No support for format " + format.toUpperCase() + " (Code:2006)";
                     values = null;
                     break;
             }

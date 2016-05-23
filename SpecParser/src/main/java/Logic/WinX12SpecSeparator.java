@@ -1,14 +1,23 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* 
+ * Copyright 2016 Deutsche Bundesbank
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
+ * by the European Commission - subsequent versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ * 
+ * http://ec.europa.eu/idabc/eupl
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the Licence is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Licence for the specific language governing permissions and
+ * limitations under the Licence.
  */
 package Logic;
 
-import WriteAndRead.DataLoaderRegression;
 import WriteAndRead.DataLoader;
+import WriteAndRead.DataLoaderRegression;
 import WriteAndRead.Izisl;
-import eu.nbdemetra.specParser.Miscellaneous.*;
 import ec.satoolkit.DecompositionMode;
 import ec.satoolkit.x11.CalendarSigma;
 import ec.satoolkit.x11.SeasonalFilterOption;
@@ -26,16 +35,26 @@ import ec.tstoolkit.information.InformationSet;
 import ec.tstoolkit.modelling.DefaultTransformationType;
 import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
-import ec.tstoolkit.modelling.arima.x13.*;
+import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec;
+import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
+import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
+import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
+import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
+import ec.tstoolkit.modelling.arima.x13.X13Exception;
 import ec.tstoolkit.timeseries.Day;
 import ec.tstoolkit.timeseries.PeriodSelectorType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.calendars.TradingDaysType;
-import ec.tstoolkit.timeseries.regression.*;
+import ec.tstoolkit.timeseries.regression.OutlierDefinition;
+import ec.tstoolkit.timeseries.regression.OutlierType;
+import ec.tstoolkit.timeseries.regression.Ramp;
+import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
-import java.io.*;
+import eu.nbdemetra.specParser.Miscellaneous.DateConverter;
+import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -168,6 +187,7 @@ public class WinX12SpecSeparator {
     public X13Document getResult() {
         X13Document x13 = new X13Document();
         x13.setSpecification(spec);
+        x13.getMetaData().putAll(meta);
         return x13;
     }
 
@@ -184,7 +204,11 @@ public class WinX12SpecSeparator {
         }
 
         //MetaData
-        return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), meta, dataLoader.getData());
+        return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, dataLoader.getData());
+    }
+
+    public MetaData getMetaData() {
+        return meta;
     }
 
     public String[] getRegressorName() {
@@ -349,7 +373,7 @@ public class WinX12SpecSeparator {
 //                        }
 //                        user.add(userVar);
 //                        break;
-//                    default: //darf eig nicht auftreten 
+//                    default: //darf eig nicht auftreten
 //                        break;
 //                }
 //            }
@@ -743,10 +767,10 @@ public class WinX12SpecSeparator {
         }
 
 //        if(content.toUpperCase().equals("FREE") || content.toUpperCase().equals("DATEVALUE")){
-//            
+//
 //        }else{
 //            errors.add(partName+": Format "+content.toUpperCase() + " is not supported. Data will be not loaded. ");
-//        }  
+//        }
 //        messages.add(partName + ": Argument FORMAT is ignored. Please have a look in SpecParser UserGuide");
     }
 
@@ -1173,7 +1197,7 @@ public class WinX12SpecSeparator {
                     s = s.replaceAll("\\s+", ",");
                 }
 
-//            c) Check cases of p,q null or not 
+//            c) Check cases of p,q null or not
                 if (p == null) {
 //                i) extract p from string
                     end = s.indexOf(",");
@@ -1303,7 +1327,6 @@ public class WinX12SpecSeparator {
                     regressionLoader.setPeriod(TsFrequency.Quarterly);
 
                     //change start date
-                    dataLoader.setStart(DateConverter.changeToQuarter(dataLoader.getStart()));
                     regressionLoader.setStart(DateConverter.changeToQuarter(regressionLoader.getStart()));
 
                     //change span
@@ -1437,7 +1460,7 @@ public class WinX12SpecSeparator {
 
     private void read_sigmalim(SpecificationPart partName, String content) {
 
-        /* 
+        /*
          *    Selects the values for lower and upper sigma
          */
         content = content.replaceAll(";", "").trim();
@@ -1659,20 +1682,20 @@ public class WinX12SpecSeparator {
                         case Between:
                         case From:
                             if (p.getD0().isBefore(start)) {
-                                //d0<start 
+                                //d0<start
                                 //=> Fehler da d0 vor start
                                 p.setD0(start);
                                 warnings.add(partName + ": Start and span are not correct. (Code:1407)");
                             }//d0>=start
                             break;
-                        default:// 
+                        default://
                             warnings.add(partName + ": Something is wrong at start or span argument. (Code:1408)");
-                            //einfach mal auf from und start 
+                            //einfach mal auf from und start
                             p.setType(PeriodSelectorType.From);
                             p.setD0(start);
                             break;
                     }
-                    //                spec.getRegArimaSpecification().getBasic().setSpan(p);  
+                    //                spec.getRegArimaSpecification().getBasic().setSpan(p);
                     spec.getRegArimaSpecification().getEstimate().setSpan(p);
 
                 } else {
@@ -1872,7 +1895,7 @@ public class WinX12SpecSeparator {
                 case "SEASONAL":
                     regressionTyp[i] = "SEASONAL";
                     break;
-                default: //holiday, easter, etc. 
+                default: //holiday, easter, etc.
                     warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
                     regressionTyp[i] = "TD";
                     break;
@@ -1927,7 +1950,7 @@ public class WinX12SpecSeparator {
             }
             try {
                 //5. try to invoke the method for the argument
-                Method m = this.getClass().getDeclaredMethod(method.toString().toLowerCase(), SpecificationPart.class, String.class);
+                Method m = this.getClass().getDeclaredMethod(method.toLowerCase(), SpecificationPart.class, String.class);
                 m.setAccessible(true);
                 m.invoke(this, partName, assign);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
@@ -2009,16 +2032,16 @@ public class WinX12SpecSeparator {
                 tmp = "seasonalfactor";
                 break;
             case "FCT":
-                tmp="forecast";
+                tmp = "forecast";
                 break;
             default:
                 //nicht unterstützt
                 break;
         }
-        
+
         StringBuilder sb = new StringBuilder("zebene");
         sb.append(InformationSet.STRSEP).append(tmp).append(InformationSet.STRSEP).append("updateid");
-        
+
         meta.put(sb.toString(), zisd[1]);
     }
 

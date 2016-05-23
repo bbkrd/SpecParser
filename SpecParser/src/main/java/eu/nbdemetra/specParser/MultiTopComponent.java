@@ -1,20 +1,30 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* 
+ * Copyright 2016 Deutsche Bundesbank
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
+ * by the European Commission - subsequent versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ * 
+ * http://ec.europa.eu/idabc/eupl
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the Licence is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Licence for the specific language governing permissions and
+ * limitations under the Licence.
  */
 package eu.nbdemetra.specParser;
 
 import Administration.MultiSpec;
-import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
-import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
+import Logic.SpecCollector;
 import ec.nbdemetra.ws.WorkspaceItem;
+import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
 import ec.tss.sa.SaItem;
-import Logic.SpecCollector;
-import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.MyCellRenderer;
+import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
+import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
@@ -37,8 +47,8 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.util.Exceptions;
-import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.TopComponent;
 
 /**
  * Top component which displays a list of SingleSpecs from the MultiDocument
@@ -49,7 +59,7 @@ import org.openide.util.NbBundle.Messages;
 )
 @TopComponent.Description(
         preferredID = "MultiDocSpecWindowTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE", 
+        //iconBase="SET/PATH/TO/ICON/HERE",
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(mode = "editor", openAtStartup = false)
@@ -242,11 +252,10 @@ public final class MultiTopComponent extends TopComponent {
 
 
     /*METHODS FOR FUNCTIONALITY OF GUI*/
-
     private void specListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_specListMouseClicked
-        /*  This method opens the SingleSpecWindow of the selected item 
+        /*  This method opens the SingleSpecWindow of the selected item
          *  from the list in front, when you click two times or more on the item.
-         *  With one click you see information of the SingleSpec transformation 
+         *  With one click you see information of the SingleSpec transformation
          *  on the rigth.
          */
         try {
@@ -260,7 +269,7 @@ public final class MultiTopComponent extends TopComponent {
 
     private void saveAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAllActionPerformed
         /*
-         * Thid method saves all (in WinX13) transformed (single) Specs of 
+         * Thid method saves all (in WinX13) transformed (single) Specs of
          * the MultiDocument list in a folder.
          */
 
@@ -451,7 +460,7 @@ public final class MultiTopComponent extends TopComponent {
 
         s.setPath(path);
 
-        //check for window of selected item in map activeWindows 
+        //check for window of selected item in map activeWindows
         if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
             //create new one
             window = new SingleTopComponent();
@@ -466,7 +475,7 @@ public final class MultiTopComponent extends TopComponent {
             //add a listener for closing STC when the corresponding MTC is closing
             window.addPropertyChangeListener("CLOSE", new MyPropertyChangeListener());
         } else {
-            //open the old one (with with new SpecCollector, maybe changes) 
+            //open the old one (with with new SpecCollector, maybe changes)
             window = activeSingleWindows.get(specList.getSelectedIndex() + "");
             window.setSpecView(s);
             window.open();
@@ -476,7 +485,6 @@ public final class MultiTopComponent extends TopComponent {
          JOptionPane.showMessageDialog(this, "No Data");
          }*/
     }
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea errorText;
@@ -561,7 +569,7 @@ public final class MultiTopComponent extends TopComponent {
                 FileReader mta_FileReader = new FileReader(mta_File);
                 //read all lines of the mta file
                 try (BufferedReader mta_BufferedReader = new BufferedReader(mta_FileReader)) {
-//                 
+//
                     String mta_line;
 //                    if (!mta_files.isEmpty()) {
                     if (!specFromMTA.isEmpty()) {
@@ -573,7 +581,7 @@ public final class MultiTopComponent extends TopComponent {
                     while ((mta_line = mta_BufferedReader.readLine()) != null) {
                         mta_line = mta_line.trim();
                         if (!mta_line.isEmpty()) {
-//                            mta_files.addSpec(mta_line); 
+//                            mta_files.addSpec(mta_line);
                             specFromMTA.addLast(mta_line);
                             counter_mta++;
                         }
@@ -606,7 +614,8 @@ public final class MultiTopComponent extends TopComponent {
                                 if (spec.getTs() != null) {
                                     if (spec.getTs().getTsData() != null) {
                                         SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
-                                        spec.setJDSpec(item.toDocument());
+                                        item.setMetaData(spec.getMetaData());
+                                        spec.setJDSpec(item.toDocument());                                        
                                         counter_trans++;
                                     } else {
                                         missingTranslation.add(current);
