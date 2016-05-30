@@ -102,6 +102,7 @@ public class WinX12SpecSeparator {
     private boolean automdlDefault = false;
     private boolean calendarsigmaSelect = false;
     private boolean finalIsUser = false;
+    private boolean x12Defaults = false;
 
     //ZISD
     private MetaData meta = new MetaData();
@@ -223,7 +224,9 @@ public class WinX12SpecSeparator {
             if (regressionLoader.getRegressors() != null) {
                 return regressionLoader.getRegressors();
             }
-            messages.add("REGRESSION: " + regressionLoader.getMessages() + " (Code:1304)");
+            if (regressionLoader.getMessages().length() > 0) {
+                messages.add("REGRESSION: " + regressionLoader.getMessages() + " (Code:1304)");
+            }
         }
         return null;
     }
@@ -403,26 +406,30 @@ public class WinX12SpecSeparator {
         } else {
             //X13
 //            x11
-            spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
+            if (!x12Defaults) {
+                spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
 
-            //arima: default is airline model
-            spec.getRegArimaSpecification().getArima().setP(0);
-            spec.getRegArimaSpecification().getArima().setD(1);
-            spec.getRegArimaSpecification().getArima().setQ(1);
-            spec.getRegArimaSpecification().getArima().setBP(0);
-            spec.getRegArimaSpecification().getArima().setBD(1);
-            spec.getRegArimaSpecification().getArima().setBQ(1);
+                //arima: default is airline model
+                spec.getRegArimaSpecification().getArima().setP(0);
+                spec.getRegArimaSpecification().getArima().setD(1);
+                spec.getRegArimaSpecification().getArima().setQ(1);
+                spec.getRegArimaSpecification().getArima().setBP(0);
+                spec.getRegArimaSpecification().getArima().setBD(1);
+                spec.getRegArimaSpecification().getArima().setBQ(1);
 
-            //estimate
-            spec.getRegArimaSpecification().getEstimate().setTol(1.0e-5);
+                //estimate
+                spec.getRegArimaSpecification().getEstimate().setTol(1.0e-5);
 
-            //no outliers
-            spec.getRegArimaSpecification().getOutliers().reset();
+                //no outliers
+                spec.getRegArimaSpecification().getOutliers().reset();
 
-            //transform
-            spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
-            spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
-            spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
+                //transform
+                spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
+                spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
+                spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
+
+            }
+            x12Defaults = true;
         }
     }
 
@@ -698,7 +705,9 @@ public class WinX12SpecSeparator {
             } else {
                 try {
                     spec.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(Double.parseDouble(s[0]));
-                    messages.add(partName + ": It isn't possible to set more than one critical value. The global critical value will be set to " + s[0] + " (Code:1842)");
+                    if (s.length > 1) {
+                        messages.add(partName + ": It isn't possible to set more than one critical value. The global critical value will be set to " + s[0] + " (Code:1842)");
+                    }
                 } catch (NumberFormatException e) {
                     messages.add(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1809)");
                 }
