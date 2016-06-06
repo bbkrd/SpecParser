@@ -127,11 +127,6 @@ public final class MultiTopComponent extends TopComponent {
 
         specList.setModel(model);
         specList.setCellRenderer(new MyCellRenderer());
-
-        if (!spec_array.isEmpty()) {
-            saveAll.setEnabled(true);
-            saveGreen.setEnabled(true);
-        }
     }
 
     public String getMtaName() {
@@ -154,9 +149,7 @@ public final class MultiTopComponent extends TopComponent {
         toolBar1 = new javax.swing.JToolBar();
         load = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
-        saveAll = new javax.swing.JButton();
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
-        saveGreen = new javax.swing.JButton();
 
         specList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -195,27 +188,7 @@ public final class MultiTopComponent extends TopComponent {
         });
         toolBar1.add(load);
         toolBar1.add(filler1);
-
-        saveAll.setBackground(Color.LIGHT_GRAY);
-        org.openide.awt.Mnemonics.setLocalizedText(saveAll, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.saveAll.text")); // NOI18N
-        saveAll.setEnabled(false);
-        saveAll.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveAllActionPerformed(evt);
-            }
-        });
-        toolBar1.add(saveAll);
         toolBar1.add(filler2);
-
-        saveGreen.setBackground(Color.LIGHT_GRAY);
-        org.openide.awt.Mnemonics.setLocalizedText(saveGreen, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.saveGreen.text")); // NOI18N
-        saveGreen.setEnabled(false);
-        saveGreen.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveGreenActionPerformed(evt);
-            }
-        });
-        toolBar1.add(saveGreen);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -266,109 +239,6 @@ public final class MultiTopComponent extends TopComponent {
             //daneben geklickt
         }
     }//GEN-LAST:event_specListMouseClicked
-
-    private void saveAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAllActionPerformed
-        /*
-         * Thid method saves all (in WinX13) transformed (single) Specs of
-         * the MultiDocument list in a folder.
-         */
-
-        //Regressoren fehlen hier
-        JFileChooser chooser = new JFileChooser(path);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle("Create target directory");
-        int result = chooser.showSaveDialog(null);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            try {
-                File mta_file = chooser.getSelectedFile();
-                String newPath = chooser.getSelectedFile().getPath();
-                new File(newPath).mkdir();
-                mta_file = new File(newPath + "\\" + mta_file.getName());
-                try (FileWriter mta_fw = new FileWriter(mta_file)) {
-                    File spc_file;
-                    String file_name;
-                    int counter = 1;
-                    for (SpecCollector c : spec_array) {
-
-                        file_name = mta_file.getName() + counter + "";
-                        counter++;
-                        mta_fw.write(file_name);
-                        mta_fw.write("\n");
-
-                        spc_file = new File(newPath + "\\" + file_name + ".spc");
-                        if (!spc_file.exists()) {
-                            spc_file.createNewFile();
-                        }
-                        try (FileWriter spc_fw = new FileWriter(spc_file)) {
-                            spc_fw.write(c.getWinX12Spec());
-                            spc_fw.close();
-                            if (!spc_file.toString().endsWith(".spc")) {
-                                spc_file.renameTo(new File(mta_file.toString() + ".spc"));
-                            }
-                        }
-                    }
-                    mta_fw.close();
-                    if (!mta_file.toString().endsWith(".mta")) {
-                        mta_file.renameTo(new File(mta_file.toString() + ".mta"));
-                    }
-                }
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, "It doesn't work");
-                Exceptions.printStackTrace(ex);
-            }
-        }
-    }//GEN-LAST:event_saveAllActionPerformed
-
-    private void saveGreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveGreenActionPerformed
-
-        JFileChooser chooser = new JFileChooser(path);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle("Create target directory");
-        int result = chooser.showSaveDialog(null);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            try {
-                File mta_file = chooser.getSelectedFile();
-                String newPath = chooser.getSelectedFile().getPath();
-                new File(newPath).mkdir();
-                mta_file = new File(newPath + "\\" + mta_file.getName());
-                try (FileWriter mta_fw = new FileWriter(mta_file)) {
-                    File spc_file;
-                    String file_name;
-                    int counter = 1;
-                    for (SpecCollector c : spec_array) {
-
-                        if (c.getErrors().length == 0) {
-                            file_name = mta_file.getName() + counter + "";
-                            counter++;
-                            mta_fw.write(file_name);
-                            mta_fw.write("\n");
-
-                            spc_file = new File(newPath + "\\" + file_name + ".spc");
-                            if (!spc_file.exists()) {
-                                spc_file.createNewFile();
-                            }
-                            try (FileWriter spc_fw = new FileWriter(spc_file)) {
-                                spc_fw.write(c.getWinX12Spec());
-                                spc_fw.close();
-                                if (!spc_file.toString().endsWith(".spc")) {
-                                    spc_file.renameTo(new File(mta_file.toString() + ".spc"));
-                                }
-                            }
-                        }
-                    }
-                    mta_fw.close();
-                    if (!mta_file.toString().endsWith(".mta")) {
-                        mta_file.renameTo(new File(mta_file.toString() + ".mta"));
-                    }
-                }
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, "It doesn't work");
-                Exceptions.printStackTrace(ex);
-            }
-        }
-    }//GEN-LAST:event_saveGreenActionPerformed
 
     private void loadMtaFiles(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_loadMtaFiles
 
@@ -493,8 +363,6 @@ public final class MultiTopComponent extends TopComponent {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JButton load;
-    private javax.swing.JButton saveAll;
-    private javax.swing.JButton saveGreen;
     private javax.swing.JLabel singleSpecName;
     private javax.swing.JList specList;
     private javax.swing.JToolBar toolBar1;

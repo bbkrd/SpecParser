@@ -132,10 +132,6 @@ public final class SingleTopComponent extends TopComponent {
         add(specViewer);
         specViewer.refreshHeader();
 
-        if (spec.getWinX12Spec() != null) {
-            refreshJD.setEnabled(true);
-            save.setEnabled(true);
-        }
         specViewer.getWinDoc().addDocumentListener(new MyDocumentListener());
     }
 
@@ -216,8 +212,6 @@ public final class SingleTopComponent extends TopComponent {
 
     /*BUTTONS*/
     private JButton load = new JButton(new LoadAction());
-    private JButton save = new JButton(new SaveAction());
-    private JButton refreshX12 = new JButton(new RefreshWinAction());
     private JButton refreshJD = new JButton(new RefreshJDAction());
     
     /** Fortschrittsbalken */
@@ -320,7 +314,6 @@ public final class SingleTopComponent extends TopComponent {
             specViewer = specViewer.refresh(sp);
 
             refreshJD.setEnabled(true);
-            save.setEnabled(true);
             refreshJD.setForeground(Color.black);
         }
 
@@ -329,16 +322,10 @@ public final class SingleTopComponent extends TopComponent {
     private void setButtons() {
 
         refreshJD.setEnabled(false);
-        save.setEnabled(false);
-
         load.setText("Load WinX12Spec");
-        save.setText("Save WinX12Spec");
-        refreshX12.setText("Refresh WinX12Text");
         refreshJD.setText("Refresh JD+ Spec");
 
         load.setBackground(Color.LIGHT_GRAY);
-        save.setBackground(Color.LIGHT_GRAY);
-        refreshX12.setBackground(Color.LIGHT_GRAY);
         refreshJD.setBackground(Color.LIGHT_GRAY);
 
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
@@ -347,9 +334,7 @@ public final class SingleTopComponent extends TopComponent {
 
         toolBar.add(load);
         toolBar.add(filler1);
-        toolBar.add(save);
         toolBar.add(filler2);
-        toolBar.add(refreshX12);
         toolBar.add(filler3);
         toolBar.add(refreshJD);
     }
@@ -410,7 +395,6 @@ public final class SingleTopComponent extends TopComponent {
                 specViewer.refresh(sp);
 
                 refreshJD.setEnabled(true);
-                save.setEnabled(true);
                 refreshJD.setForeground(Color.black);
                 counter++;
 

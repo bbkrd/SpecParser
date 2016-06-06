@@ -219,43 +219,6 @@ public class SpecCollector {
             }
 
         }
-        //later: reverse direction (translation from JD+ to winx12)
-        /*else {
-         //Translation from JDemetra+Spec to WinX12Spec
-         if (ts != null) {
-         if (wsItem.getElement() instanceof X13Document) {
-         ts = ((X13Document) wsItem.getElement()).getInput();
-         } else {
-         ts = ((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index).getTs();
-         }
-
-         if (ts.getTsData() != null) {
-         JDSpecSeparator separator = new JDSpecSeparator((X13Specification) jdSpec.getSpecification(), ts, wsItem.getOwner().getContext());
-         separator.build();
-         winX12SpecText = separator.getResult();
-
-         //anfrage machen
-         //                    regData = separator.getRegressors();
-         refreshWS();
-
-         errors = separator.getErrorList();
-         messages = separator.getMessageList();
-         } else {
-         //if data are missing
-         errors = new String[1];
-         errors[0] = "NO DATA" + " (Code:3001)";
-         //                    messages = new String[1];
-         //                    messages[0] = "NO DATA!!!";
-         }
-
-         } else {
-         //if data are missing
-         errors = new String[1];
-         errors[0] = "NO DATA" + " (Code:3002)";
-         //                messages = new String[1];
-         //                messages[0] = "NO DATA!!!";
-         }
-         }*/
     }
 
     private void refreshWS() {
@@ -343,7 +306,7 @@ public class SpecCollector {
 
                             //if in td
                             String[] tdVars = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().getUserVariables();
-                            if (tdVars.length != 0) {
+                            if (tdVars!=null && tdVars.length != 0) {
                                 for (int j = 0; j < tdVars.length; j++) {
                                     if (tdVars[j].equals(curName)) {
                                         tdVars[j] = newName;
