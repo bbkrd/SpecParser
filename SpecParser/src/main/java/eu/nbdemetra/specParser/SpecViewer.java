@@ -112,6 +112,12 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
                 errormessage.append(a + "\n");
             }
 
+//            errormessage.append("\nTESTS\n"
+//                    + "********\n");
+//            for (String a : this.spec.getTests()) {
+//                errormessage.append(a + "\n");
+//            }
+            
             setDocument(spec.getJDSpec());
         }
         return this;

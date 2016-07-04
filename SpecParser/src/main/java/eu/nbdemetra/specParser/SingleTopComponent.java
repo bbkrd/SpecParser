@@ -230,7 +230,7 @@ public final class SingleTopComponent extends TopComponent {
 
             if (state == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
-                path= file.getParent()+"\\";
+                path= file.getParent()+File.separator;
                 
                 progressHandle.start(10);
                 LoadRunnable load = new LoadRunnable();

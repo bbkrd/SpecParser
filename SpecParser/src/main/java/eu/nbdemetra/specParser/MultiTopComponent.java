@@ -33,7 +33,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -252,7 +251,7 @@ public final class MultiTopComponent extends TopComponent {
 
                 File mta_File = fc.getSelectedFile();
                 String name = mta_File.getName();
-                path = fc.getSelectedFile().getParent() + "\\";
+                path = fc.getSelectedFile().getParent() + File.separator;
                 name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
 
                 mtaName = name;

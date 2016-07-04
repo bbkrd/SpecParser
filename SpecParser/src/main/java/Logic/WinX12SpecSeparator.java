@@ -76,6 +76,7 @@ public class WinX12SpecSeparator {
     private ArrayList<String> errors = new ArrayList();
     private ArrayList<String> messages = new ArrayList();
     private ArrayList<String> warnings = new ArrayList();
+    private ArrayList<String> tests = new ArrayList();
 
     //no equivalence in a JD+ spec item, this information is given in Ts
     //for timeseries
@@ -183,6 +184,9 @@ public class WinX12SpecSeparator {
 
     public String[] getWarningList() {
         return warnings.toArray(new String[warnings.size()]);
+    }
+    public String[] getTestsList() {
+        return tests.toArray(new String[tests.size()]);
     }
 
     public X13Document getResult() {
@@ -792,11 +796,14 @@ public class WinX12SpecSeparator {
         //delete this letters: ; and ' and "
         content = content.replaceAll("[;'\"]", "").trim();
         File file;
-        if (!content.contains("\\")) {
+        if (!content.contains(File.separator)) {
+//            if (!content.contains("\\")) {
             file = new File((path + content));
         } else {
             file = new File(content);
         }
+        tests.add("PATH: "+path);
+        tests.add("FILE: "+file);
 
         switch (partName) {
             case SERIES:
@@ -1858,7 +1865,7 @@ public class WinX12SpecSeparator {
 
     private void read_user(SpecificationPart partName, String content) {
 
-        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toUpperCase();
         String[] regressors = content.split("\\s+");
         regressionLoader.setRegressorName(regressors);
         if (regressionLoader.isStartDefault()) {

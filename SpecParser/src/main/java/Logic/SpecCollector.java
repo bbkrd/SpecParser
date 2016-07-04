@@ -58,6 +58,7 @@ public class SpecCollector {
     private String[] errors;
     private String[] messages;
     private String[] warnings;
+    private String[] tests;
 
     /*  index   -   reference to each single item in a multi doc the corresponding SpecCollector (only for multi docs important)
      *   name    -   */
@@ -146,6 +147,13 @@ public class SpecCollector {
         }
         return warnings;
     }
+    
+     public String[] getTests() {
+        if (tests == null) {
+            tests = new String[]{};
+        }
+        return tests;
+    }
 
     public String getRegData() {
         return regData;
@@ -211,9 +219,16 @@ public class SpecCollector {
             errors = separator.getErrorList();
             warnings = separator.getWarningList();
             messages = separator.getMessageList();
+            tests = separator.getTestsList();
             if (ts.getTsData() == null) {
-                errors = new String[1];
-                errors[0] = "NO DATA (Code:3003)";
+                String [] tmp = new  String[errors.length+1];
+//                errors = new String[1];
+                tmp[0] = "NO DATA (Code:3003)";
+                for(int i =1; i<tmp.length; i++){
+                    tmp[i]=errors[i-1];
+                }
+                errors=tmp.clone();
+                
             } else {
                 refreshWS();
             }
