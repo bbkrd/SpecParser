@@ -197,11 +197,11 @@ public final class MultiTopComponent extends TopComponent {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(23, 23, 23)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 146, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(singleSpecName)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(toolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -278,6 +278,7 @@ public final class MultiTopComponent extends TopComponent {
             String[] errors = spec_array.get(specList.getSelectedIndex()).getErrors();
             String[] messages = spec_array.get(specList.getSelectedIndex()).getMessages();
             String[] warnings = spec_array.get(specList.getSelectedIndex()).getWarnings();
+            String[] tests = spec_array.get(specList.getSelectedIndex()).getTests();
 
             errorText.setText("ERRORS:\n"
                     + "******\n");
@@ -308,6 +309,17 @@ public final class MultiTopComponent extends TopComponent {
             } else {
                 errorText.append("\nNo messages\n");
             }
+
+            errorText.append("\nTESTS:\n"
+                    + "*********\n");
+            if (tests.length != 0) {
+                for (String tmp : tests) {
+                    errorText.append(tmp + "\n");
+                }
+            } else {
+                errorText.append("\nNo tests\n");
+            }
+            errorText.append("PATH: " + path);
         } catch (ArrayIndexOutOfBoundsException e) {
             //click not on item
         }
@@ -461,7 +473,13 @@ public final class MultiTopComponent extends TopComponent {
                         current = specFromMTA.pollFirst();
                         counter++;
 
-                        try (FileReader spec_FileReader = new FileReader(new File(path + (current) + ".SPC"))) {
+                        File file;
+                        if (current.contains(File.separator)) {
+                            file = new File(current + ".SPC");
+                        } else {
+                            file = new File(path + (current) + ".SPC");
+                        }
+                        try (FileReader spec_FileReader = new FileReader(file)) {
 
                             try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
                                 StringBuilder spec_StringBuilder = new StringBuilder();
@@ -482,10 +500,11 @@ public final class MultiTopComponent extends TopComponent {
                                     if (spec.getTs().getTsData() != null) {
                                         SaItem item = new SaItem((ISaSpecification) spec.getJDSpec().getSpecification(), spec.getTs());
                                         item.setMetaData(spec.getMetaData());
-                                        spec.setJDSpec(item.toDocument());                                        
+                                        spec.setJDSpec(item.toDocument());
                                         counter_trans++;
                                     } else {
-                                        missingTranslation.add(current);
+                                        missingTranslation.add(current + " Data Missing");
+                                        JOptionPane.showMessageDialog(null, "Data Missing");
                                     }
                                 }
                                 spec_array.add(spec);
@@ -493,7 +512,8 @@ public final class MultiTopComponent extends TopComponent {
                         } catch (IOException ex) {
                             //spc konnte nicht uebersetzt werden
                             //merke dir current
-                            missingTranslation.add(current);
+                            missingTranslation.add(current + " IOException");
+                            Exceptions.printStackTrace(ex);
                         }
                         progressHandle.progress(counter);
                     }
@@ -523,7 +543,7 @@ public final class MultiTopComponent extends TopComponent {
 
                     StringBuilder tmp = new StringBuilder("Not translated spc-files: \n");
                     for (String s : missingTranslation) {
-                        tmp.append(s).append("\n");
+                        tmp.append(path).append(s).append("\n");
                     }
                     JOptionPane.showMessageDialog(null, tmp.toString());
                 }

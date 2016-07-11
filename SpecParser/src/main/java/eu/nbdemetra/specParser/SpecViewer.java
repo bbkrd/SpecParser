@@ -117,7 +117,6 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 //            for (String a : this.spec.getTests()) {
 //                errormessage.append(a + "\n");
 //            }
-            
             setDocument(spec.getJDSpec());
         }
         return this;
@@ -129,10 +128,11 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         IProcSpecification pspec = specDescriptor.getCore();
         doc.setSpecification(pspec.clone());
         setDirty(false);
-        firePropertyChange(BUTTON_APPLY, null, null);
-        refreshView();
+
+        /*refreshView();
         if (isHeaderVisible()) {
             refreshHeader();
-        }
+        }*/
+        firePropertyChange(BUTTON_APPLY, null, null);
     }
 }

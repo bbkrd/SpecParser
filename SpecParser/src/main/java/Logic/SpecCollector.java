@@ -216,23 +216,22 @@ public class SpecCollector {
             }
 
             jdSpec = separator.getResult();
-            errors = separator.getErrorList();
+            
             warnings = separator.getWarningList();
             messages = separator.getMessageList();
             tests = separator.getTestsList();
             if (ts.getTsData() == null) {
-                String [] tmp = new  String[errors.length+1];
+                String [] tmp = new  String[separator.getErrorList().length+1];
 //                errors = new String[1];
                 tmp[0] = "NO DATA (Code:3003)";
-                for(int i =1; i<tmp.length; i++){
+                for(int i = 1; i<tmp.length; i++){
                     tmp[i]=errors[i-1];
                 }
-                errors=tmp.clone();
-                
+                errors=tmp.clone();   
             } else {
+                errors = separator.getErrorList();
                 refreshWS();
             }
-
         }
     }
 

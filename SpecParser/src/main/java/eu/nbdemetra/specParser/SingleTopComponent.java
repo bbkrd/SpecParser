@@ -19,7 +19,6 @@ import Logic.SpecCollector;
 import Administration.SingleSpec;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
-import ec.tss.sa.documents.SaDocument;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
@@ -30,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -47,7 +45,8 @@ import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * This class is the window for the single mode. 
+ * This class is the window for the single mode.
+ *
  * @author Nina Gonschorreck
  */
 @ConvertAsProperties(
@@ -74,21 +73,29 @@ import org.openide.util.NbBundle.Messages;
 
 public final class SingleTopComponent extends TopComponent {
 
-    /** GUI component @see SpecViewer */
+    /**
+     * GUI component @see SpecViewer
+     */
     private SpecViewer specViewer;
-    /** Identification number of the single window */
+    /**
+     * Identification number of the single window
+     */
     private String id;
-    /** path to open a directory for loading and saving, memorize the last directory */
+    /**
+     * path to open a directory for loading and saving, memorize the last
+     * directory
+     */
     private static String path = System.getProperty("user.home");
-    /** current workspace node, for refreshing the workspace */
+    /**
+     * current workspace node, for refreshing the workspace
+     */
     private WsNode wsNode;
 
-
-    /** 
+    /**
      * Creates the single window for a single document in the multi mode
      */
     public SingleTopComponent() {
-        
+
         initComponents();
         setName(Bundle.CTL_SingleSpecWindowTopComponent());
         setToolTipText(Bundle.HINT_SingleSpecWindowTopComponent());
@@ -98,7 +105,9 @@ public final class SingleTopComponent extends TopComponent {
         load.setEnabled(false);
     }
 
-    /** Creates the single window in the single mode
+    /**
+     * Creates the single window in the single mode
+     *
      * @param ws current Workspace node
      */
     public SingleTopComponent(WsNode ws) {
@@ -115,6 +124,7 @@ public final class SingleTopComponent extends TopComponent {
 
     /**
      * Returns the current SpecView
+     *
      * @return current view of the specification
      */
     public SpecViewer getSpecViewer() {
@@ -123,6 +133,7 @@ public final class SingleTopComponent extends TopComponent {
 
     /**
      * Sets a SpecView into the window
+     *
      * @param spec current @see SpecCollector
      */
     public void setSpecView(SpecCollector spec) {
@@ -137,6 +148,7 @@ public final class SingleTopComponent extends TopComponent {
 
     /**
      * Sets an identification number for the window
+     *
      * @param id identification number for this window
      */
     public void setId(String id) {
@@ -145,6 +157,7 @@ public final class SingleTopComponent extends TopComponent {
 
     /**
      * Returns the identification number of this window
+     *
      * @return identificatiion number of this window
      */
     public String getId() {
@@ -153,6 +166,7 @@ public final class SingleTopComponent extends TopComponent {
 
     /**
      * Returns the path of the latest directory
+     *
      * @return path of directory
      */
     public String getPath() {
@@ -194,8 +208,8 @@ public final class SingleTopComponent extends TopComponent {
     @Override
     public void componentClosed() {
 
-            SingleSpec.deleteWindow(id);
-            firePropertyChange("CLOSE", null, null);
+        SingleSpec.deleteWindow(id);
+        firePropertyChange("CLOSE", null, null);
     }
 
     void writeProperties(java.util.Properties p) {
@@ -213,8 +227,10 @@ public final class SingleTopComponent extends TopComponent {
     /*BUTTONS*/
     private JButton load = new JButton(new LoadAction());
     private JButton refreshJD = new JButton(new RefreshJDAction());
-    
-    /** Fortschrittsbalken */
+
+    /**
+     * Fortschrittsbalken
+     */
     private ProgressHandle progressHandle;
 
     /*ACTIONS FOR BUTTONS*/
@@ -230,8 +246,8 @@ public final class SingleTopComponent extends TopComponent {
 
             if (state == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
-                path= file.getParent()+File.separator;
-                
+                path = file.getParent() + File.separator;
+
                 progressHandle.start(10);
                 LoadRunnable load = new LoadRunnable();
                 load.setSpc_File(file);
@@ -245,39 +261,38 @@ public final class SingleTopComponent extends TopComponent {
         }
     }
 
-    public class SaveAction extends AbstractAction {
+    /* public class SaveAction extends AbstractAction {
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
+     @Override
+     public void actionPerformed(ActionEvent e) {
 
-            JFileChooser chooser = new JFileChooser(path);
-            chooser.setAcceptAllFileFilterUsed(false);
-            chooser.setFileFilter(new MyFilter(".spc"));
-            int result = chooser.showSaveDialog(null);
+     JFileChooser chooser = new JFileChooser(path);
+     chooser.setAcceptAllFileFilterUsed(false);
+     chooser.setFileFilter(new MyFilter(".spc"));
+     int result = chooser.showSaveDialog(null);
 
-            if (result == JFileChooser.APPROVE_OPTION) {
-                try {
-                    File file = chooser.getSelectedFile();
-                    try (FileWriter fw = new FileWriter(file)) {
-                        fw.write(specViewer.getSpecCollector().getWinX12Spec());
-                    }
-                    if (!file.toString().endsWith(".spc")) {
-                        file.renameTo(new File(file.toString() + ".spc"));
-                    }
+     if (result == JFileChooser.APPROVE_OPTION) {
+     try {
+     File file = chooser.getSelectedFile();
+     try (FileWriter fw = new FileWriter(file)) {
+     fw.write(specViewer.getSpecCollector().getWinX12Spec());
+     }
+     if (!file.toString().endsWith(".spc")) {
+     file.renameTo(new File(file.toString() + ".spc"));
+     }
 
-                    if (specViewer.getSpecCollector().getRegData() != null) {
-                        File regFile = new File(chooser.getCurrentDirectory() + "\\dataRegressors.rgr");
-                        try (FileWriter fw = new FileWriter(regFile)) {
-                            fw.write(specViewer.getSpecCollector().getRegData());
-                        }
-                    }
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
-        }
-    }
-
+     if (specViewer.getSpecCollector().getRegData() != null) {
+     File regFile = new File(chooser.getCurrentDirectory() + File.separator+"dataRegressors.rgr");
+     try (FileWriter fw = new FileWriter(regFile)) {
+     fw.write(specViewer.getSpecCollector().getRegData());
+     }
+     }
+     } catch (IOException ex) {
+     Exceptions.printStackTrace(ex);
+     }
+     }
+     }
+     }*/
     public class RefreshJDAction extends AbstractAction {
 
         @Override
@@ -301,32 +316,31 @@ public final class SingleTopComponent extends TopComponent {
         }
     }
 
-    public class RefreshWinAction extends AbstractAction {
+    /*public class RefreshWinAction extends AbstractAction {
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
+     @Override
+     public void actionPerformed(ActionEvent e) {
 
-            specViewer.pressApplyButton();
+     specViewer.pressApplyButton();
 
-            SpecCollector sp = specViewer.getSpecCollector();
-            sp.setJDSpec((SaDocument) specViewer.getDocument());
-            sp.translate(TranslationTo_Type.WinX12Spec);
-            specViewer = specViewer.refresh(sp);
+     SpecCollector sp = specViewer.getSpecCollector();
+     sp.setJDSpec((SaDocument) specViewer.getDocument());
+     sp.translate(TranslationTo_Type.WinX12Spec);
+     specViewer = specViewer.refresh(sp);
 
-            refreshJD.setEnabled(true);
-            refreshJD.setForeground(Color.black);
-        }
+     refreshJD.setEnabled(true);
+     refreshJD.setForeground(Color.black);
+     }
 
-    }
-
+     }*/
     private void setButtons() {
 
-        refreshJD.setEnabled(false);
         load.setText("Load WinX12Spec");
         refreshJD.setText("Refresh JD+ Spec");
 
         load.setBackground(Color.LIGHT_GRAY);
         refreshJD.setBackground(Color.LIGHT_GRAY);
+        refreshJD.setEnabled(false);
 
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767));
@@ -347,16 +361,21 @@ public final class SingleTopComponent extends TopComponent {
         @Override
         public void insertUpdate(DocumentEvent e) {
             refreshJD.setForeground(Color.blue);
+            refreshJD.setEnabled(true);
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
             refreshJD.setForeground(Color.blue);
+            refreshJD.setEnabled(true);
+
         }
 
         @Override
         public void changedUpdate(DocumentEvent e) {
             refreshJD.setForeground(Color.blue);
+            refreshJD.setEnabled(true);
+
         }
     }
 
@@ -370,7 +389,7 @@ public final class SingleTopComponent extends TopComponent {
 
         @Override
         public void run() {
-            String message=null;
+            String message = null;
             int counter = 0;
             try {
                 FileReader f = new FileReader(file);
@@ -399,17 +418,19 @@ public final class SingleTopComponent extends TopComponent {
                 counter++;
 
             } catch (FileNotFoundException ex) {
-                message="File not found";
+                message = "File not found";
+                Exceptions.printStackTrace(ex);
             } catch (IOException ex) {
-                message="File is not readable";
+                message = "File is not readable";
+                Exceptions.printStackTrace(ex);
             } finally {
                 progressHandle.finish();
 //                wsNode.updateUI();
                 wsNode.getWorkspace().sort();
-                JOptionPane.showMessageDialog(null, "Translation completed: "+ counter +" / 1 specs");
-           
-                if(counter==0){
-                    JOptionPane.showMessageDialog(null, "Not translated spc file: "+file.getName()+" "+message);
+                JOptionPane.showMessageDialog(null, "Translation completed: " + counter + " / 1 specs");
+
+                if (counter == 0) {
+                    JOptionPane.showMessageDialog(null, "Not translated spc file: " + file.getName() + " " + message);
                 }
             }
         }
