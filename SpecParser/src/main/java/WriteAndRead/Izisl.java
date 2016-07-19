@@ -26,7 +26,7 @@ import ec.tstoolkit.timeseries.simplets.TsData;
 @ServiceDefinition
 public interface Izisl {
     
-    public void setId(String id);
+    public void setId(String id, String name);
     public TsData getData();
     public TsMoniker getMoniker();
 }

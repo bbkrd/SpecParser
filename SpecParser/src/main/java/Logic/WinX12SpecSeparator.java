@@ -802,8 +802,8 @@ public class WinX12SpecSeparator {
         } else {
             file = new File(content);
         }
-        tests.add("PATH: "+path);
-        tests.add("FILE: "+file);
+        //tests.add("PATH: "+path);
+        //tests.add("FILE: "+file);
 
         switch (partName) {
             case SERIES:
@@ -1994,7 +1994,7 @@ public class WinX12SpecSeparator {
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         Izisl zisl = Lookup.getDefault().lookup(Izisl.class);
         if (zisl != null) {
-            zisl.setId(content.toUpperCase());
+            zisl.setId(content.toUpperCase(),name);
             TsData dataFromWebServive = zisl.getData();
             TsMoniker moniker = zisl.getMoniker();
 

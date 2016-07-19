@@ -61,7 +61,7 @@ public class SingleSpec {
                 // Preparation of the window 
                 SpecCollector spec = new SpecCollector(w);
                 spec.setPath(window.getPath());
-                window.setSpecView(spec);
+                window.setSpecView(spec, false);
 
                 // put window into the list of active single windows
                 activeSingleWindows.put(id, window);

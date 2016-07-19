@@ -21,6 +21,8 @@ import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.utilities.IModifiable;
+import ec.ui.view.tsprocessing.DefaultProcessingViewer;
+import ec.ui.view.tsprocessing.DefaultProcessingViewer.Type;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
@@ -136,9 +138,14 @@ public final class SingleTopComponent extends TopComponent {
      *
      * @param spec current @see SpecCollector
      */
-    public void setSpecView(SpecCollector spec) {
+    public void setSpecView(SpecCollector spec, boolean multi) {
 
-        specViewer = SpecViewer.create(spec);
+        if (!multi) {
+            specViewer = SpecViewer.create(spec);
+        }else{
+            specViewer= new SpecViewer(Type.APPLY_RESTORE_SAVE, spec);
+        }
+
         specViewer = specViewer.refresh(spec);
         add(specViewer);
         specViewer.refreshHeader();

@@ -18,9 +18,6 @@ package eu.nbdemetra.specParser;
 import ec.tss.documents.TsDocument;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import Logic.SpecCollector;
-import ec.tstoolkit.algorithm.IActiveProcDocument;
-import ec.tstoolkit.algorithm.IProcSpecification;
-import static ec.ui.view.tsprocessing.DefaultProcessingViewer.BUTTON_APPLY;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
@@ -47,7 +44,7 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         SpecViewer viewer = new SpecViewer(Type.APPLY, spec);
         return viewer;
     }
-
+    
     public SpecViewer(Type type, final SpecCollector spec) {
         super(type);
         this.spec = spec;
@@ -122,17 +119,18 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         return this;
     }
 
-    public void pressApplyButton() {
+  /*  public void pressApplyButton() {
 
         IActiveProcDocument doc = getDocument();
         IProcSpecification pspec = specDescriptor.getCore();
         doc.setSpecification(pspec.clone());
         setDirty(false);
 
-        /*refreshView();
+        firePropertyChange(BUTTON_APPLY, null, null);
+        refreshView();
         if (isHeaderVisible()) {
             refreshHeader();
-        }*/
-        firePropertyChange(BUTTON_APPLY, null, null);
-    }
+        }
+        
+    }*/
 }

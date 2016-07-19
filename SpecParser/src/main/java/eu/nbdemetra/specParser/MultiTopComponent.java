@@ -25,6 +25,7 @@ import ec.tstoolkit.utilities.IModifiable;
 import eu.nbdemetra.specParser.Miscellaneous.MyCellRenderer;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
@@ -278,7 +279,7 @@ public final class MultiTopComponent extends TopComponent {
             String[] errors = spec_array.get(specList.getSelectedIndex()).getErrors();
             String[] messages = spec_array.get(specList.getSelectedIndex()).getMessages();
             String[] warnings = spec_array.get(specList.getSelectedIndex()).getWarnings();
-            String[] tests = spec_array.get(specList.getSelectedIndex()).getTests();
+            //String[] tests = spec_array.get(specList.getSelectedIndex()).getTests();
 
             errorText.setText("ERRORS:\n"
                     + "******\n");
@@ -309,17 +310,6 @@ public final class MultiTopComponent extends TopComponent {
             } else {
                 errorText.append("\nNo messages\n");
             }
-
-            errorText.append("\nTESTS:\n"
-                    + "*********\n");
-            if (tests.length != 0) {
-                for (String tmp : tests) {
-                    errorText.append(tmp + "\n");
-                }
-            } else {
-                errorText.append("\nNo tests\n");
-            }
-            errorText.append("PATH: " + path);
         } catch (ArrayIndexOutOfBoundsException e) {
             //click not on item
         }
@@ -345,7 +335,7 @@ public final class MultiTopComponent extends TopComponent {
         if (!activeSingleWindows.containsKey(specList.getSelectedIndex() + "")) {
             //create new one
             window = new SingleTopComponent();
-            window.setSpecView(s);
+            window.setSpecView(s, true);
             window.setDisplayName("SpecParser for " + s.getName());
             window.setPath(path);
             window.setId(specList.getSelectedIndex() + "");
@@ -358,7 +348,7 @@ public final class MultiTopComponent extends TopComponent {
         } else {
             //open the old one (with with new SpecCollector, maybe changes)
             window = activeSingleWindows.get(specList.getSelectedIndex() + "");
-            window.setSpecView(s);
+            window.setSpecView(s, true);
             window.open();
             window.requestActive();
         }
@@ -475,10 +465,12 @@ public final class MultiTopComponent extends TopComponent {
 
                         File file;
                         if (current.contains(File.separator)) {
-                            file = new File(current + ".SPC");
+                            //absolute path
+                            file = new File(current + ".spc");
                         } else {
-                            file = new File(path + (current) + ".SPC");
-                        }
+                            //relative path
+                            file = new File(path + (current) + ".spc");
+                        }                        
                         try (FileReader spec_FileReader = new FileReader(file)) {
 
                             try (BufferedReader brSpec = new BufferedReader(spec_FileReader)) {
@@ -503,8 +495,7 @@ public final class MultiTopComponent extends TopComponent {
                                         spec.setJDSpec(item.toDocument());
                                         counter_trans++;
                                     } else {
-                                        missingTranslation.add(current + " Data Missing");
-                                        JOptionPane.showMessageDialog(null, "Data Missing");
+                                        missingTranslation.add(current);
                                     }
                                 }
                                 spec_array.add(spec);
@@ -512,8 +503,7 @@ public final class MultiTopComponent extends TopComponent {
                         } catch (IOException ex) {
                             //spc konnte nicht uebersetzt werden
                             //merke dir current
-                            missingTranslation.add(current + " IOException");
-                            Exceptions.printStackTrace(ex);
+                            missingTranslation.add(current);
                         }
                         progressHandle.progress(counter);
                     }
