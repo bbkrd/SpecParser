@@ -126,6 +126,9 @@ public class WinX12SpecSeparator {
         //X13
 //            x11
         if (!x12Defaults) {
+            
+             spec.getX11Specification().setForecastHorizon(-1);
+            
             spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
 
             //arima: default is airline model
