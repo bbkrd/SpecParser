@@ -1935,18 +1935,22 @@ public class WinX12SpecSeparator {
             //hier die kommas tauschen durch semikolon
             //beachten wenn sincos mal genutzt werden sollte
             int beginIndex = content.indexOf("sincos");
-            int endIndex = content.indexOf("]", beginIndex);
-            content = content.substring(beginIndex, endIndex).replaceAll(",", ";");
+            int endIndex = content.indexOf("]", beginIndex)+1;
+            String sincos = content.substring(beginIndex, endIndex);
+            content = content.replace(sincos, "");
+//            content = content.replaceAll(sincos, sincos.replaceAll(",", ";")); Komma ersetzen
             warnings.add(partName + ": Value SINCOS in argument VARIABLES is not supported (Code:1604).");
         }
 
-        String[] variables;
+        // create some separator
+        content = content.replaceAll(",", " ");
+        String[] variables = content.split("\\s+");
 
-        if (content.contains(",")) {
-            variables = content.split(",");
-        } else {
-            variables = content.split("\\s+");
-        }
+//        if (content.contains(",")) {
+//            variables = content.split(",");
+//        } else {
+//            variables = 
+//        }
 
         String method;
         String assign;
