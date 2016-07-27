@@ -253,7 +253,7 @@ public final class MultiTopComponent extends TopComponent {
                 File mta_File = fc.getSelectedFile();
                 String name = mta_File.getName();
                 path = fc.getSelectedFile().getParent() + File.separator;
-                name = name.replaceAll("\\.mta", "").replaceAll("\\.MTA", "");
+                name = name.replace(".mta", "").replace(".MTA", "");
 
                 mtaName = name;
 

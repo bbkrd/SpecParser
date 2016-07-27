@@ -260,7 +260,7 @@ public final class SingleTopComponent extends TopComponent {
                 load.setSpc_File(file);
                 Thread thread = new Thread(load);
                 thread.start();
-                String name = file.getName().replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
+                String name = file.getName().replace(".spc", "").replace(".SPC", "");
                 ((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class)).setDisplayName(name);
                 setDisplayName("SpecParser for " + name);
 

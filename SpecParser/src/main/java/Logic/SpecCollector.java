@@ -163,7 +163,7 @@ public class SpecCollector {
 
         if (wsItem.getElement() instanceof X13Document) {
             if (!name.isEmpty()) {
-                this.name = name.replaceAll("\\.spc", "").replaceAll("\\.SPC", "");
+                this.name = name.replace(".spc", "").replace(".SPC", "");
                 if (ts != null) {
                     ts = ts.rename(name);
                 }

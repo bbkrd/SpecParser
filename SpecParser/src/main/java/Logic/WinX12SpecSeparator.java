@@ -111,7 +111,45 @@ public class WinX12SpecSeparator {
     public WinX12SpecSeparator() {
 //        setDefaults();
         spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
-        setDefaults();
+        setX11Defaults();
+        //setDefaults();
+    }
+
+    private void setDefaults() {
+
+        //setX11Defaults();
+//        if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
+//            //X11
+//            spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
+//
+//        } else {
+        //X13
+//            x11
+        if (!x12Defaults) {
+            spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
+
+            //arima: default is airline model
+            spec.getRegArimaSpecification().getArima().setP(0);
+            spec.getRegArimaSpecification().getArima().setD(1);
+            spec.getRegArimaSpecification().getArima().setQ(1);
+            spec.getRegArimaSpecification().getArima().setBP(0);
+            spec.getRegArimaSpecification().getArima().setBD(1);
+            spec.getRegArimaSpecification().getArima().setBQ(1);
+
+            //estimate
+            spec.getRegArimaSpecification().getEstimate().setTol(1.0e-5);
+
+            //no outliers
+            spec.getRegArimaSpecification().getOutliers().reset();
+
+            //transform
+            spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
+            spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
+            spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
+
+        }
+        x12Defaults = true;
+        //}
     }
 
     private void setX12Part() {
@@ -123,7 +161,9 @@ public class WinX12SpecSeparator {
     private void setOUTLIERDefaults() {
 
         outlierDefaults = true;
-        setX12Part();
+        if (!x12Defaults) {
+            setX12Part();
+        }
 
         spec.getRegArimaSpecification().getOutliers().setLSRun(0);
         spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddOne);
@@ -138,7 +178,9 @@ public class WinX12SpecSeparator {
         //automdl
 
         automdlDefault = true;
-        setX12Part();
+        if (!x12Defaults) {
+            setX12Part();
+        }
 
         spec.getRegArimaSpecification().getAutoModel().setEnabled(true);
         spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
@@ -185,6 +227,7 @@ public class WinX12SpecSeparator {
     public String[] getWarningList() {
         return warnings.toArray(new String[warnings.size()]);
     }
+
     public String[] getTestsList() {
         return tests.toArray(new String[tests.size()]);
     }
@@ -396,44 +439,6 @@ public class WinX12SpecSeparator {
         if (user.length > 0) {
 //            if (user != null) {
             spec.getRegArimaSpecification().getRegression().setUserDefinedVariables(user);
-        }
-    }
-
-    private void setDefaults() {
-
-        setX11Defaults();
-
-        if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
-            //X11
-            spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
-
-        } else {
-            //X13
-//            x11
-            if (!x12Defaults) {
-                spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
-
-                //arima: default is airline model
-                spec.getRegArimaSpecification().getArima().setP(0);
-                spec.getRegArimaSpecification().getArima().setD(1);
-                spec.getRegArimaSpecification().getArima().setQ(1);
-                spec.getRegArimaSpecification().getArima().setBP(0);
-                spec.getRegArimaSpecification().getArima().setBD(1);
-                spec.getRegArimaSpecification().getArima().setBQ(1);
-
-                //estimate
-                spec.getRegArimaSpecification().getEstimate().setTol(1.0e-5);
-
-                //no outliers
-                spec.getRegArimaSpecification().getOutliers().reset();
-
-                //transform
-                spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
-                spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
-                spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
-
-            }
-            x12Defaults = true;
         }
     }
 
@@ -1994,7 +1999,7 @@ public class WinX12SpecSeparator {
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
         Izisl zisl = Lookup.getDefault().lookup(Izisl.class);
         if (zisl != null) {
-            zisl.setId(content.toUpperCase(),name);
+            zisl.setId(content.toUpperCase(), name);
             TsData dataFromWebServive = zisl.getData();
             TsMoniker moniker = zisl.getMoniker();
 
