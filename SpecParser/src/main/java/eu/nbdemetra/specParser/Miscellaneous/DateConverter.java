@@ -25,15 +25,14 @@ import static ec.tstoolkit.timeseries.simplets.TsFrequency.*;
  * @author Nina Gonschorreck
  */
 public class DateConverter {
-    
-    
-    public static Day toJD(String day){
-        return toJD(day, Monthly);
+
+    public static Day toJD(String day, boolean begin) {
+        return toJD(day, Monthly, begin);
     }
-    
-    public static Day toJD(String day, TsFrequency period){
-                
-       String[] split = day.split("\\.");
+
+    public static Day toJD(String day, TsFrequency period, boolean begin) {
+
+        String[] split = day.split("\\.");
 
         int year = Integer.parseInt(split[0].trim());
         Day erg = null;
@@ -42,42 +41,90 @@ public class DateConverter {
             case Monthly:
                 DateConverterMonth m = DateConverterMonth.getMonth(split[1].trim());
                 switch (m) {
-                     
+
                     case JAN:
-                        erg = new Day(year, Month.January, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.January, 0);
+                        } else {
+                            erg = new Day(year, Month.January, 30);
+                        }
                         break;
                     case FEB:
-                        erg = new Day(year, Month.February, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.February, 0);
+                        } else {
+                            erg = new Day(year, Month.February, 27);
+                        }
                         break;
                     case MAR:
-                        erg = new Day(year, Month.March, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.March, 0);
+                        } else {
+                            erg = new Day(year, Month.March, 30);
+                        }
                         break;
                     case APR:
-                        erg = new Day(year, Month.April, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.April, 0);
+                        } else {
+                            erg = new Day(year, Month.April, 29);
+                        }
                         break;
                     case MAY:
-                        erg = new Day(year, Month.May, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.May, 0);
+                        }else{
+                            erg = new Day(year, Month.May, 30);
+                        }
                         break;
                     case JUN:
-                        erg = new Day(year, Month.June, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.June, 0);
+                        }else{
+                            erg = new Day(year, Month.June, 29);
+                        }
                         break;
                     case JUL:
-                        erg = new Day(year, Month.July, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.July, 0);
+                        }else{
+                            erg = new Day(year, Month.July, 30);
+                        }
                         break;
                     case AUG:
-                        erg = new Day(year, Month.August, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.August, 0);
+                        }else{
+                            erg = new Day(year, Month.August, 30);
+                        }
                         break;
                     case SEP:
-                        erg = new Day(year, Month.September, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.September, 0);
+                        }else{
+                            erg = new Day(year, Month.September, 29);
+                        }
                         break;
                     case OCT:
-                        erg = new Day(year, Month.October, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.October, 0);
+                        }else{
+                            erg = new Day(year, Month.October, 30);
+                        }
                         break;
                     case NOV:
-                        erg = new Day(year, Month.November, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.November, 0);
+                        }else{
+                            erg = new Day(year, Month.November, 29);
+                        }
                         break;
                     case DEC:
-                        erg = new Day(year, Month.December, 0);
+                        if (begin) {
+                            erg = new Day(year, Month.December, 0);
+                        }else{
+                            erg = new Day(year, Month.December, 30);
+                        }
                         break;
                     default:
 //                        errors.add(partName + ": Date format is not correct");
@@ -103,12 +150,12 @@ public class DateConverter {
 //                        errors.add(partName + ": Date format is not correct");
                         break;
                 }
-        } 
+        }
         return erg;
     }
-    
-    public static Day changeToQuarter(Day month){
-        
+
+    public static Day changeToQuarter(Day month) {
+
         int quarter = month.getMonth();
         Day rslt;
 

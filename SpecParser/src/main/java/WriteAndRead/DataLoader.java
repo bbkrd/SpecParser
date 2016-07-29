@@ -201,7 +201,7 @@ public class DataLoader {
                     split = line.split("\\s+");
                     if (year > Integer.parseInt(split[0])) {
                         year = Integer.parseInt(split[0]);
-                        start = DateConverter.toJD(split[0] + "." + split[1]);
+                        start = DateConverter.toJD(split[0] + "." + split[1], true);
                         changeStartDefault();
                     }
                     //calculate max period
@@ -252,7 +252,7 @@ public class DataLoader {
 
                     if (year > Integer.parseInt(y)) {
                         year = Integer.parseInt(y);
-                        start = DateConverter.toJD(y + "." + p);
+                        start = DateConverter.toJD(y + "." + p, true);
                         changeStartDefault();
                     }
                     //calculate max period

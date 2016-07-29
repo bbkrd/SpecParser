@@ -1623,20 +1623,20 @@ public class WinX12SpecSeparator {
                     //modify to between
                     dummy.setType(PeriodSelectorType.Between);
                     dummy.setD0(spec.getRegArimaSpecification().getBasic().getSpan().getD0());
-                    dummy.setD1(DateConverter.toJD(split[1], dataLoader.getPeriod()));
+                    dummy.setD1(DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
 //                    dummy.to(DateConverter.toJD(split[1], dataLoader.getPeriod()));
                 }
             } else {
                 if (split[1].replaceAll("\\s+", "").isEmpty()) {
                     //FROM
                     dummy.setType(PeriodSelectorType.From);
-                    dummy.from(DateConverter.toJD(split[0], dataLoader.getPeriod()));
+                    dummy.from(DateConverter.toJD(split[0], dataLoader.getPeriod(), true));
 //                    p.from(calcDay(partName, split[0]));
 
                 } else {
                     //BETWEEN
                     dummy.setType(PeriodSelectorType.Between);
-                    dummy.between(DateConverter.toJD(split[0], dataLoader.getPeriod()), DateConverter.toJD(split[1], dataLoader.getPeriod()));
+                    dummy.between(DateConverter.toJD(split[0], dataLoader.getPeriod(), true), DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
 //                    p.between(calcDay(partName, split[0]), calcDay(partName, split[1]));
                 }
             }
@@ -1685,7 +1685,7 @@ public class WinX12SpecSeparator {
 
         switch (partName) {
             case SERIES:
-                Day start = DateConverter.toJD(content, dataLoader.getPeriod());
+                Day start = DateConverter.toJD(content, dataLoader.getPeriod(), true);
 
                 if (dataLoader.isStartDefault()) {
                     dataLoader.setStart(start);
@@ -1728,7 +1728,7 @@ public class WinX12SpecSeparator {
                 break;
             case REGRESSION:
                 content = content.replaceAll("\\(", "").replaceAll("\\)", "").trim();
-                regressionLoader.setStart(DateConverter.toJD(content, regressionLoader.getPeriod()));
+                regressionLoader.setStart(DateConverter.toJD(content, regressionLoader.getPeriod(), true));
                 regressionLoader.changeStartDefault();
 
                 break;
@@ -2108,27 +2108,27 @@ public class WinX12SpecSeparator {
 
     private void do_ao(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.AO, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.AO, true);
 //        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.AO, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_ls(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.LS, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.LS, true);
         spec.getRegArimaSpecification().getRegression().add(o);
 //        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument VARIABLES." + " (Code:1602)");
     }
 
     private void do_tc(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.TC, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.TC, true);
         spec.getRegArimaSpecification().getRegression().add(o);
 //        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument VARIABLES." + " (Code:1603)");
     }
 
     private void do_so(SpecificationPart partName, String content) {
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod()), OutlierType.SO, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.SO, true);
         spec.getRegArimaSpecification().getRegression().add(o);
 
     }
@@ -2136,8 +2136,8 @@ public class WinX12SpecSeparator {
     private void do_rp(SpecificationPart partName, String content) {
 
         String[] ramps = content.split("-");
-        Day start = DateConverter.toJD(ramps[0].trim(), dataLoader.getPeriod());
-        Day end = DateConverter.toJD(ramps[1].trim(), dataLoader.getPeriod());
+        Day start = DateConverter.toJD(ramps[0].trim(), dataLoader.getPeriod(), true);
+        Day end = DateConverter.toJD(ramps[1].trim(), dataLoader.getPeriod(), false);
 //        Day start = calcDay(partName, ramps[0].trim());
 //        Day end = calcDay(partName, ramps[1].trim());
 
