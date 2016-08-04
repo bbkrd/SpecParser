@@ -28,7 +28,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -144,17 +143,14 @@ public class DataLoader {
                 fileInput = fileInput.replaceAll("D", "E");
             } else {
                 messages = "File is empty" + " (Code:2001)";
-                JOptionPane.showMessageDialog(null, messages);
             }
 
         } catch (FileNotFoundException ex) {
             messages = "File not found (Code:2007)";
-            JOptionPane.showMessageDialog(null, messages);
             //eig error
         } catch (IOException ex) {
             //error
             messages = "File is not readable" + " (Code:2002)";
-            JOptionPane.showMessageDialog(null, messages);
         }
     }
 
@@ -225,7 +221,6 @@ public class DataLoader {
             }
         } catch (NumberFormatException ex) {
             messages = "Format is not correct. Try with free format" + " (Code:2004)";
-            JOptionPane.showMessageDialog(null, messages);
             loadFreeFormat();
         }
         return val;

@@ -29,16 +29,12 @@ import java.util.Arrays;
 public class DataLoaderRegression extends DataLoader {
 
     private ArrayList<String> regressorName = new ArrayList();
+    private ArrayList<String> regressorDesc = new ArrayList<>();
     private ArrayList<String> regressorZislId = new ArrayList();
 //    private double[] values;
 
     private ArrayList<TsData> regressorsFromWebService = new ArrayList();
 
-//    @Override
-//    public void load(String data) {
-//        super.load(data);
-//        values = super.getValues();
-//    }
     public void addRegFromWebServive(TsData data) {
         regressorsFromWebService.add(data);
     }
@@ -57,6 +53,18 @@ public class DataLoaderRegression extends DataLoader {
 
     public void setRegressorZisl(String zisl) {
         this.regressorZislId.add(zisl);
+    }
+
+    public String[] getRegressorDesc() {
+        return regressorDesc.toArray(new String[0]);
+    }
+
+    public void setRegressorDesc(ArrayList<String> regressorDesc) {
+        this.regressorDesc = regressorDesc;
+    }
+    
+        public void setRegressorDesc(String regressorDesc) {
+        this.regressorDesc.add(regressorDesc);
     }
 
 //     public String[] getRegressorZislIds() {
@@ -126,16 +134,16 @@ public class DataLoaderRegression extends DataLoader {
 
             if (super.getValues() != null) {
                 ArrayList<TsVariable> r = new ArrayList();
-                if (regressorName.isEmpty()) {
-                    regressorName.add("NoName");
+                if (regressorDesc.isEmpty()) {
+                    regressorDesc.add("...");
                 }
-                int lengthOfRegressors = super.getValues().length / regressorName.size();
+                int lengthOfRegressors = super.getValues().length / regressorDesc.size();
                 double[] tmp = new double[lengthOfRegressors];
                 TsData data;
 
-                for (int regressor = 0; regressor < regressorName.size(); regressor++) {
+                for (int regressor = 0; regressor < regressorDesc.size(); regressor++) {
                     for (int i = 0; i < lengthOfRegressors; i++) {
-                        tmp[i] = super.getValues()[i * regressorName.size() + regressor];
+                        tmp[i] = super.getValues()[i * regressorDesc.size() + regressor];
                     }
 //month geht nicht wenn größer als 3
                     int p = getStart().getMonth();
@@ -146,7 +154,7 @@ public class DataLoaderRegression extends DataLoader {
                     //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
 //                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));
-                    r.add(new TsVariable(regressorName.get(regressor), data));
+                    r.add(new DynamicTsVariable(regressorDesc.get(regressor), null ,data));
 
                 }
                 return r.toArray(new TsVariable[0]);

@@ -265,6 +265,10 @@ public class WinX12SpecSeparator {
     public String[] getRegressorName() {
         return regressionLoader.getRegressorName();
     }
+    
+    public String[] getRegDesc(){
+        return regressionLoader.getRegressorDesc();
+    }
 //     public String[] getRegressorZislId() {
 //        return regressionLoader.getRegressorZislIds();
 //    }
@@ -741,6 +745,7 @@ public class WinX12SpecSeparator {
             case REGRESSION:
                 regressionSpec = true;
                 regressionLoader.load(content);
+                regressionLoader.setRegressorDesc("data");
                 if (regressionLoader.isStartDefault()) {
                     regressionLoader.setStart(dataLoader.getStart());
                 }
@@ -827,6 +832,7 @@ public class WinX12SpecSeparator {
                 if (regressionLoader.isStartDefault()) {
                     regressionLoader.setStart(dataLoader.getStart());
                 }
+                regressionLoader.setRegressorDesc(content);
                 /*if (!regressionLoader.getMessages().isEmpty()) {
                  errors.add(partName + ": " + regressionLoader.getMessages());
                  regressionLoader.setMessage();
@@ -2027,7 +2033,7 @@ public class WinX12SpecSeparator {
                         regressionLoader.addRegFromWebServive(dataFromWebServive);
                         regressionLoader.setMoniker(moniker);
                         regressionLoader.setPeriod(dataFromWebServive.getFrequency());
-//                    regressionLoader.setRegressorName(content);
+//                    regressionLoader.setRegressorDesc(content);
                         regressionLoader.setRegressorZisl(content);
                         if (!regressionLoader.getMessages().isEmpty()) {
                             errors.add(partName + ": " + regressionLoader.getMessages());

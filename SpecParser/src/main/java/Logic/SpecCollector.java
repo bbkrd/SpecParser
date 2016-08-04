@@ -309,6 +309,7 @@ public class SpecCollector {
                             if (((TsVariable) wsVariables.getElement().get(curName + ends)).getTsData().equals(regressor[i].getTsData())) {
                                 //Daten sind gleich
                                 found = true;
+                                curName=curName+ends;
                             } else {
                                 iterator++;
                             }
@@ -351,7 +352,7 @@ public class SpecCollector {
             } else {
                 wsVariables.getElement().set(curName, regressor[i]);
             }
-
+            
             switch (regTyp[i].toUpperCase()) {
                 case "TD":
                     td.add(reg_SpecParser + "." + curName);
