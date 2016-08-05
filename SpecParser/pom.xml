@@ -5,7 +5,7 @@
 
     <groupId>eu.nbdemetra</groupId>
     <artifactId>SpecParser</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <packaging>nbm</packaging>
 
     <name>SpecParser</name>
@@ -114,6 +114,11 @@
             <artifactId>org-netbeans-api-progress</artifactId>
             <groupId>org.netbeans.api</groupId>
             <type>jar</type>
+            <version>RELEASE802</version>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-modules-settings</artifactId>
             <version>RELEASE802</version>
         </dependency>
     </dependencies>

@@ -16,6 +16,7 @@
 package WriteAndRead;
 
 import ec.tss.DynamicTsVariable;
+import ec.tss.TsMoniker;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
@@ -154,7 +155,7 @@ public class DataLoaderRegression extends DataLoader {
                     //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
 //                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));
-                    r.add(new DynamicTsVariable(regressorDesc.get(regressor), null ,data));
+                    r.add(new DynamicTsVariable(regressorDesc.get(regressor), new TsMoniker() ,data));
 
                 }
                 return r.toArray(new TsVariable[0]);

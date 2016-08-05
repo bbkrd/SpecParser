@@ -52,6 +52,8 @@ public class MultiSpec {
             // Preparation of the new multi window
             this.id = ws.getId();
             window = new MultiTopComponent(wsNode);
+            
+//            window = new MultiTopComponent(wsNode);
             window.setName("SpecParser for " + ws.getDisplayName());
 
             // later: Implemantion of reverse direction (JD+ to winx12)
