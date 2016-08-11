@@ -243,6 +243,7 @@ public class WinX12SpecSeparator {
     }
 
     public Ts getTs() {
+        TsData data = dataLoader.getData();
         if (dataLoader.isStartDefault() && !dataLoader.isDataFromWebserviceSet()) {
             messages.add("SERIES: Start date is set to 01/01/1970. (Code: 1409)");
         }
@@ -255,7 +256,7 @@ public class WinX12SpecSeparator {
         }
 
         //MetaData
-        return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, dataLoader.getData());
+        return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, data);
     }
 
     public MetaData getMetaData() {

@@ -5,7 +5,7 @@
 
     <groupId>eu.nbdemetra</groupId>
     <artifactId>SpecParser</artifactId>
-    <version>1.4.1</version>
+    <version>1.5.1</version>
     <packaging>nbm</packaging>
 
     <name>SpecParser</name>

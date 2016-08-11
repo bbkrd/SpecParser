@@ -184,7 +184,7 @@ public class DataLoader {
         String[] split;
 
         int periode = 0;
-        int year = 10000;
+        int year = Integer.MAX_VALUE;//10000;
         ArrayList<String> v = new ArrayList();
 
         double[] val = null;
@@ -197,8 +197,9 @@ public class DataLoader {
                     split = line.split("\\s+");
                     if (year > Integer.parseInt(split[0])) {
                         year = Integer.parseInt(split[0]);
-                        start = DateConverter.toJD(split[0] + "." + split[1], true);
-                        changeStartDefault();
+                        setStart(DateConverter.toJD(split[0] + "." + split[1], true));
+//                        start = DateConverter.toJD(split[0] + "." + split[1], true);
+//                        changeStartDefault();
                     }
                     //calculate max period
                     if (periode < Integer.parseInt(split[1])) {

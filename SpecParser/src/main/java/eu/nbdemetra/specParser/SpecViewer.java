@@ -18,6 +18,8 @@ package eu.nbdemetra.specParser;
 import ec.tss.documents.TsDocument;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import Logic.SpecCollector;
+import ec.tstoolkit.algorithm.IActiveProcDocument;
+import ec.tstoolkit.algorithm.IProcSpecification;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
@@ -29,7 +31,8 @@ import javax.swing.text.Document;
  * of the translation between the both specs.
  *
  */
-public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
+//public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
+    public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
     private JTextArea winX12Text;
     private JTextArea errormessage;
@@ -44,21 +47,19 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         SpecViewer viewer = new SpecViewer(Type.APPLY, spec);
         return viewer;
     }
-    
+
     public SpecViewer(Type type, final SpecCollector spec) {
         super(type);
         this.spec = spec;
         remove(splitter);
 
 //        doc =  spec.getJDSpec();
-        setSpecificationsVisible(true);
-
         winX12Text = new JTextArea();
         errormessage = new JTextArea();
 
         errormessage.setEditable(false);
 
-        winX12Text.setText("empty");
+        winX12Text.setText("Please load a file");
         errormessage.setText("error messages");
 
         scrollText = new JScrollPane(winX12Text);
@@ -70,9 +71,12 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
         add(split);
 
+      
+        
         if (spec.getJDSpec() != null) {
             setDocument(spec.getJDSpec());
         }
+        setSpecificationsVisible(true);
     }
 
     public SpecCollector getSpecCollector() {
@@ -119,7 +123,7 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         return this;
     }
 
-  /*  public void pressApplyButton() {
+    public void pressApplyButton() {
 
         IActiveProcDocument doc = getDocument();
         IProcSpecification pspec = specDescriptor.getCore();
@@ -131,6 +135,6 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         if (isHeaderVisible()) {
             refreshHeader();
         }
-        
-    }*/
+
+    }
 }
