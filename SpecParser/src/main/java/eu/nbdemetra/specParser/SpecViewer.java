@@ -20,6 +20,9 @@ import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import Logic.SpecCollector;
 import ec.tstoolkit.algorithm.IActiveProcDocument;
 import ec.tstoolkit.algorithm.IProcSpecification;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
@@ -32,7 +35,7 @@ import javax.swing.text.Document;
  *
  */
 //public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
-    public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
+public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 
     private JTextArea winX12Text;
     private JTextArea errormessage;
@@ -71,12 +74,12 @@ import javax.swing.text.Document;
 
         add(split);
 
-      
-        
         if (spec.getJDSpec() != null) {
             setDocument(spec.getJDSpec());
         }
-        setSpecificationsVisible(true);
+
+//        setSpecificationsVisible(true);
+//        specPanel.setEnabled(false);
     }
 
     public SpecCollector getSpecCollector() {
@@ -119,22 +122,26 @@ import javax.swing.text.Document;
 //                errormessage.append(a + "\n");
 //            }
             setDocument(spec.getJDSpec());
+            Component c = ((BorderLayout) specPanel.getLayout()).getLayoutComponent(BorderLayout.SOUTH);
+            if (c != null) {
+                specPanel.remove(c);
+            }
         }
         return this;
     }
 
-    public void pressApplyButton() {
-
-        IActiveProcDocument doc = getDocument();
-        IProcSpecification pspec = specDescriptor.getCore();
-        doc.setSpecification(pspec.clone());
-        setDirty(false);
-
-        firePropertyChange(BUTTON_APPLY, null, null);
-        refreshView();
-        if (isHeaderVisible()) {
-            refreshHeader();
-        }
-
-    }
+//    public void pressApplyButton() {
+//
+//        IActiveProcDocument doc = getDocument();
+//        IProcSpecification pspec = specDescriptor.getCore();
+//        doc.setSpecification(pspec.clone());
+//        setDirty(false);
+//
+//        firePropertyChange(BUTTON_APPLY, null, null);
+//        refreshView();
+//        if (isHeaderVisible()) {
+//            refreshHeader();
+//        }
+//
+//    }
 }

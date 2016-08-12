@@ -17,6 +17,7 @@ import ec.ui.view.tsprocessing.DefaultProcessingViewer.Type;
 import eu.nbdemetra.specParser.Miscellaneous.MyCellRenderer;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
+import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -102,25 +103,34 @@ public final class NewMultiTopComponent extends TopComponent {
         specViewer = new SpecViewer(Type.APPLY, new SpecCollector(wsItem));
 
         //button faerben
-//        specViewer.getWinDoc().addDocumentListener(new DocumentListener() {
-//
-//            @Override
-//            public void insertUpdate(DocumentEvent e) {
-////                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//            }
-//
-//            @Override
-//            public void removeUpdate(DocumentEvent e) {
-////                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//            }
-//
-//            @Override
-//            public void changedUpdate(DocumentEvent e) {
-////                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//            }
-//        });
+        specViewer.getWinDoc().addDocumentListener(new DocumentListener() {
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                refresh.setForeground(Color.blue);
+                refresh.setEnabled(true);
+//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                refresh.setForeground(Color.blue);
+                refresh.setEnabled(true);
+//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                refresh.setForeground(Color.blue);
+                refresh.setEnabled(true);
+//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        });
         specViewer.refreshHeader();
-        add(specViewer);
+
+        jSplitPane1.setRightComponent(specViewer);
+//        add(specViewer);
+        specViewer.setSpecificationsVisible(true);
 
     }
 
@@ -137,8 +147,8 @@ public final class NewMultiTopComponent extends TopComponent {
         top = new javax.swing.JPanel();
         load = new javax.swing.JButton();
         refresh = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jScrollPane2 = new javax.swing.JScrollPane();
         specList = new javax.swing.JList();
 
         setLayout(new java.awt.BorderLayout());
@@ -166,35 +176,12 @@ public final class NewMultiTopComponent extends TopComponent {
                 specListValueChanged(evt);
             }
         });
-        jScrollPane1.setViewportView(specList);
+        jScrollPane2.setViewportView(specList);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
-        );
+        jSplitPane1.setLeftComponent(jScrollPane2);
 
-        add(jPanel1, java.awt.BorderLayout.LINE_START);
+        add(jSplitPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void specListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_specListValueChanged
-        // TODO add your handling code here:
-        try {
-
-            specViewer.refresh(spec_array.get(specList.getSelectedIndex()));
-            specViewer.refreshHeader();
-
-        } catch (ArrayIndexOutOfBoundsException e) {
-            //click not on item
-        }
-
-
-    }//GEN-LAST:event_specListValueChanged
 
     private void loadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadActionPerformed
         // TODO add your handling code here:
@@ -222,6 +209,8 @@ public final class NewMultiTopComponent extends TopComponent {
                 NewMultiTopComponent.this.repaint();
 
                 load.setFocusable(false);
+                refresh.setEnabled(true);
+                refresh.setForeground(Color.black);
             } else {
                 JOptionPane.showMessageDialog(this, "File isn't loaded");
             }
@@ -234,11 +223,21 @@ public final class NewMultiTopComponent extends TopComponent {
         newSpec.setWinX12Spec(specViewer.getWinX12Text());
         newSpec.translate(TranslationTo_Type.JDSpec);
         specViewer.refresh(newSpec);
+        refresh.setEnabled(true);
+        refresh.setForeground(Color.black);
     }//GEN-LAST:event_refreshActionPerformed
 
+    private void specListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_specListValueChanged
+
+        specViewer.refresh(spec_array.get(specList.getSelectedIndex()));
+        refresh.setEnabled(true);
+        refresh.setForeground(Color.black);
+
+    }//GEN-LAST:event_specListValueChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JButton load;
     private javax.swing.JButton refresh;
     private javax.swing.JList specList;
