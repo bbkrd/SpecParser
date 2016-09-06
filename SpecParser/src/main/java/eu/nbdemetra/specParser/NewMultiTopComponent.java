@@ -7,10 +7,13 @@ package eu.nbdemetra.specParser;
 
 import Administration.MultiSpec;
 import Logic.SpecCollector;
+import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
+import ec.tss.sa.EstimationPolicyType;
 import ec.tss.sa.SaItem;
+import ec.tss.sa.SaProcessing;
 import ec.tstoolkit.utilities.IModifiable;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer.Type;
@@ -29,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -100,7 +104,7 @@ public final class NewMultiTopComponent extends TopComponent {
         setToolTipText(Bundle.HINT_MultiDocSpecWindowTopComponent());
         progressHandle = ProgressHandleFactory.createHandle("calculate ...");
         this.wsItem = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
-        specViewer = new SpecViewer(Type.APPLY, new SpecCollector(wsItem));
+        specViewer = new SpecViewer(Type.APPLY_RESTORE_SAVE, new SpecCollector(wsItem));
 
         //button faerben
         specViewer.getWinDoc().addDocumentListener(new DocumentListener() {
@@ -196,7 +200,7 @@ public final class NewMultiTopComponent extends TopComponent {
                 File mta_File = fc.getSelectedFile();
                 String name = mta_File.getName();
                 path = fc.getSelectedFile().getParent() + File.separator;
-                name = name.replace(".mta", "").replace(".MTA", "");
+                name = Pattern.compile("\\.mta",Pattern.CASE_INSENSITIVE).matcher(name).replaceAll("");//name.replace(".mta", "").replace(".MTA", "");
 
                 mtaName = name;
 
@@ -219,10 +223,20 @@ public final class NewMultiTopComponent extends TopComponent {
 
     private void refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshActionPerformed
         // TODO add your handling code here:
-        SpecCollector newSpec = specViewer.getSpecCollector();
+        SpecCollector newSpec = spec_array.get(specList.getSelectedIndex());//specViewer.getSpecCollector();
         newSpec.setWinX12Spec(specViewer.getWinX12Text());
         newSpec.translate(TranslationTo_Type.JDSpec);
+        
+//        SaProcessing multiDoc = ((MultiProcessingDocument) wsItem.getElement()).getCurrent();
+        
+
+//        newSpec.setJDSpec(newSpec.getJDSpec());
         specViewer.refresh(newSpec);
+//        
+//                SaItem testi = multiDoc.get(newSpec.getIndex()).newSpecification(newSpec.getTs(), (ISaSpecification) newSpec.getJDSpec().getSpecification(), EstimationPolicyType.None); //setPointSpecification((ISaSpecification) newSpec.getJDSpec());
+//        multiDoc.replace(multiDoc.get(newSpec.getIndex()), testi);
+//        
+//        
         refresh.setEnabled(true);
         refresh.setForeground(Color.black);
     }//GEN-LAST:event_refreshActionPerformed

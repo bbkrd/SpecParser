@@ -121,11 +121,13 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
 //            for (String a : this.spec.getTests()) {
 //                errormessage.append(a + "\n");
 //            }
-            setDocument(spec.getJDSpec());
+            setDocument(this.spec.getJDSpec());
+           
             Component c = ((BorderLayout) specPanel.getLayout()).getLayoutComponent(BorderLayout.SOUTH);
             if (c != null) {
                 specPanel.remove(c);
             }
+            specPanel.revalidate();
         }
         return this;
     }

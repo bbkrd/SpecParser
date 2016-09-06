@@ -37,7 +37,6 @@ import ec.tstoolkit.modelling.RegressionTestSpec;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.modelling.arima.x13.MovingHolidaySpec;
 import ec.tstoolkit.modelling.arima.x13.OutlierSpec;
-import ec.tstoolkit.modelling.arima.x13.RegArimaSpecification;
 import ec.tstoolkit.modelling.arima.x13.SingleOutlierSpec;
 import ec.tstoolkit.modelling.arima.x13.TradingDaysSpec;
 import ec.tstoolkit.modelling.arima.x13.X13Exception;
@@ -1033,7 +1032,7 @@ public class WinX12SpecSeparator {
                 }
             }
         } else {
-            messages.add(partName + ": The number of values for argument MA is not conform to the number of values in argument MODEL." + " (Code:1505)");
+            messages.add(partName + ": The number of values for argument MA is not conform to the number of values in argument MODEL. (Code:1505)");
         }
     }
 
@@ -1047,7 +1046,6 @@ public class WinX12SpecSeparator {
         } catch (NumberFormatException e) {
             messages.add(partName + ": No support for value " + content + " in argument MAXLEAD" + " (Code:1815)");
         }
-
     }
 
     private void read_method(SpecificationPart partName, String content) {
@@ -1067,7 +1065,7 @@ public class WinX12SpecSeparator {
 //                spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddAll);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument METHOD" + " (Code:1817)");
+                messages.add(partName + ": No support for value " + content + " in argument METHOD." + " (Code:1817)");
                 break;
         }
     }
@@ -1113,7 +1111,7 @@ public class WinX12SpecSeparator {
                     if (!transformNone) {
                         spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
                     } else {
-                        warnings.add(partName + ": For transform function = none is only mode=add in JD+ possible, Value is changed to add" + " (Code:1820)");
+                        warnings.add(partName + ": For transform function = none is only mode=add in JD+ possible. Value is changed to add" + " (Code:1820)");
                         spec.getX11Specification().setMode(DecompositionMode.Additive);
                     }
                     break;
@@ -1482,7 +1480,7 @@ public class WinX12SpecSeparator {
             }
         }
         if (tmp.size() == 1 || tmp.size() == dataLoader.getPeriod().intValue()) {
-            spec.getX11Specification().setSeasonalFilters((SeasonalFilterOption[]) tmp.toArray(new SeasonalFilterOption[tmp.size()]));
+            spec.getX11Specification().setSeasonalFilters(tmp.toArray(new SeasonalFilterOption[tmp.size()]));
         } else {
             messages.add(partName + ": Period is not conform to the period of the data. Seasonal filter is set to " + tmp.get(0) + " (Code:1829)");
             spec.getX11Specification().setSeasonalFilter(tmp.get(0));
@@ -1649,7 +1647,7 @@ public class WinX12SpecSeparator {
             }
 
             //dummy modifizieren falls ALL ist, da wir nicht mehr mit all arbeiten stattdessen mit from, da start argument missbraucht wird
-            //andere Fälle werden nicht abgeprüft, da von korrekten Spec files ausgegangen wird
+            //andere FÃ¤lle werden nicht abgeprÃ¼ft, da von korrekten Spec files ausgegangen wird
             TsPeriodSelector span_current = spec.getRegArimaSpecification().getBasic().getSpan();
             if (dummy.getType().equals(PeriodSelectorType.All)) {
                 dummy.setType(PeriodSelectorType.From);
@@ -2042,11 +2040,11 @@ public class WinX12SpecSeparator {
                         regressionSpec = true;
                         break;
                     default:
-                        messages.add(partName + ": Hier wird zisl nicht unterstützt!" + " (Code:1201)");
+                        messages.add(partName + ": Hier wird zisl nicht unterstÃ¼tzt!" + " (Code:1201)");
                         break;
                 }
             } else {
-                errors.add(partName + ": Keine Werte vom Webservice verfügbar" + " (Code:1202)");
+                errors.add(partName + ": Keine Werte vom Webservice verfÃ¼gbar" + " (Code:1202)");
             }
         } else {
             errors.add(partName + ": WebService-Plugin nicht vorhanden" + " (Code:1203)");
@@ -2070,7 +2068,7 @@ public class WinX12SpecSeparator {
                 tmp = "forecast";
                 break;
             default:
-                //nicht unterstützt
+                //nicht unterstÃ¼tzt
                 break;
         }
 

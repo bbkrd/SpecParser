@@ -119,7 +119,9 @@ public class SpecCollector {
         if (wsItem != null) {
             if (wsItem.getElement() instanceof X13Document) {
                 wsItem.setElement(jdSpec);
-            }
+            }/*else{
+                ((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index).setPointSpecification((ISaSpecification) jdSpec.getSpecification());
+            }*/
         }
     }
 
@@ -365,6 +367,7 @@ public class SpecCollector {
                     if (separator.isFinalUser()) {
                         userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
                     } else {
+                        //default: final != user
                         userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
                     }
                     user.add(userVar);

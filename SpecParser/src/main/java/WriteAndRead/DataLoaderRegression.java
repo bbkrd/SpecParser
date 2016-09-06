@@ -138,13 +138,13 @@ public class DataLoaderRegression extends DataLoader {
                 if (regressorDesc.isEmpty()) {
                     regressorDesc.add("...");
                 }
-                int lengthOfRegressors = super.getValues().length / regressorDesc.size();
+                int lengthOfRegressors = super.getValues().length / regressorName.size();
                 double[] tmp = new double[lengthOfRegressors];
                 TsData data;
 
-                for (int regressor = 0; regressor < regressorDesc.size(); regressor++) {
+                for (int regressor = 0; regressor < regressorName.size(); regressor++) {
                     for (int i = 0; i < lengthOfRegressors; i++) {
-                        tmp[i] = super.getValues()[i * regressorDesc.size() + regressor];
+                        tmp[i] = super.getValues()[i * regressorName.size() + regressor];
                     }
 //month geht nicht wenn größer als 3
                     int p = getStart().getMonth();
@@ -155,7 +155,7 @@ public class DataLoaderRegression extends DataLoader {
                     //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
 //                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));
-                    r.add(new DynamicTsVariable(regressorDesc.get(regressor), new TsMoniker() ,data));
+                    r.add(new DynamicTsVariable(regressorDesc.get(0), new TsMoniker() ,data));
 
                 }
                 return r.toArray(new TsVariable[0]);
