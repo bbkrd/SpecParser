@@ -378,6 +378,12 @@ public class SpecCollector {
                     var.setEffect(TsVariableDescriptor.UserComponentType.Seasonal);
                     user.add(var);
                     break;
+                    case "LS":
+                    TsVariableDescriptor v = new TsVariableDescriptor();
+                    v.setName(reg_SpecParser + "." + curName);
+                    v.setEffect(TsVariableDescriptor.UserComponentType.Trend);
+                    user.add(v);
+                    break;
                 default:
                     TsVariableDescriptor userVar2 = new TsVariableDescriptor();
                     userVar2.setName(reg_SpecParser + "." + curName);

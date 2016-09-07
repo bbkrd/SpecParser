@@ -125,9 +125,9 @@ public class WinX12SpecSeparator {
         //X13
 //            x11
         if (!x12Defaults) {
-            
-             spec.getX11Specification().setForecastHorizon(-1);
-            
+
+            spec.getX11Specification().setForecastHorizon(-1);
+
             spec.getRegArimaSpecification().getBasic().setPreprocessing(true);
 
             //arima: default is airline model
@@ -265,8 +265,8 @@ public class WinX12SpecSeparator {
     public String[] getRegressorName() {
         return regressionLoader.getRegressorName();
     }
-    
-    public String[] getRegDesc(){
+
+    public String[] getRegDesc() {
         return regressionLoader.getRegressorDesc();
     }
 //     public String[] getRegressorZislId() {
@@ -1924,6 +1924,10 @@ public class WinX12SpecSeparator {
                 case "SEASONAL":
                     regressionTyp[i] = "SEASONAL";
                     break;
+
+                case "LS":
+                    regressionTyp[i] = "LS";
+                    break;
                 default: //holiday, easter, etc.
                     warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
                     regressionTyp[i] = "TD";
@@ -1943,7 +1947,7 @@ public class WinX12SpecSeparator {
             //hier die kommas tauschen durch semikolon
             //beachten wenn sincos mal genutzt werden sollte
             int beginIndex = content.indexOf("sincos");
-            int endIndex = content.indexOf("]", beginIndex)+1;
+            int endIndex = content.indexOf("]", beginIndex) + 1;
             String sincos = content.substring(beginIndex, endIndex);
             content = content.replace(sincos, "");
 //            content = content.replaceAll(sincos, sincos.replaceAll(",", ";")); Komma ersetzen
@@ -1959,7 +1963,6 @@ public class WinX12SpecSeparator {
 //        } else {
 //            variables = 
 //        }
-
         String method;
         String assign;
         for (String var : variables) {
