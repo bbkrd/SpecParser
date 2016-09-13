@@ -155,7 +155,8 @@ public class DataLoaderRegression extends DataLoader {
                     //Name und startwert pruefen
 //                r.add(new DynamicTsVariable(regressorName.get(regressor), TsMoniker.createDynamicMoniker(), data));
 //                    r.add(new DynamicTsVariable(regressorName.get(regressor),getMoniker(), data));
-                    r.add(new DynamicTsVariable(regressorDesc.get(0), new TsMoniker() ,data));
+                    r.add(new TsVariable(regressorDesc.get(0), data));
+//                    r.add(new DynamicTsVariable(regressorDesc.get(0), new TsMoniker() ,data));
 
                 }
                 return r.toArray(new TsVariable[0]);

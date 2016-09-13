@@ -275,12 +275,14 @@ public class WinX12SpecSeparator {
 
     public TsVariable[] getRegressor() {
         if (regressionSpec) {
-            if (regressionLoader.getRegressors() != null) {
-                return regressionLoader.getRegressors();
-            }
+            TsVariable[] reg = regressionLoader.getRegressors();
             if (regressionLoader.getMessages().length() > 0) {
                 messages.add("REGRESSION: " + regressionLoader.getMessages() + " (Code:1304)");
             }
+            if (reg != null) {
+                return reg;
+            }
+            
         }
         return null;
     }
@@ -1930,7 +1932,7 @@ public class WinX12SpecSeparator {
                     break;
                 default: //holiday, easter, etc.
                     warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
-                    regressionTyp[i] = "TD";
+                    regressionTyp[i] = "USER";
                     break;
             }
         }

@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.stream.Stream;
 
 /**
  *
@@ -155,26 +156,32 @@ public class DataLoader {
     }
 
     protected double[] loadFreeFormat() {
-        double[] val = null;
-        try {
+//        double[] val = null;
+        ArrayList<Double> val = new ArrayList<>();
 
-            if (!fileInput.isEmpty()) {
-                String[] split = fileInput.split(";");
+        if (!fileInput.isEmpty()) {
+            String[] split = fileInput.split(";");
 
-                val = new double[split.length];
-                for (int i = 0; i < val.length; i++) {
-                    val[i] = Double.parseDouble(split[i].trim());
-                }
-
-            } else {
-                val = null;
-            }
-
-        } catch (NumberFormatException ex) {
+            for (String line : split) {
+                line = line.trim();
+                String[] singleValue = line.split("\\s+");
+                for (String s : singleValue) {
+                    try {
+                        val.add(Double.parseDouble(s));
+                    } catch (NumberFormatException e) {
             messages = "Format is not correct." + " (Code:2003)";
-
+                    }
+                }
+            }
+        } 
+        
+        // kleiner double
+        double[] val_double = new double[val.size()];
+        for(int i=0; i<val.size(); i++){
+            val_double[i]=val.get(i);
         }
-        return val;
+        return val_double;
+//        return ArrayUtils.toPrimitive();
     }
 
     protected double[] loadDatevalueFormat() {
