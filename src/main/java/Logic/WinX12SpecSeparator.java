@@ -282,7 +282,7 @@ public class WinX12SpecSeparator {
             if (reg != null) {
                 return reg;
             }
-            
+
         }
         return null;
     }
@@ -1890,10 +1890,17 @@ public class WinX12SpecSeparator {
 
         if (regressionTyp == null) {
             regressionTyp = new String[regressors.length];
-            for (int i = 0; i < regressionTyp.length; i++) {
-                //default usertype
+        }else{
+            if(regressionTyp.length!=regressors.length){
+                regressionTyp = new String[regressors.length];
+            }
+        }
+        for (int i = 0; i < regressors.length; i++) {
+            //default usertype
+            if (regressionTyp[i]==null) {
                 regressionTyp[i] = "USER";
             }
+
         }
         regressionSpec = true;
     }
@@ -2092,7 +2099,8 @@ public class WinX12SpecSeparator {
     private void do_td(SpecificationPart partName, String content) {
 
         TradingDaysSpec td = spec.getRegArimaSpecification().getRegression().getTradingDays();
-        td.setAutoAdjust(true);
+        // ueber GUI nicht steuerbar
+        td.setAutoAdjust(false);
         td.setTradingDaysType(TradingDaysType.TradingDays);
         td.setTest(RegressionTestSpec.None);
         td.setHolidays(null);
@@ -2108,7 +2116,11 @@ public class WinX12SpecSeparator {
         MovingHolidaySpec easter = new MovingHolidaySpec();
         int w = 7;
         if (!content.isEmpty()) {
-            w = Integer.parseInt(content);//abfangen
+            try {
+                w = Integer.parseInt(content);//abfangen
+            } catch (NumberFormatException e) {
+                warnings.add(partName + ": No support for variables = ( easter[ " + content + " ] )");
+            }
         }
         easter.setType(MovingHolidaySpec.Type.Easter);
         easter.setTest(RegressionTestSpec.None);
@@ -2135,6 +2147,21 @@ public class WinX12SpecSeparator {
         OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.TC, true);
         spec.getRegArimaSpecification().getRegression().add(o);
 //        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument VARIABLES." + " (Code:1603)");
+    }
+
+    private void do_tdstock(SpecificationPart partName, String content) {
+
+        int w = 0;
+        TradingDaysSpec td = spec.getRegArimaSpecification().getRegression().getTradingDays();
+        if (content != null) {
+            try {
+                w = Integer.parseInt(content);
+            } catch (NumberFormatException e) {
+                warnings.add(partName + ": No support for variables = ( tdstock[ " + content + " ] )");
+            }
+        }
+        td.setStockTradingDays(w);
+        spec.getRegArimaSpecification().getRegression().setTradingDays(td);
     }
 
     private void do_so(SpecificationPart partName, String content) {
