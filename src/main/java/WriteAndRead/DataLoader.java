@@ -326,8 +326,8 @@ public class DataLoader {
 
                 case "X12Save":
                 case "X13Save":
-                    values = loadX12SaveFormat();
-                    break;
+//                    values = loadX12SaveFormat();
+//                    break;
                 default:
                     messages = "No support for format " + format.toUpperCase() + " (Code:2006)";
                     values = null;

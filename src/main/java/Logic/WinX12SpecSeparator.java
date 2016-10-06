@@ -241,8 +241,10 @@ public class WinX12SpecSeparator {
         return x13;
     }
 
+    private TsData data;
+
     public Ts getTs() {
-        TsData data = dataLoader.getData();
+//        TsData data = dataLoader.getData();
         if (dataLoader.isStartDefault() && !dataLoader.isDataFromWebserviceSet()) {
             messages.add("SERIES: Start date is set to 01/01/1970. (Code: 1409)");
         }
@@ -353,6 +355,7 @@ public class WinX12SpecSeparator {
             //seperate the specification part name
             specPartSplitted[0] = specPartSplitted[0].replaceAll(";", "");
             specPartSplitted[0] = specPartSplitted[0].replaceAll("\\s", "");
+
             try {
                 specPartName = SpecificationPart.valueOf(specPartSplitted[0].toUpperCase());
                 if (!specPartName.equals(SpecificationPart.X11) && !specPartName.equals(SpecificationPart.SERIES)) {
@@ -407,37 +410,15 @@ public class WinX12SpecSeparator {
                         warnings.add(specPartName.name() + ": No support for defaults. Please define some arguments." + " (Code:1902)");
                     }
                 }
+                if (specPartName.equals(SpecificationPart.SERIES)) {
+                    data = dataLoader.getData();
+                }
             } catch (IllegalArgumentException ex) {
                 warnings.add(specPartSplitted[0].toUpperCase() + ": No support for spec " + specPartSplitted[0].toUpperCase() + " (Code:1903)");
             }
             noArgument = false;
-        }  //if regression user defined variables are in the spec
-//        if (regressionTyp != null) {
-//            ArrayList<String> td = new ArrayList();
-//            ArrayList<TsVariableDescriptor> user = new ArrayList();
-//            String[] regNames = regressionLoader.getRegressorName();
-//
-//            for (int i = 0; i < regressionTyp.length; i++) {
-//                switch (regressionTyp[i]) {
-//                    case "TD":
-//                        td.add("reg_" + mtaName + "." + name + "_" + regNames[i]);
-//                        break;
-//                    case "USER":
-//                        TsVariableDescriptor userVar = new TsVariableDescriptor();
-//                        userVar.setName("reg_" + mtaName + "." + name + "_" + regNames[i]);
-//                        if (isFinalUser()) {
-//                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
-//                        } else {
-//                            userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
-//                        }
-//                        user.add(userVar);
-//                        break;
-//                    default: //darf eig nicht auftreten
-//                        break;
-//                }
-//            }
-//
-//        }
+
+        }
     }
 
     public void setRegressorsInSpec(String[] td, TsVariableDescriptor[] user) {
@@ -866,11 +847,17 @@ public class WinX12SpecSeparator {
             case "LOG":
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
                 spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
+
+                spec.getRegArimaSpecification().getRegression().getTradingDays().setAutoAdjust(false);
+
                 transformLog = true;
                 break;
             case "NONE":
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
                 spec.getX11Specification().setMode(DecompositionMode.Additive);
+
+                spec.getRegArimaSpecification().getRegression().getTradingDays().setAutoAdjust(false);
+
                 transformNone = true;
                 break;
             case "AUTO":
@@ -1890,14 +1877,14 @@ public class WinX12SpecSeparator {
 
         if (regressionTyp == null) {
             regressionTyp = new String[regressors.length];
-        }else{
-            if(regressionTyp.length!=regressors.length){
+        } else {
+            if (regressionTyp.length != regressors.length) {
                 regressionTyp = new String[regressors.length];
             }
         }
         for (int i = 0; i < regressors.length; i++) {
             //default usertype
-            if (regressionTyp[i]==null) {
+            if (regressionTyp[i] == null) {
                 regressionTyp[i] = "USER";
             }
 
@@ -2099,8 +2086,7 @@ public class WinX12SpecSeparator {
     private void do_td(SpecificationPart partName, String content) {
 
         TradingDaysSpec td = spec.getRegArimaSpecification().getRegression().getTradingDays();
-        // ueber GUI nicht steuerbar
-        td.setAutoAdjust(false);
+//        td.setAutoAdjust(false);
         td.setTradingDaysType(TradingDaysType.TradingDays);
         td.setTest(RegressionTestSpec.None);
         td.setHolidays(null);
@@ -2153,6 +2139,7 @@ public class WinX12SpecSeparator {
 
         int w = 0;
         TradingDaysSpec td = spec.getRegArimaSpecification().getRegression().getTradingDays();
+//        td.setAutoAdjust(false);
         if (content != null) {
             try {
                 w = Integer.parseInt(content);
