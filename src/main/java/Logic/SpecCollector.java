@@ -120,8 +120,8 @@ public class SpecCollector {
             if (wsItem.getElement() instanceof X13Document) {
                 wsItem.setElement(jdSpec);
             }/*else{
-                ((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index).setPointSpecification((ISaSpecification) jdSpec.getSpecification());
-            }*/
+             ((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index).setPointSpecification((ISaSpecification) jdSpec.getSpecification());
+             }*/
         }
     }
 
@@ -149,8 +149,8 @@ public class SpecCollector {
         }
         return warnings;
     }
-    
-     public String[] getTests() {
+
+    public String[] getTests() {
         if (tests == null) {
             tests = new String[]{};
         }
@@ -218,19 +218,18 @@ public class SpecCollector {
             }
 
             jdSpec = separator.getResult();
-            
 
             warnings = separator.getWarningList();
             messages = separator.getMessageList();
             //tests = separator.getTestsList();
             if (ts.getTsData() == null) {
-                String [] tmp = new  String[separator.getErrorList().length+1];
+                String[] tmp = new String[separator.getErrorList().length + 1];
 //                errors = new String[1];
                 tmp[0] = "NO DATA (Code:3003)";
-                for(int i = 1; i<tmp.length; i++){
-                    tmp[i]=separator.getErrorList()[i-1];
+                for (int i = 1; i < tmp.length; i++) {
+                    tmp[i] = separator.getErrorList()[i - 1];
                 }
-                errors=tmp.clone();   
+                errors = tmp.clone();
             } else {
                 errors = separator.getErrorList();
                 refreshWS();
@@ -311,7 +310,7 @@ public class SpecCollector {
                             if (((TsVariable) wsVariables.getElement().get(curName + ends)).getTsData().equals(regressor[i].getTsData())) {
                                 //Daten sind gleich
                                 found = true;
-                                curName=curName+ends;
+                                curName = curName + ends;
                             } else {
                                 iterator++;
                             }
@@ -324,7 +323,7 @@ public class SpecCollector {
 
                             //if in td
                             String[] tdVars = separator.getCurrentSpec().getRegArimaSpecification().getRegression().getTradingDays().getUserVariables();
-                            if (tdVars!=null && tdVars.length != 0) {
+                            if (tdVars != null && tdVars.length != 0) {
                                 for (int j = 0; j < tdVars.length; j++) {
                                     if (tdVars[j].equals(curName)) {
                                         tdVars[j] = newName;
@@ -354,7 +353,7 @@ public class SpecCollector {
             } else {
                 wsVariables.getElement().set(curName, regressor[i]);
             }
-            
+
             switch (regTyp[i].toUpperCase()) {
                 case "TD":
                     td.add(reg_SpecParser + "." + curName);
@@ -378,11 +377,19 @@ public class SpecCollector {
                     var.setEffect(TsVariableDescriptor.UserComponentType.Seasonal);
                     user.add(var);
                     break;
-                    case "LS":
+                case "LS":
                     TsVariableDescriptor v = new TsVariableDescriptor();
                     v.setName(reg_SpecParser + "." + curName);
                     v.setEffect(TsVariableDescriptor.UserComponentType.Trend);
                     user.add(v);
+                    break;
+                    /*Version 1.5.6 Sylwias Mail vom 12.10.*/
+                case "HOLIDAY":
+//                    td.add(reg_SpecParser + "." + curName);
+                    TsVariableDescriptor vars = new TsVariableDescriptor();
+                    vars.setName(reg_SpecParser + "." + curName);
+                    vars.setEffect(TsVariableDescriptor.UserComponentType.Undefined);
+                    user.add(vars);
                     break;
                 default:
                     TsVariableDescriptor userVar2 = new TsVariableDescriptor();

@@ -1924,7 +1924,11 @@ public class WinX12SpecSeparator {
                 case "LS":
                     regressionTyp[i] = "LS";
                     break;
-                default: //holiday, easter, etc.
+                    //Version 1.5.6 Sylwias mail vom 12.10.
+                case "HOLIDAY":
+                    regressionTyp[i] = "HOLIDAY";
+                    break;
+                default: // easter, etc.
                     warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
                     regressionTyp[i] = "USER";
                     break;
