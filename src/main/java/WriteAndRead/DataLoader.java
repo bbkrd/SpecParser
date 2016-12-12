@@ -127,10 +127,9 @@ public class DataLoader {
 
     public void load(File file) {
 
-        try {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             StringBuilder sb = new StringBuilder();
-            BufferedReader br = new BufferedReader(new FileReader(file));
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (!line.isEmpty()) {
@@ -169,16 +168,16 @@ public class DataLoader {
                     try {
                         val.add(Double.parseDouble(s));
                     } catch (NumberFormatException e) {
-            messages = "Format is not correct." + " (Code:2003)";
+                        messages = "Format is not correct." + " (Code:2003)";
                     }
                 }
             }
-        } 
-        
+        }
+
         // kleiner double
         double[] val_double = new double[val.size()];
-        for(int i=0; i<val.size(); i++){
-            val_double[i]=val.get(i);
+        for (int i = 0; i < val.size(); i++) {
+            val_double[i] = val.get(i);
         }
         return val_double;
 //        return ArrayUtils.toPrimitive();
