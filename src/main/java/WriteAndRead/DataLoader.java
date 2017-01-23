@@ -29,12 +29,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Nina Gonschorreck
  */
 public class DataLoader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
 
     protected String messages = "";
     protected String format = "FREE";
@@ -127,7 +131,7 @@ public class DataLoader {
 
     public void load(File file) {
 
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))){
             String line;
             StringBuilder sb = new StringBuilder();
             while ((line = br.readLine()) != null) {
@@ -146,9 +150,11 @@ public class DataLoader {
             }
 
         } catch (FileNotFoundException ex) {
+            LOGGER.error(ex.toString());
             messages = "File not found (Code:2007)";
             //eig error
         } catch (IOException ex) {
+            LOGGER.error(ex.toString());
             //error
             messages = "File is not readable" + " (Code:2002)";
         }
@@ -168,6 +174,7 @@ public class DataLoader {
                     try {
                         val.add(Double.parseDouble(s));
                     } catch (NumberFormatException e) {
+                        LOGGER.error(e.toString());
                         messages = "Format is not correct." + " (Code:2003)";
                     }
                 }
@@ -227,6 +234,7 @@ public class DataLoader {
                 period = TsFrequency.Quarterly;
             }
         } catch (NumberFormatException ex) {
+            LOGGER.error(ex.toString());
             messages = "Format is not correct. Try with free format" + " (Code:2004)";
             loadFreeFormat();
         }
@@ -270,7 +278,7 @@ public class DataLoader {
                 period = TsFrequency.Quarterly;
             }
         } catch (NumberFormatException ex) {
-
+            LOGGER.error(ex.toString());
             messages = "Format is not correct" + " (Code:2005)";
         }
 

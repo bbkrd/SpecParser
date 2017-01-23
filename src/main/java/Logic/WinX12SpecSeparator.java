@@ -58,12 +58,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import org.openide.util.Lookup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Nina Gonschorreck
  */
 public class WinX12SpecSeparator {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(WinX12SpecSeparator.class);
 
     /*
      spec   -   collect the x13Specification for JD+
@@ -385,6 +389,7 @@ public class WinX12SpecSeparator {
                                     m.setAccessible(true);
                                     m.invoke(this, specPartName, lineSplitted[1]);
                                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+                                    LOGGER.error(ex.toString());
                                     warnings.add(specPartName.name() + ": No support for argument " + lineSplitted[0].toUpperCase() + " (Code:1901)");
                                     //eventuell aufgliedern
                                 }
@@ -407,6 +412,7 @@ public class WinX12SpecSeparator {
                         m.invoke(this);
 
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException ex) {
+                        LOGGER.error(ex.toString());
                         warnings.add(specPartName.name() + ": No support for defaults. Please define some arguments." + " (Code:1902)");
                     }
                 }
@@ -414,6 +420,7 @@ public class WinX12SpecSeparator {
                     data = dataLoader.getData();
                 }
             } catch (IllegalArgumentException ex) {
+                LOGGER.error(ex.toString());
                 warnings.add(specPartSplitted[0].toUpperCase() + ": No support for spec " + specPartSplitted[0].toUpperCase() + " (Code:1903)");
             }
             noArgument = false;
@@ -486,6 +493,7 @@ public class WinX12SpecSeparator {
             }
             spec.getRegArimaSpecification().getTransform().setAICDiff(value);
         } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": No support for value " + content + " in argument AICDIFF" + " (Code:1803)");
         }
     }
@@ -604,8 +612,10 @@ public class WinX12SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(value);
         } catch (NumberFormatException ex) {
+            LOGGER.error(ex.toString());
             messages.add(partName + ": No support for value " + content + " in argument ARMALIMIT" + " (Code:1804)");
         } catch (X13Exception e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": " + e.toString());
         }
     }
@@ -698,6 +708,7 @@ public class WinX12SpecSeparator {
                     try {
                         o[i].setCriticalValue(Double.parseDouble(s[i]));
                     } catch (NumberFormatException e) {
+                        LOGGER.error(e.toString());
                         messages.add(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1808)");
                     }
                 }
@@ -708,6 +719,7 @@ public class WinX12SpecSeparator {
                         messages.add(partName + ": It isn't possible to set more than one critical value. The global critical value will be set to " + s[0] + " (Code:1842)");
                     }
                 } catch (NumberFormatException e) {
+                    LOGGER.error(e.toString());
                     messages.add(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1809)");
                 }
             }
@@ -904,6 +916,7 @@ public class WinX12SpecSeparator {
             }
             spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(value);
         } catch (NumberFormatException ex) {
+            LOGGER.error(ex.toString());
             messages.add(partName + ": No support for value " + content + " in argument LJUNGBOXLIMIT" + " (Code:1813)");
         }
     }
@@ -919,6 +932,7 @@ public class WinX12SpecSeparator {
             }
             spec.getRegArimaSpecification().getOutliers().setLSRun(value);
         } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": No support for value " + content + " in argument LSRUN" + " (Code:1814)");
         }
     }
@@ -1033,6 +1047,7 @@ public class WinX12SpecSeparator {
             int forecast = Integer.parseInt(content);
             spec.getX11Specification().setForecastHorizon(forecast);
         } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": No support for value " + content + " in argument MAXLEAD" + " (Code:1815)");
         }
     }
@@ -1298,8 +1313,10 @@ public class WinX12SpecSeparator {
                         spec.getRegArimaSpecification().getArima().setBTheta(q_para);
                     }
                 } catch (NumberFormatException e) {
+                    LOGGER.error(e.toString());
                     messages.add(partName + ": No support for value " + content + " in argument MODEL" + " (Code:1503)");
                 } catch (X13Exception e) {
+                    LOGGER.error(e.toString());
                     warnings.add(partName + ": No support for parameters in argument MODEL" + " (Code:1504)");
                 }
             }
@@ -1381,6 +1398,7 @@ public class WinX12SpecSeparator {
                     break;
             }
         } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": No support for value " + content + " in argument PERIOD." + " (Code:1406)");
         }
     }
@@ -1396,6 +1414,7 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
             }
         } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": No support for value " + content + " in argument POWER" + " (Code:1826)");
         }
     }
@@ -1412,8 +1431,10 @@ public class WinX12SpecSeparator {
             }
             spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(value);
         } catch (NumberFormatException ex) {
+            LOGGER.error(ex.toString());
             messages.add(partName + ": No support for value " + content + " in argument REDUCECV" + " (Code:1827)");
         } catch (X13Exception e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": " + e.getMessage());
         }
     }
@@ -1515,6 +1536,7 @@ public class WinX12SpecSeparator {
                 }
             }
         } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": No support for value " + content + " in argument SIGMALIM" + " (Code:1830)");
         }
     }
@@ -1740,6 +1762,7 @@ public class WinX12SpecSeparator {
 
             spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(value);
         } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": No support for value " + content + " in argument TCRATE" + " (Code:1833)");
         }
     }
@@ -1758,8 +1781,10 @@ public class WinX12SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getEstimate().setTol(value);
         } catch (NumberFormatException ex) {
+            LOGGER.error(ex.toString());
             messages.add(partName + ": No support for value " + content + " in argument TOL" + " (Code:1834)");
         } catch (X13Exception e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": " + e.getMessage());
         }
     }
@@ -1775,6 +1800,7 @@ public class WinX12SpecSeparator {
             int t = Integer.parseInt(content);
             spec.getX11Specification().setHendersonFilterLength(t);
         } catch (NumberFormatException ex) {
+            LOGGER.error(ex.toString());
             messages.add(partName + ": No support for value " + content + " in argument TRENDMA" + " (Code:1835)");
         }
     }
@@ -1859,8 +1885,10 @@ public class WinX12SpecSeparator {
             double value = Double.parseDouble(content);
             spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(value);
         } catch (NumberFormatException ex) {
+            LOGGER.error(ex.toString());
             messages.add(partName + ": No support for value " + content + " in argument URFINAL" + " (Code:1840)");
         } catch (X13Exception e) {
+            LOGGER.error(e.toString());
             messages.add(partName + ": " + e.getMessage());
         }
     }
@@ -1990,6 +2018,7 @@ public class WinX12SpecSeparator {
                 m.setAccessible(true);
                 m.invoke(this, partName, assign);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+                LOGGER.error(ex.toString());
                 messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + content.toUpperCase() + " in VARIABLES is not supported" + " (Code:1600)"));
             }
 
@@ -2109,6 +2138,7 @@ public class WinX12SpecSeparator {
             try {
                 w = Integer.parseInt(content);//abfangen
             } catch (NumberFormatException e) {
+                LOGGER.error(e.toString());
                 warnings.add(partName + ": No support for variables = ( easter[ " + content + " ] )");
             }
         }
@@ -2148,6 +2178,7 @@ public class WinX12SpecSeparator {
             try {
                 w = Integer.parseInt(content);
             } catch (NumberFormatException e) {
+                LOGGER.error(e.toString());
                 warnings.add(partName + ": No support for variables = ( tdstock[ " + content + " ] )");
             }
         }
