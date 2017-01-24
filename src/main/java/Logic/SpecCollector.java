@@ -32,6 +32,9 @@ import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariables;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.util.ArrayList;
+import java.util.prefs.Preferences;
+import options.SpecParserOptionsPanelController;
+import org.openide.util.NbPreferences;
 
 /**
  * This class collects all information for the specification of a document.
@@ -122,6 +125,7 @@ public class SpecCollector {
             }/*else{
              ((MultiProcessingDocument) wsItem.getElement()).getCurrent().get(index).setPointSpecification((ISaSpecification) jdSpec.getSpecification());
              }*/
+
         }
     }
 
@@ -354,52 +358,63 @@ public class SpecCollector {
                 wsVariables.getElement().set(curName, regressor[i]);
             }
 
-            switch (regTyp[i].toUpperCase()) {
-                case "TD":
+            Preferences node = NbPreferences.forModule(SpecParserOptionsPanelController.class);
+            String vars_loc = node.get(SpecParserOptionsPanelController.SPECPARSER_VARS_LOCATION, "regular");
+
+            switch (vars_loc.toLowerCase()) {
+                case "in calenders":
                     td.add(reg_SpecParser + "." + curName);
                     break;
-                case "USER":
-                    TsVariableDescriptor userVar = new TsVariableDescriptor();
-                    userVar.setName(reg_SpecParser + "." + curName);
-
-                    // differences for final = user
-                    if (separator.isFinalUser()) {
-                        userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
-                    } else {
-                        //default: final != user
-                        userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
-                    }
-                    user.add(userVar);
-                    break;
-                case "SEASONAL":
-                    TsVariableDescriptor var = new TsVariableDescriptor();
-                    var.setName(reg_SpecParser + "." + curName);
-                    var.setEffect(TsVariableDescriptor.UserComponentType.Seasonal);
-                    user.add(var);
-                    break;
-                case "LS":
-                    TsVariableDescriptor v = new TsVariableDescriptor();
-                    v.setName(reg_SpecParser + "." + curName);
-                    v.setEffect(TsVariableDescriptor.UserComponentType.Trend);
-                    user.add(v);
-                    break;
-                    /*Version 1.5.6 Sylwias Mail vom 12.10.*/
-                case "HOLIDAY":
-//                    td.add(reg_SpecParser + "." + curName);
-                    TsVariableDescriptor vars = new TsVariableDescriptor();
-                    vars.setName(reg_SpecParser + "." + curName);
-                    vars.setEffect(TsVariableDescriptor.UserComponentType.Undefined);
-                    user.add(vars);
-                    break;
+                case "regular":
                 default:
-                    TsVariableDescriptor userVar2 = new TsVariableDescriptor();
-                    userVar2.setName(reg_SpecParser + "." + curName);
+                    switch (regTyp[i].toUpperCase()) {
+                        case "TD":
+                            td.add(reg_SpecParser + "." + curName);
+                            break;
+                        case "USER":
+                            TsVariableDescriptor userVar = new TsVariableDescriptor();
+                            userVar.setName(reg_SpecParser + "." + curName);
 
-                    // differences for final = user
-                    userVar2.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
-                    user.add(userVar2);
-                    break;
+                            // differences for final = user
+                            if (separator.isFinalUser()) {
+                                userVar.setEffect(TsVariableDescriptor.UserComponentType.Series);
+                            } else {
+                                //default: final != user
+                                userVar.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
+                            }
+                            user.add(userVar);
+                            break;
+                        case "SEASONAL":
+                            TsVariableDescriptor var = new TsVariableDescriptor();
+                            var.setName(reg_SpecParser + "." + curName);
+                            var.setEffect(TsVariableDescriptor.UserComponentType.Seasonal);
+                            user.add(var);
+                            break;
+                        case "LS":
+                            TsVariableDescriptor v = new TsVariableDescriptor();
+                            v.setName(reg_SpecParser + "." + curName);
+                            v.setEffect(TsVariableDescriptor.UserComponentType.Trend);
+                            user.add(v);
+                            break;
+                        /*Version 1.5.6 Sylwias Mail vom 12.10.*/
+                        case "HOLIDAY":
+//                    td.add(reg_SpecParser + "." + curName);
+                            TsVariableDescriptor vars = new TsVariableDescriptor();
+                            vars.setName(reg_SpecParser + "." + curName);
+                            vars.setEffect(TsVariableDescriptor.UserComponentType.Undefined);
+                            user.add(vars);
+                            break;
+                        default:
+                            TsVariableDescriptor userVar2 = new TsVariableDescriptor();
+                            userVar2.setName(reg_SpecParser + "." + curName);
+
+                            // differences for final = user
+                            userVar2.setEffect(TsVariableDescriptor.UserComponentType.Irregular);
+                            user.add(userVar2);
+                            break;
+                    }
             }
+
         }
         separator.setRegressorsInSpec(td.toArray(new String[0]), user.toArray(new TsVariableDescriptor[0]));
     }
