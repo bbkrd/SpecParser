@@ -30,7 +30,7 @@ final class SpecParserPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SpecParserPanel.class, "SpecParserPanel.jLabel1.text")); // NOI18N
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "regular", "in calenders" }));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "regular", "in calendars" }));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
