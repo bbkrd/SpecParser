@@ -1906,7 +1906,7 @@ public class WinX12SpecSeparator {
         if (regressionTyp == null) {
             regressionTyp = new String[regressors.length];
             for (int i = 0; i < regressors.length; i++) {
-            //default usertype
+                //default usertype
                 regressionTyp[i] = "USER";
             }
         }
@@ -1944,7 +1944,7 @@ public class WinX12SpecSeparator {
 
         //regressionTyp.lwngth == reg.length
         for (int i = 0; i < regressionTyp.length; i++) {
-            
+
             switch (reg[i].toUpperCase().trim()) {
                 case "TD":
                     regressionTyp[i] = "TD";
@@ -2064,14 +2064,22 @@ public class WinX12SpecSeparator {
             if (dataFromWebServive != null) {
                 switch (partName) {
                     case SERIES:
-                        if (!dataLoader.isDataFromWebserviceSet()) {
-                            dataLoader.setDataFromWebService(dataFromWebServive);
-                            dataLoader.setMoniker(moniker);
-                            dataLoader.setPeriod(dataFromWebServive.getFrequency());
-                            dataLoader.setZislId(content);
-                            if (!dataLoader.getMessages().isEmpty()) {
-                                errors.add(partName + ": " + dataLoader.getMessages());
+                        if (dataLoader.getZislId() == null) {
+                            // 1. ZISL befehle
+                            if (!dataLoader.isDataFromWebserviceSet()) {
+                                dataLoader.setDataFromWebService(dataFromWebServive);
+                                dataLoader.setMoniker(moniker);
+                                dataLoader.setPeriod(dataFromWebServive.getFrequency());
+                                dataLoader.setZislId(content);
+                                if (!dataLoader.getMessages().isEmpty()) {
+                                    errors.add(partName + ": " + dataLoader.getMessages());
+                                }
                             }
+                        } else {
+                            // 2. Zisl befehl für alte D10
+                            StringBuilder sb = new StringBuilder("prodebene");
+                            sb.append(InformationSet.STRSEP).append("seasonalfactor").append(InformationSet.STRSEP).append("loadid");
+                            meta.put(sb.toString(), content);
                         }
                         break;
                     case REGRESSION:
@@ -2086,7 +2094,7 @@ public class WinX12SpecSeparator {
                         regressionSpec = true;
                         break;
                     default:
-                        messages.add(partName + ": Hier wird zisl nicht unterstÃ¼tzt!" + " (Code:1201)");
+                        messages.add(partName + ": Hier wird zisl nicht unterstuetzt!" + " (Code:1201)");
                         break;
                 }
             } else {
