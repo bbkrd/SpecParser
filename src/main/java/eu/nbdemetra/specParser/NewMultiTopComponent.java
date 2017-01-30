@@ -5,33 +5,24 @@
  */
 package eu.nbdemetra.specParser;
 
-import Administration.MultiSpec;
 import Logic.SpecCollector;
-import ec.nbdemetra.sa.MultiProcessingDocument;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
-import ec.tss.sa.EstimationPolicyType;
 import ec.tss.sa.SaItem;
-import ec.tss.sa.SaProcessing;
 import ec.tstoolkit.utilities.IModifiable;
-import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer.Type;
 import eu.nbdemetra.specParser.Miscellaneous.MyCellRenderer;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.awt.Color;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
@@ -101,7 +92,7 @@ public final class NewMultiTopComponent extends TopComponent {
         this.wsNode = wsNode;
         initComponents();
 
-        setToolTipText(Bundle.HINT_MultiDocSpecWindowTopComponent());
+        setToolTipText(Bundle.HINT_NewMultiTopComponentTopComponent());
         progressHandle = ProgressHandleFactory.createHandle("calculate ...");
         this.wsItem = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
         specViewer = new SpecViewer(Type.APPLY_RESTORE_SAVE, new SpecCollector(wsItem));
