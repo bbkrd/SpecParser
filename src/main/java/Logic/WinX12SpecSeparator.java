@@ -66,7 +66,7 @@ import org.slf4j.LoggerFactory;
  * @author Nina Gonschorreck
  */
 public class WinX12SpecSeparator {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(WinX12SpecSeparator.class);
 
     /*
@@ -1905,18 +1905,17 @@ public class WinX12SpecSeparator {
 
         if (regressionTyp == null) {
             regressionTyp = new String[regressors.length];
-        } else {
-            if (regressionTyp.length != regressors.length) {
-                regressionTyp = new String[regressors.length];
-            }
-        }
-        for (int i = 0; i < regressors.length; i++) {
+            for (int i = 0; i < regressors.length; i++) {
             //default usertype
-            if (regressionTyp[i] == null) {
                 regressionTyp[i] = "USER";
             }
-
         }
+//            else {
+//            if (regressionTyp.length != regressors.length) {
+//                regressionTyp = new String[regressors.length];
+//            }
+//        }
+
         regressionSpec = true;
     }
 
@@ -1925,19 +1924,27 @@ public class WinX12SpecSeparator {
         String[] regressors = content.split("\\s+");
 
         if (regressionTyp == null) {
-            regressionTyp = new String[1];
+            regressionTyp = new String[regressors.length];
         }
 
+        /*Beide Variablen sind für den Fall, dass der Regressortyp nicht unterstuetzt wird und mehr als einer angegeben ist. 
+         Das Ziel ist es die Meldung im default case nur einmal auszugeben. Z.B. usertype = tdstock*/
+        boolean stretched = false, alreday = false;
+
         String[] reg = new String[regressionTyp.length];
+//        String[] reg = new String[regressors.length];
         for (int j = 0; j < reg.length; j++) {
-            if (j < regressors.length) {
+            if (j < regressors.length) { // nachdenken
                 reg[j] = regressors[j];
             } else {
                 reg[j] = regressors[0];
+                stretched = true;
             }
         }
 
-        for (int i = 0; i < reg.length; i++) {
+        //regressionTyp.lwngth == reg.length
+        for (int i = 0; i < regressionTyp.length; i++) {
+            
             switch (reg[i].toUpperCase().trim()) {
                 case "TD":
                     regressionTyp[i] = "TD";
@@ -1948,16 +1955,23 @@ public class WinX12SpecSeparator {
                 case "SEASONAL":
                     regressionTyp[i] = "SEASONAL";
                     break;
-
                 case "LS":
                     regressionTyp[i] = "LS";
                     break;
-                    //Version 1.5.6 Sylwias mail vom 12.10.
+                //Version 1.5.6 Sylwias mail vom 12.10.
                 case "HOLIDAY":
                     regressionTyp[i] = "HOLIDAY";
                     break;
-                default: // easter, etc.
-                    warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
+                default: // easter, tdstock etc.
+                    if (!stretched) {
+                        warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
+                    } else {
+                        if (!alreday) {
+                            warnings.add(partName + ": No support for value " + reg[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
+                            alreday = true;
+                        }
+                    }
+
                     regressionTyp[i] = "USER";
                     break;
             }

@@ -296,6 +296,11 @@ public class SpecCollector {
         for (int i = 0; i < regressor.length; i++) {
             curName = regName[i];
 
+            int counter_single_usertype = i;
+            if(regTyp.length ==1 && regTyp.length != regressor.length){
+                counter_single_usertype = 0;
+            }
+            
             //is there a regressor with this curName?
             if (wsItem.getOwner().getContext().getTsVariableDictionary().contains(reg_SpecParser + "." + curName)) {
 
@@ -362,12 +367,12 @@ public class SpecCollector {
             String vars_loc = node.get(SpecParserOptionsPanelController.SPECPARSER_VARS_LOCATION, "regular");
 
             switch (vars_loc.toLowerCase()) {
-                case "in calenders":
+                case "in calendars":
                     td.add(reg_SpecParser + "." + curName);
                     break;
                 case "regular":
                 default:
-                    switch (regTyp[i].toUpperCase()) {
+                    switch (regTyp[counter_single_usertype].toUpperCase()) {
                         case "TD":
                             td.add(reg_SpecParser + "." + curName);
                             break;
