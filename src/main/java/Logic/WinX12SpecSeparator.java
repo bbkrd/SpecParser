@@ -1906,7 +1906,7 @@ public class WinX12SpecSeparator {
         if (regressionTyp == null) {
             regressionTyp = new String[regressors.length];
             for (int i = 0; i < regressors.length; i++) {
-            //default usertype
+                //default usertype
                 regressionTyp[i] = "USER";
             }
         }
@@ -1944,7 +1944,7 @@ public class WinX12SpecSeparator {
 
         //regressionTyp.lwngth == reg.length
         for (int i = 0; i < regressionTyp.length; i++) {
-            
+
             switch (reg[i].toUpperCase().trim()) {
                 case "TD":
                     regressionTyp[i] = "TD";
@@ -2064,14 +2064,20 @@ public class WinX12SpecSeparator {
             if (dataFromWebServive != null) {
                 switch (partName) {
                     case SERIES:
-                        if (!dataLoader.isDataFromWebserviceSet()) {
-                            dataLoader.setDataFromWebService(dataFromWebServive);
-                            dataLoader.setMoniker(moniker);
-                            dataLoader.setPeriod(dataFromWebServive.getFrequency());
-                            dataLoader.setZislId(content);
-                            if (!dataLoader.getMessages().isEmpty()) {
-                                errors.add(partName + ": " + dataLoader.getMessages());
+                        if (dataLoader.getZislId() == null) {
+                            if (!dataLoader.isDataFromWebserviceSet()) {
+                                dataLoader.setDataFromWebService(dataFromWebServive);
+                                dataLoader.setMoniker(moniker);
+                                dataLoader.setPeriod(dataFromWebServive.getFrequency());
+                                dataLoader.setZislId(content);
+                                if (!dataLoader.getMessages().isEmpty()) {
+                                    errors.add(partName + ": " + dataLoader.getMessages());
+                                }
                             }
+                        } else {
+                            // 2. zisl befehl für alte d10
+                            StringBuilder sb = new StringBuilder("prodebene");
+                            sb.append(InformationSet.STRSEP).append("seasonalfactor").append(InformationSet.STRSEP).append("loadid");
                         }
                         break;
                     case REGRESSION:
