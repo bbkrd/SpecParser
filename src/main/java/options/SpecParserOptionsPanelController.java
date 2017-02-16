@@ -26,6 +26,9 @@ public final class SpecParserOptionsPanelController extends OptionsPanelControll
     public static final String ID = "Demetra/SpecParser";
     public static final String SPECPARSER_VARS_LOCATION = "specparser_vars_location";
     
+    public static final String DEFAULT_MODE = "Default mode", 
+                               CALENDAR_MODE = "Calendar mode";
+    
     private SpecParserPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;

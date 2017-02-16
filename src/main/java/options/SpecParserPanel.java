@@ -14,7 +14,9 @@ final class SpecParserPanel extends javax.swing.JPanel {
     SpecParserPanel(SpecParserOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
-        // TODO listen to changes in form fields and call controller.changed()
+        // TODO listen to changes in form fields and call controller.changed()   
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { SpecParserOptionsPanelController.DEFAULT_MODE, SpecParserOptionsPanelController.CALENDAR_MODE}));
+        
     }
 
     /**
@@ -30,8 +32,6 @@ final class SpecParserPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SpecParserPanel.class, "SpecParserPanel.jLabel1.text")); // NOI18N
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "regular", "in calendars" }));
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -41,7 +41,7 @@ final class SpecParserPanel extends javax.swing.JPanel {
                 .addComponent(jLabel1)
                 .addGap(18, 18, 18)
                 .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(76, Short.MAX_VALUE))
+                .addContainerGap(130, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -56,7 +56,7 @@ final class SpecParserPanel extends javax.swing.JPanel {
 
     void load() {
 
-        String saveMethod = NbPreferences.forModule(SpecParserOptionsPanelController.class).get(SpecParserOptionsPanelController.SPECPARSER_VARS_LOCATION, "regular");
+        String saveMethod = NbPreferences.forModule(SpecParserOptionsPanelController.class).get(SpecParserOptionsPanelController.SPECPARSER_VARS_LOCATION, "Default mode");
         jComboBox1.setSelectedItem(saveMethod);
     }
 
