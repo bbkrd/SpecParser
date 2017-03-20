@@ -20,7 +20,7 @@ import ec.tstoolkit.utilities.Id;
 import Logic.SpecCollector;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tstoolkit.utilities.IModifiable;
-import eu.nbdemetra.specParser.NewMultiTopComponent;
+import eu.nbdemetra.specParser.MultiTopComponent;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -29,10 +29,10 @@ import java.util.HashMap;
  * 
  * @author Nina Gonschorreck
  */
-public class NewMultiSpec {
+public class MultiSpec {
 
     /** Collect all active multi windows */
-    private static HashMap<Id, NewMultiTopComponent> activeMultiWindows = new HashMap();
+    private static HashMap<Id, MultiTopComponent> activeMultiWindows = new HashMap();
     /** Collect all SpecColletors for the single documents in the multi mode */
     private ArrayList<SpecCollector> specList = new ArrayList();
     /** idetification number of the current multi document*/
@@ -42,16 +42,16 @@ public class NewMultiSpec {
      * Creates an object of the multi mode
      * @param wsNode current workspace node
      */
-    public NewMultiSpec(WsNode wsNode) {
+    public MultiSpec(WsNode wsNode) {
 
         WorkspaceItem ws = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
-        NewMultiTopComponent window;
+        MultiTopComponent window;
 
         // Is there a multi window with the id from the workspace node?
         if (!activeMultiWindows.containsKey(ws.getId())) {
             // Preparation of the new multi window
             this.id = ws.getId();
-            window = new NewMultiTopComponent(wsNode);
+            window = new MultiTopComponent(wsNode);
             
 //            window = new MultiTopComponent(wsNode);
             window.setName("SpecParser for " + ws.getDisplayName());

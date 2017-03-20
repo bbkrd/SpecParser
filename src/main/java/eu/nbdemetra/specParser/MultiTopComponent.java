@@ -42,29 +42,29 @@ import org.openide.util.NbBundle.Messages;
  * Top component which displays something.
  */
 @ConvertAsProperties(
-        dtd = "-//eu.nbdemetra.specParser//NewMultiTopComponent//EN",
+        dtd = "-//eu.nbdemetra.specParser//MultiTopComponent//EN",
         autostore = false
 )
 @TopComponent.Description(
-        preferredID = "NewMultiTopComponentTopComponent",
+        preferredID = "MultiTopComponentTopComponent",
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(mode = "editor", openAtStartup = false)
-@ActionID(category = "Window", id = "eu.nbdemetra.specParser.NewMultiTopComponentTopComponent")
+@ActionID(category = "Window", id = "eu.nbdemetra.specParser.MultiTopComponentTopComponent")
 @ActionReference(path = "Menu/Window" /*, position = 333 */)
 @TopComponent.OpenActionRegistration(
-        displayName = "#CTL_NewMultiTopComponentAction",
-        preferredID = "NewMultiTopComponentTopComponent"
+        displayName = "#CTL_MultiTopComponentAction",
+        preferredID = "MultiTopComponentTopComponent"
 )
 @Messages({
-    "CTL_NewMultiTopComponentAction=NewMultiTopComponent",
-    "CTL_NewMultiTopComponentTopComponent=NewMultiTopComponent Window",
-    "HINT_NewMultiTopComponentTopComponent=This is a NewMultiTopComponent window"
+    "CTL_MultiTopComponentAction=MultiTopComponent",
+    "CTL_MultiTopComponentTopComponent=MultiTopComponent Window",
+    "HINT_MultiTopComponentTopComponent=This is a MultiTopComponent window"
 })
-public final class NewMultiTopComponent extends TopComponent {
+public final class MultiTopComponent extends TopComponent {
 
-    public NewMultiTopComponent() {
+    public MultiTopComponent() {
 
     }
 
@@ -87,12 +87,12 @@ public final class NewMultiTopComponent extends TopComponent {
 
     private ProgressHandle progressHandle;
 
-    public NewMultiTopComponent(WsNode wsNode) {
+    public MultiTopComponent(WsNode wsNode) {
 
         this.wsNode = wsNode;
         initComponents();
 
-        setToolTipText(Bundle.HINT_NewMultiTopComponentTopComponent());
+        setToolTipText(Bundle.HINT_MultiTopComponentTopComponent());
         progressHandle = ProgressHandleFactory.createHandle("calculate ...");
         this.wsItem = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
         specViewer = new SpecViewer(Type.APPLY_RESTORE_SAVE, new SpecCollector(wsItem));
@@ -148,7 +148,7 @@ public final class NewMultiTopComponent extends TopComponent {
 
         setLayout(new java.awt.BorderLayout());
 
-        org.openide.awt.Mnemonics.setLocalizedText(load, org.openide.util.NbBundle.getMessage(NewMultiTopComponent.class, "NewMultiTopComponent.load.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(load, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.load.text")); // NOI18N
         load.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loadActionPerformed(evt);
@@ -156,7 +156,7 @@ public final class NewMultiTopComponent extends TopComponent {
         });
         top.add(load);
 
-        org.openide.awt.Mnemonics.setLocalizedText(refresh, org.openide.util.NbBundle.getMessage(NewMultiTopComponent.class, "NewMultiTopComponent.refresh.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(refresh, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.refresh.text")); // NOI18N
         refresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshActionPerformed(evt);
@@ -195,13 +195,13 @@ public final class NewMultiTopComponent extends TopComponent {
 
                 mtaName = name;
 
-                NewMultiTopComponent.LoadRunnable loadProcess = new NewMultiTopComponent.LoadRunnable();
+                MultiTopComponent.LoadRunnable loadProcess = new MultiTopComponent.LoadRunnable();
                 loadProcess.setMta_File(mta_File);
                 Thread thread = new Thread(loadProcess);
                 thread.start();
                 wsItem.setDisplayName(name);
-                NewMultiTopComponent.this.setDisplayName("SpecParser for " + name);
-                NewMultiTopComponent.this.repaint();
+                MultiTopComponent.this.setDisplayName("SpecParser for " + name);
+                MultiTopComponent.this.repaint();
 
                 load.setFocusable(false);
                 refresh.setEnabled(true);
@@ -401,7 +401,7 @@ public final class NewMultiTopComponent extends TopComponent {
                     Exceptions.printStackTrace(ex);
                 }
             } catch (FileNotFoundException ex) {
-                JOptionPane.showMessageDialog(NewMultiTopComponent.this, "File doesn't exist");
+                JOptionPane.showMessageDialog(MultiTopComponent.this, "File doesn't exist");
             } finally {
                 progressHandle.finish();
                 wsNode.updateUI();

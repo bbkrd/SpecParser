@@ -57,6 +57,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.openide.util.Lookup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,6 +111,9 @@ public class WinX12SpecSeparator {
 
     //ZISD
     private MetaData meta = new MetaData();
+
+    // collect all variables and user names in order of appereance in the spc file for b argument
+    ArrayList<String> fixedRegressors = new ArrayList<>();
 
     public WinX12SpecSeparator() {
 //        setDefaults();
@@ -620,6 +624,26 @@ public class WinX12SpecSeparator {
         }
     }
 
+    private void read_b(SpecificationPart partName, String content) {
+
+        // see Reference Manual: b is after variables
+        content = content.replaceAll(";", "").trim().toUpperCase();
+        content = content.replaceAll("\\(", "").replaceAll("\\)", "");
+        String[] values;
+        if (content.contains(",")) {
+            values = content.split(",", Integer.MIN_VALUE);
+        }else{
+            values = content.trim().split("\\s+");
+        }
+
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].contains("F")) {
+                double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
+                spec.getRegArimaSpecification().getRegression().setFixedCoefficients(fixedRegressors.get(i), new double[]{value});
+            }
+        }
+    }
+
     private void read_balanced(SpecificationPart partName, String content) {
 
         if (!automdlDefault) {
@@ -1036,6 +1060,19 @@ public class WinX12SpecSeparator {
             }
         } else {
             messages.add(partName + ": The number of values for argument MA is not conform to the number of values in argument MODEL. (Code:1505)");
+        }
+    }
+
+    private void read_maxback(SpecificationPart partName, String content) {
+
+        content = content.trim();
+
+        try {
+            int backcast = Integer.parseInt(content);
+            spec.getX11Specification().setBackcastHorizon(backcast);
+        } catch (NumberFormatException e) {
+            LOGGER.error(e.toString());
+            messages.add(partName + ": No support for value " + content + " in argument MAXBACK" + " (Code:1816)");
         }
     }
 
@@ -1897,7 +1934,13 @@ public class WinX12SpecSeparator {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toUpperCase();
         String[] regressors = content.split("\\s+");
+
+        for (String s : regressors) {
+            fixedRegressors.add("reg_SpecParser@" + s.trim());
+        }
+
         regressionLoader.setRegressorName(regressors);
+
         if (regressionLoader.isStartDefault()) {
             regressionLoader.setStart(dataLoader.getStart());
         }
@@ -2170,23 +2213,27 @@ public class WinX12SpecSeparator {
 
     private void do_ao(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.AO);
-//        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.AO, true);
+        Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
+        OutlierDefinition o = new OutlierDefinition(day, OutlierType.AO);
         spec.getRegArimaSpecification().getRegression().add(o);
+
+        fixedRegressors.add("AO (" + day.toString() + ")");
     }
 
     private void do_ls(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.LS);
+        Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
+        OutlierDefinition o = new OutlierDefinition(day, OutlierType.LS);
         spec.getRegArimaSpecification().getRegression().add(o);
-//        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument VARIABLES." + " (Code:1602)");
+
+        fixedRegressors.add("LS (" + day.toString() + ")");
     }
 
     private void do_tc(SpecificationPart partName, String content) {
-
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.TC);
+        Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
+        OutlierDefinition o = new OutlierDefinition(day, OutlierType.TC);
         spec.getRegArimaSpecification().getRegression().add(o);
-//        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument VARIABLES." + " (Code:1603)");
+        fixedRegressors.add("TC (" + day.toString() + ")");
     }
 
     private void do_tdstock(SpecificationPart partName, String content) {
@@ -2207,9 +2254,11 @@ public class WinX12SpecSeparator {
     }
 
     private void do_so(SpecificationPart partName, String content) {
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.SO);
+        Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
+        OutlierDefinition o = new OutlierDefinition(day, OutlierType.SO);
         spec.getRegArimaSpecification().getRegression().add(o);
 
+        fixedRegressors.add("SO (" + day.toString() + ")");
     }
 
     private void do_rp(SpecificationPart partName, String content) {
@@ -2221,6 +2270,8 @@ public class WinX12SpecSeparator {
 //        Day end = calcDay(partName, ramps[1].trim());
 
         spec.getRegArimaSpecification().getRegression().add(new Ramp(start, end));
+
+        fixedRegressors.add("rp$" + start.toString() + "$" + end.toString());
     }
 
     /*

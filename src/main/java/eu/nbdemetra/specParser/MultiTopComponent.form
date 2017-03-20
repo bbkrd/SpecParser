@@ -28,7 +28,7 @@
         <Component class="javax.swing.JButton" name="load">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="eu/nbdemetra/specParser/Bundle.properties" key="NewMultiTopComponent.load.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="eu/nbdemetra/specParser/Bundle.properties" key="MultiTopComponent.load.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -38,7 +38,7 @@
         <Component class="javax.swing.JButton" name="refresh">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="eu/nbdemetra/specParser/Bundle.properties" key="NewMultiTopComponent.refresh.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="eu/nbdemetra/specParser/Bundle.properties" key="MultiTopComponent.refresh.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
