@@ -640,6 +640,8 @@ public class WinX12SpecSeparator {
             if (values[i].contains("F")) {
                 double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
                 spec.getRegArimaSpecification().getRegression().setFixedCoefficients(fixedRegressors.get(i), new double[]{value});
+            }else{
+                warnings.add(partName+": Initial value for "+fixedRegressors.get(i)+" is not possible.");
             }
         }
     }
