@@ -75,7 +75,7 @@ public class OpenSpecParser implements ActionListener {
             SingleSpec s = new SingleSpec(context);
         } else if (w.getElement() instanceof MultiProcessingDocument) {
 //            MultiSpec m = new MultiSpec(context);    
-            NewMultiSpec m = new NewMultiSpec(context); 
+            MultiSpec m = new MultiSpec(context); 
         } else {
             JOptionPane.showMessageDialog(null, "nix");
         }

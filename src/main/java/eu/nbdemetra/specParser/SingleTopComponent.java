@@ -21,7 +21,6 @@ import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.utilities.IModifiable;
-import ec.ui.view.tsprocessing.DefaultProcessingViewer;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer.Type;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;

@@ -2170,21 +2170,21 @@ public class WinX12SpecSeparator {
 
     private void do_ao(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.AO, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.AO);
 //        OutlierDefinition o = new OutlierDefinition(calcDay(partName, content), OutlierType.AO, true);
         spec.getRegArimaSpecification().getRegression().add(o);
     }
 
     private void do_ls(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.LS, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.LS);
         spec.getRegArimaSpecification().getRegression().add(o);
 //        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument VARIABLES." + " (Code:1602)");
     }
 
     private void do_tc(SpecificationPart partName, String content) {
 
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.TC, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.TC);
         spec.getRegArimaSpecification().getRegression().add(o);
 //        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument VARIABLES." + " (Code:1603)");
     }
@@ -2207,7 +2207,7 @@ public class WinX12SpecSeparator {
     }
 
     private void do_so(SpecificationPart partName, String content) {
-        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.SO, true);
+        OutlierDefinition o = new OutlierDefinition(DateConverter.toJD(content, dataLoader.getPeriod(), true), OutlierType.SO);
         spec.getRegArimaSpecification().getRegression().add(o);
 
     }

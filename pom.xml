@@ -4,15 +4,15 @@
 
     <groupId>eu.nbdemetra</groupId>
     <artifactId>SpecParser</artifactId>
-    <version>1.6.2</version>
+    <version>2.0.0</version>
     <packaging>nbm</packaging>
 
     <name>SpecParser</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jdemetra.version>2.1.0</jdemetra.version>
-        <netbeans.version>RELEASE802</netbeans.version>
+        <jdemetra.version>2.2.0-SNAPSHOT</jdemetra.version>
+        <netbeans.version>RELEASE82</netbeans.version>
         <findbugs-maven-plugin.version>3.0.3</findbugs-maven-plugin.version>
     </properties>
 
@@ -54,8 +54,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
@@ -98,7 +98,7 @@
             <groupId>eu.europa.ec.joinup.sat</groupId>
             <artifactId>nbdemetra-sa</artifactId>
             <version>${jdemetra.version}</version>
-        </dependency>
+        </dependency>        
 
         <!--Netbeans dependencies-->
         <dependency>
@@ -135,6 +135,16 @@
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-modules-options-api</artifactId>
             <version>${netbeans.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-openide-util-ui</artifactId>
+            <version>RELEASE82</version>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-api-progress-nb</artifactId>
+            <version>RELEASE82</version>
         </dependency>
     </dependencies>
 
