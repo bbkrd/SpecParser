@@ -45,6 +45,7 @@ import ec.tstoolkit.timeseries.PeriodSelectorType;
 import ec.tstoolkit.timeseries.TsPeriodSelector;
 import ec.tstoolkit.timeseries.calendars.LengthOfPeriodType;
 import ec.tstoolkit.timeseries.calendars.TradingDaysType;
+import ec.tstoolkit.timeseries.regression.ITsVariable;
 import ec.tstoolkit.timeseries.regression.OutlierDefinition;
 import ec.tstoolkit.timeseries.regression.OutlierType;
 import ec.tstoolkit.timeseries.regression.Ramp;
@@ -639,7 +640,7 @@ public class WinX12SpecSeparator {
         for (int i = 0; i < values.length; i++) {
             if (values[i].contains("F")) {
                 double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
-                spec.getRegArimaSpecification().getRegression().setFixedCoefficients(fixedRegressors.get(i), new double[]{value});
+                spec.getRegArimaSpecification().getRegression().setFixedCoefficients(ITsVariable.shortName(fixedRegressors.get(i)), new double[]{value});
             }else{
                 warnings.add(partName+": Initial value for "+fixedRegressors.get(i)+" is not possible.");
             }
