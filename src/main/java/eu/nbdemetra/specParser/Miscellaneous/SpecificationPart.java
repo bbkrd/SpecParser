@@ -23,6 +23,7 @@ public enum SpecificationPart {
     
     ARIMA, 
     AUTOMDL, 
+    CHECK,
     ESTIMATE, 
     FORECAST, 
     OUTLIER, 

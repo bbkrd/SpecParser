@@ -557,7 +557,7 @@ public class WinX12SpecSeparator {
                 }
             }
         }
-        if (assigned == required) {
+        if (assigned >= required) {
 
 //        5. Set assigned parameters on the correct position in the vector
             if (phi != null) {
@@ -600,7 +600,8 @@ public class WinX12SpecSeparator {
                     }
                 }
             }
-        } else {
+        } 
+            else {
             messages.add(partName + ": The number of values for argument AR is not conform to the number of values in argument MODEL." + " (Code:1506)");
         }
     }
@@ -633,7 +634,7 @@ public class WinX12SpecSeparator {
         String[] values;
         if (content.contains(",")) {
             values = content.split(",", Integer.MIN_VALUE);
-        }else{
+        } else {
             values = content.trim().split("\\s+");
         }
 
@@ -641,8 +642,8 @@ public class WinX12SpecSeparator {
             if (values[i].contains("F")) {
                 double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
                 spec.getRegArimaSpecification().getRegression().setFixedCoefficients(ITsVariable.shortName(fixedRegressors.get(i)), new double[]{value});
-            }else{
-                warnings.add(partName+": Initial value for "+fixedRegressors.get(i)+" is not possible.");
+            } else {
+                warnings.add(partName + ": Initial value for " + fixedRegressors.get(i) + " is not possible.");
             }
         }
     }
@@ -1018,7 +1019,7 @@ public class WinX12SpecSeparator {
                 }
             }
         }
-        if (assigned == required) {
+        if (assigned >= required) {
 
 //        5. Set assigned parameters on the correct position in the vector
             if (theta != null) {
@@ -1216,7 +1217,7 @@ public class WinX12SpecSeparator {
             String[] sep = content.split("\\s*\\)\\s*\\(\\s*");
 
             boolean sarima;
-            String p, d, q;
+            String p_string, d_string, q_string;
             String[] p_array, q_array;
             Parameter[] p_para, q_para;
             int start, end;
@@ -1225,8 +1226,8 @@ public class WinX12SpecSeparator {
 //        2. After split there is one or two strings to analyze
             for (int i = 0; i < sep.length; i++) {
                 s = sep[i].trim();
-                p = null;
-                q = null;
+                p_string = null;
+                q_string = null;
                 sarima = false;
 
 //            3. Check it is the part of saisonal (SARIMA)
@@ -1252,14 +1253,15 @@ public class WinX12SpecSeparator {
 //            a) Look for arguments inside [...], then p,q!=null
                 if (s.startsWith("[")) {
                     end = s.indexOf("]");
-                    p = s.substring(1, end).trim();
-                    p = p.replaceAll("\\s+", ",");
+                    p_string = s.substring(1, end).trim();
+                    p_string = p_string.trim();
+                    p_string = p_string.replaceAll("\\s+", ",");
                     s = s.substring(end + 1).trim();
                 }
                 if (s.endsWith("]")) {
                     start = s.indexOf("[");
-                    q = s.substring(start).trim();
-                    q = q.replaceAll("\\s+", ",");
+                    q_string = s.substring(start).trim();
+                    q_string = q_string.replaceAll("\\s+", ",");
                     s = s.substring(0, start).trim();
                 }
 
@@ -1271,26 +1273,26 @@ public class WinX12SpecSeparator {
                 }
 
 //            c) Check cases of p,q null or not
-                if (p == null) {
+                if (p_string == null) {
 //                i) extract p from string
                     end = s.indexOf(",");
-                    p = s.substring(0, end);
+                    p_string = s.substring(0, end);
                     s = s.substring(end + 1);
 
 //                ii) set default parameter
-                    p_para = new Parameter[Integer.parseInt(p)];
+                    p_para = new Parameter[Integer.parseInt(p_string)];
                     for (int j = 0; j < p_para.length; j++) {
                         p_para[j] = new Parameter(-0.1, ParameterType.Undefined);
                     }
 
                 } else {
 //                i) extract arguments in [...]
-                    p = p.replaceAll("\\[", "").replaceAll("\\]", "");
-                    p_array = p.split(",");
+                    p_string = p_string.replaceAll("\\[", "").replaceAll("\\]", "");
+                    p_array = p_string.split(",");
 
 //              ii) set parameter, when not use 0.0 else default
-                    p = p_array[p_array.length - 1];
-                    p_para = new Parameter[Integer.parseInt(p)];
+                    p_string = p_array[p_array.length - 1];
+                    p_para = new Parameter[Integer.parseInt(p_string)];
                     for (int j = 0; j < p_para.length; j++) {
                         p_para[j] = new Parameter(0.0, ParameterType.Fixed);
                     }
@@ -1298,30 +1300,30 @@ public class WinX12SpecSeparator {
                         p_para[Integer.parseInt(a) - 1] = new Parameter(-0.1, ParameterType.Undefined);
                     }
                 }
-                if (q == null) {
+                if (q_string == null) {
 //                i) extract q
                     if (s.startsWith(",")) {
                         start = s.indexOf(",");
                         s = s.substring(start).trim();
                     }
                     start = s.indexOf(",");
-                    q = s.substring(start + 1);
+                    q_string = s.substring(start + 1);
                     s = s.substring(0, start);
 
 //                ii) set default parameter
-                    q_para = new Parameter[Integer.parseInt(q)];
+                    q_para = new Parameter[Integer.parseInt(q_string)];
                     for (int j = 0; j < q_para.length; j++) {
                         q_para[j] = new Parameter(-0.1, ParameterType.Undefined);
                     }
 
                 } else {
 //                i) extract arguments in [...]
-                    q = q.replaceAll("\\[", "").replaceAll("\\]", "");
-                    q_array = q.split(",");
-                    q = q_array[q_array.length - 1];
+                    q_string = q_string.replaceAll("\\[", "").replaceAll("\\]", "");
+                    q_array = q_string.split(",");
+                    q_string = q_array[q_array.length - 1];
 
 //                ii) set parameter
-                    q_para = new Parameter[Integer.parseInt(q)];
+                    q_para = new Parameter[Integer.parseInt(q_string)];
                     for (int j = 0; j < q_para.length; j++) {
                         q_para[j] = new Parameter(0.0, ParameterType.Fixed);
                     }
@@ -1331,30 +1333,57 @@ public class WinX12SpecSeparator {
                 }
 
 //            c) extract d
-                d = s.replaceAll(",", "").replaceAll(" ", "");
+                d_string = s.replaceAll(",", "").replaceAll(" ", "");
 
 //            d) set parameters in X13Specification
+                int p = 0, d = 0, q = 0;
+                try {
+                    p = Integer.parseInt(p_string);
+                    d = Integer.parseInt(d_string);
+                    q = Integer.parseInt(q_string);
+                } catch (NumberFormatException e) {
+                    LOGGER.error(e.toString());
+                    messages.add(partName + ": No support for value " + content + " in argument MODEL" + " (Code:1503)");
+                }
                 try {
                     if (sarima == false) {
 //                    i) ARIMA part
-                        spec.getRegArimaSpecification().getArima().setP(Integer.parseInt(p));
-                        spec.getRegArimaSpecification().getArima().setD(Integer.parseInt(d));
-                        spec.getRegArimaSpecification().getArima().setQ(Integer.parseInt(q));
+                        spec.getRegArimaSpecification().getArima().setP(p);
+                        spec.getRegArimaSpecification().getArima().setD(q);
+                        spec.getRegArimaSpecification().getArima().setQ(d);
 //
                         spec.getRegArimaSpecification().getArima().setPhi(p_para);
                         spec.getRegArimaSpecification().getArima().setTheta(q_para);
                     } else {
 //                    ii) SARIMA part
-                        spec.getRegArimaSpecification().getArima().setBP(Integer.parseInt(p));
-                        spec.getRegArimaSpecification().getArima().setBD(Integer.parseInt(d));
-                        spec.getRegArimaSpecification().getArima().setBQ(Integer.parseInt(q));
-//
-                        spec.getRegArimaSpecification().getArima().setBPhi(p_para);
-                        spec.getRegArimaSpecification().getArima().setBTheta(q_para);
+                        if (p <= 1) {
+                            spec.getRegArimaSpecification().getArima().setBP(p);
+                            spec.getRegArimaSpecification().getArima().setBPhi(p_para);
+                        } else {
+                            spec.getRegArimaSpecification().getArima().setBP(1);
+                            // was passiert hier? p_para 
+                            ArrayList<Parameter> tmp1 = new ArrayList<>();
+                            tmp1.add(p_para[0]);
+                            spec.getRegArimaSpecification().getArima().setBTheta(tmp1.toArray(new Parameter[0]));
+                            warnings.add(partName + ": Number of seasonal AR parameters is set to 1. " + " (Code:1504)");
+                        }
+                        if (d <= 1) {
+                            spec.getRegArimaSpecification().getArima().setBD(d);
+                        } else {
+                            spec.getRegArimaSpecification().getArima().setBD(1);
+                            warnings.add(partName + ": Number of seasonal differencing is set to 1. " + " (Code:1504)");
+                        }
+                        if (q <= 1) {
+                            spec.getRegArimaSpecification().getArima().setBQ(q);
+                            spec.getRegArimaSpecification().getArima().setBTheta(q_para);
+                        }else{
+                            spec.getRegArimaSpecification().getArima().setBQ(1);
+                            ArrayList<Parameter> tmp = new ArrayList<>();
+                            tmp.add(q_para[0]);
+                            spec.getRegArimaSpecification().getArima().setBTheta(tmp.toArray(new Parameter[0]));
+                            warnings.add(partName + ": Number of seasonal MA parameters is set to 1. " + " (Code:1504)");
+                        }                        
                     }
-                } catch (NumberFormatException e) {
-                    LOGGER.error(e.toString());
-                    messages.add(partName + ": No support for value " + content + " in argument MODEL" + " (Code:1503)");
                 } catch (X13Exception e) {
                     LOGGER.error(e.toString());
                     warnings.add(partName + ": No support for parameters in argument MODEL" + " (Code:1504)");
@@ -1698,7 +1727,7 @@ public class WinX12SpecSeparator {
             }
 
             //dummy modifizieren falls ALL ist, da wir nicht mehr mit all arbeiten stattdessen mit from, da start argument missbraucht wird
-            //andere FÃ¤lle werden nicht abgeprÃ¼ft, da von korrekten Spec files ausgegangen wird
+            //andere FÃƒÂ¤lle werden nicht abgeprÃƒÂ¼ft, da von korrekten Spec files ausgegangen wird
             TsPeriodSelector span_current = spec.getRegArimaSpecification().getBasic().getSpan();
             if (dummy.getType().equals(PeriodSelectorType.All)) {
                 dummy.setType(PeriodSelectorType.From);
@@ -1973,7 +2002,7 @@ public class WinX12SpecSeparator {
             regressionTyp = new String[regressors.length];
         }
 
-        /*Beide Variablen sind für den Fall, dass der Regressortyp nicht unterstuetzt wird und mehr als einer angegeben ist. 
+        /*Beide Variablen sind fÃ¼r den Fall, dass der Regressortyp nicht unterstuetzt wird und mehr als einer angegeben ist. 
          Das Ziel ist es die Meldung im default case nur einmal auszugeben. Z.B. usertype = tdstock*/
         boolean stretched = false, alreday = false;
 
@@ -2121,7 +2150,7 @@ public class WinX12SpecSeparator {
                                 }
                             }
                         } else {
-                            // 2. zisl befehl für alte d10
+                            // 2. zisl befehl fÃ¼r alte d10
                             StringBuilder sb = new StringBuilder("prodebene");
                             sb.append(InformationSet.STRSEP).append("seasonalfactor").append(InformationSet.STRSEP).append("loadid");
                         }
@@ -2138,11 +2167,11 @@ public class WinX12SpecSeparator {
                         regressionSpec = true;
                         break;
                     default:
-                        messages.add(partName + ": Hier wird zisl nicht unterstÃ¼tzt!" + " (Code:1201)");
+                        messages.add(partName + ": Hier wird zisl nicht unterstÃƒÂ¼tzt!" + " (Code:1201)");
                         break;
                 }
             } else {
-                errors.add(partName + ": Keine Werte vom Webservice verfÃ¼gbar" + " (Code:1202)");
+                errors.add(partName + ": Keine Werte vom Webservice verfÃƒÂ¼gbar" + " (Code:1202)");
             }
         } else {
             errors.add(partName + ": WebService-Plugin nicht vorhanden" + " (Code:1203)");
@@ -2166,7 +2195,7 @@ public class WinX12SpecSeparator {
                 tmp = "forecast";
                 break;
             default:
-                //nicht unterstÃ¼tzt
+                //nicht unterstÃƒÂ¼tzt
                 break;
         }
 
@@ -2288,6 +2317,9 @@ public class WinX12SpecSeparator {
     private void read_decimals(SpecificationPart partName, String content) {
     }
 
+    private void read_outofsample(SpecificationPart partName, String content) {
+    }
+
     private void read_precision(SpecificationPart partName, String content) {
     }
 
@@ -2300,4 +2332,6 @@ public class WinX12SpecSeparator {
     private void read_savelog(SpecificationPart partName, String content) {
     }
 
+    private void read_spectrumtype(SpecificationPart partName, String content) {
+    }
 }
