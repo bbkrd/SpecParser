@@ -1260,7 +1260,7 @@ public class WinX12SpecSeparator {
                 }
                 if (s.endsWith("]")) {
                     start = s.indexOf("[");
-                    q_string = s.substring(start).trim();
+                    q_string = s.substring(start+1, s.length()-1).trim();
                     q_string = q_string.replaceAll("\\s+", ",");
                     s = s.substring(0, start).trim();
                 }
@@ -1349,8 +1349,8 @@ public class WinX12SpecSeparator {
                     if (sarima == false) {
 //                    i) ARIMA part
                         spec.getRegArimaSpecification().getArima().setP(p);
-                        spec.getRegArimaSpecification().getArima().setD(q);
-                        spec.getRegArimaSpecification().getArima().setQ(d);
+                        spec.getRegArimaSpecification().getArima().setD(d);
+                        spec.getRegArimaSpecification().getArima().setQ(q);
 //
                         spec.getRegArimaSpecification().getArima().setPhi(p_para);
                         spec.getRegArimaSpecification().getArima().setTheta(q_para);
@@ -1365,13 +1365,13 @@ public class WinX12SpecSeparator {
                             ArrayList<Parameter> tmp1 = new ArrayList<>();
                             tmp1.add(p_para[0]);
                             spec.getRegArimaSpecification().getArima().setBTheta(tmp1.toArray(new Parameter[0]));
-                            warnings.add(partName + ": Number of seasonal AR parameters is set to 1. " + " (Code:1504)");
+                            warnings.add(partName + ": Number of seasonal AR parameters is set to 1. " + " (Code:1506)");
                         }
                         if (d <= 1) {
                             spec.getRegArimaSpecification().getArima().setBD(d);
                         } else {
                             spec.getRegArimaSpecification().getArima().setBD(1);
-                            warnings.add(partName + ": Number of seasonal differencing is set to 1. " + " (Code:1504)");
+                            warnings.add(partName + ": Number of seasonal differencing is set to 1. " + " (Code:1506)");
                         }
                         if (q <= 1) {
                             spec.getRegArimaSpecification().getArima().setBQ(q);
@@ -1381,7 +1381,7 @@ public class WinX12SpecSeparator {
                             ArrayList<Parameter> tmp = new ArrayList<>();
                             tmp.add(q_para[0]);
                             spec.getRegArimaSpecification().getArima().setBTheta(tmp.toArray(new Parameter[0]));
-                            warnings.add(partName + ": Number of seasonal MA parameters is set to 1. " + " (Code:1504)");
+                            warnings.add(partName + ": Number of seasonal MA parameters is set to 1. " + " (Code:1506)");
                         }                        
                     }
                 } catch (X13Exception e) {
