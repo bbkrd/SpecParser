@@ -91,6 +91,7 @@ public class MultiSpec {
             wsNode.getWorkspace().sortFamily(wsNode.lookup());
             
             // open the window
+            window.open();
             window.requestActive();
         }
     }
