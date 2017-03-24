@@ -58,7 +58,6 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import org.openide.util.Lookup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1933,6 +1932,9 @@ public class WinX12SpecSeparator {
 //                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument TYPES." + " (Code:1838)");
 
                     break;
+                case "SO":
+                    spec.getRegArimaSpecification().getOutliers().add(OutlierType.SO);
+                    break;
                 default:
                     messages.add(partName + ": No support for value " + t.toUpperCase() + " in argument TYPES" + " (Code:1839)");
                     break;
@@ -2056,7 +2058,7 @@ public class WinX12SpecSeparator {
 
     private void read_variables(SpecificationPart partName, String content) {
 
-        warnings.add(partName + ": It is possible WinX13 and JD+ have different results for argument VARIABLES." + " (Code:1602)");
+        warnings.add(partName + ": It is possible X12 and JD+ have different results for argument VARIABLES." + " (Code:1602)");
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toLowerCase();
 
