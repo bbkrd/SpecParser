@@ -18,6 +18,7 @@ package eu.nbdemetra.specParser.Miscellaneous;
 import Logic.SpecCollector;
 import java.awt.Color;
 import java.awt.Component;
+import java.util.Collection;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
@@ -45,21 +46,15 @@ public class MyCellRenderer extends JLabel implements ListCellRenderer {
             setForeground(list.getSelectionForeground());
         } else {
             //display red or green logic because of the translation has errors or not
-            String[] errorlist = spec.getErrors();
-            if (errorlist.length == 0) {
-                String[] warningList = spec.getWarnings();
-                if (warningList.length == 0) {
-                    String[] messagesList = spec.getMessages();
-                    if (messagesList.length == 0) {
-                        setBackground(Color.green);
-                    } else {
-                        setBackground(Color.yellow);
-                    }
-                } else {
-                    setBackground(Color.orange);
-                }
-            } else {
+            Collection<TranslationInfo> error_types = spec.getTranslation_messages().values();
+            if (error_types.contains(TranslationInfo.ERROR)) {
                 setBackground(Color.red);
+            } else if (error_types.contains(TranslationInfo.WARNING1)) {
+                setBackground(Color.ORANGE);
+            } else if (error_types.contains(TranslationInfo.WARNING2)) {
+                setBackground(Color.YELLOW);
+            } else {
+                setBackground(Color.GREEN);
             }
             setForeground(list.getForeground());
         }

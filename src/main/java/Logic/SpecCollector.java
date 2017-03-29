@@ -30,8 +30,14 @@ import ec.tstoolkit.MetaData;
 import ec.tstoolkit.modelling.TsVariableDescriptor;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.regression.TsVariables;
+import eu.nbdemetra.specParser.Miscellaneous.TranslationInfo;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.prefs.Preferences;
 import options.SpecParserOptionsPanelController;
 import org.openide.util.NbPreferences;
@@ -58,10 +64,8 @@ public class SpecCollector {
 
     /*  errors      -   collects errors which appear by translating
      *   messages    -   collects messages which appear by translating   */
-    private String[] errors;
-    private String[] messages;
-    private String[] warnings;
-    private String[] tests;
+
+    private HashMap<String, TranslationInfo> translation_messages = new HashMap<>();
 
     /*  index   -   reference to each single item in a multi doc the corresponding SpecCollector (only for multi docs important)
      *   name    -   */
@@ -133,32 +137,62 @@ public class SpecCollector {
         return jdSpec;
     }
 
-    public String[] getErrors() {
-        if (errors == null) {
-            errors = new String[]{};
+    public HashMap<String, TranslationInfo> getTranslation_messages() {
+        return translation_messages;
+    }
+    
+    public List<String> getErrors() {
+
+        if (!translation_messages.containsValue(TranslationInfo.ERROR)) {
+            return null;
         }
-        return errors;
+        ArrayList<String> result = new ArrayList<>();
+        for (Map.Entry<String, TranslationInfo> entry : translation_messages.entrySet()) {
+            if (entry.getValue().equals(TranslationInfo.ERROR)) {
+                result.add(entry.getKey());
+            }
+        }
+        return result;
     }
 
-    public String[] getMessages() {
-        if (messages == null) {
-            messages = new String[]{};
+    public List<String> getMessages() {
+        if (!translation_messages.containsValue(TranslationInfo.MESSAGE)) {
+            return null;
         }
-        return messages;
+        ArrayList<String> result = new ArrayList<>();
+        for (Map.Entry<String, TranslationInfo> entry : translation_messages.entrySet()) {
+            if (entry.getValue().equals(TranslationInfo.MESSAGE)) {
+                result.add(entry.getKey());
+            }
+        }
+        return result;
     }
 
-    public String[] getWarnings() {
-        if (warnings == null) {
-            warnings = new String[]{};
+
+    public List<String> getWarnings1() {
+        if (!translation_messages.containsValue(TranslationInfo.WARNING1)) {
+            return null;
         }
-        return warnings;
+        ArrayList<String> result = new ArrayList<>();
+        for (Map.Entry<String, TranslationInfo> entry : translation_messages.entrySet()) {
+            if (entry.getValue().equals(TranslationInfo.WARNING1)) {
+                result.add(entry.getKey());
+            }
+        }
+        return result;
     }
 
-    public String[] getTests() {
-        if (tests == null) {
-            tests = new String[]{};
+    public List<String> getWarnings2() {
+        if (!translation_messages.containsValue(TranslationInfo.WARNING2)) {
+            return null;
         }
-        return tests;
+        ArrayList<String> result = new ArrayList<>();
+        for (Map.Entry<String, TranslationInfo> entry : translation_messages.entrySet()) {
+            if (entry.getValue().equals(TranslationInfo.WARNING2)) {
+                result.add(entry.getKey());
+            }
+        }
+        return result;
     }
 
     public String getRegData() {
@@ -180,10 +214,10 @@ public class SpecCollector {
             this.name = name;
         }
     }
-
 //    public void setNameForWS(String name) {
 //        nameForWS = name;
 //    }
+
     public String getName() {
         return name;
     }
@@ -223,19 +257,8 @@ public class SpecCollector {
 
             jdSpec = separator.getResult();
 
-            warnings = separator.getWarningList();
-            messages = separator.getMessageList();
-            //tests = separator.getTestsList();
-            if (ts.getTsData() == null) {
-                String[] tmp = new String[separator.getErrorList().length + 1];
-//                errors = new String[1];
-                tmp[0] = "NO DATA (Code:3003)";
-                for (int i = 1; i < tmp.length; i++) {
-                    tmp[i] = separator.getErrorList()[i - 1];
-                }
-                errors = tmp.clone();
-            } else {
-                errors = separator.getErrorList();
+            translation_messages = separator.getTranslationInfos();
+            if (ts.getTsData() != null) {
                 refreshWS();
             }
         }

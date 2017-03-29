@@ -22,13 +22,14 @@ import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import ec.tstoolkit.timeseries.simplets.TsPeriod;
 import eu.nbdemetra.specParser.Miscellaneous.DateConverter;
+import eu.nbdemetra.specParser.Miscellaneous.TranslationInfo;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public class DataLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
 
-    protected String messages = "";
+    protected HashMap<String, TranslationInfo> infos;
     protected String format = "FREE";
     protected String fileInput = "";
 
@@ -54,7 +55,12 @@ public class DataLoader {
 
     private double[] values;
 
-//    private TsData rslt;
+    public DataLoader(HashMap<String, TranslationInfo> map) {
+        if (infos == null) {
+            infos = map;
+        }
+    }
+
     public TsFrequency getPeriod() {
         return period;
     }
@@ -77,14 +83,6 @@ public class DataLoader {
 
     public int getNumberValues() {
         return values.length;
-    }
-
-    public String getMessages() {
-        return messages;
-    }
-
-    public void setMessage() {
-        messages = "";
     }
 
     public boolean isStartDefault() {
@@ -131,7 +129,7 @@ public class DataLoader {
 
     public void load(File file) {
 
-        try (BufferedReader br = new BufferedReader(new FileReader(file))){
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             StringBuilder sb = new StringBuilder();
             while ((line = br.readLine()) != null) {
@@ -146,22 +144,19 @@ public class DataLoader {
                 //because regression variables
                 fileInput = fileInput.replaceAll("D", "E");
             } else {
-                messages = "File is empty" + " (Code:2001)";
+                infos.put("File is empty" + " (Code:2001)", TranslationInfo.MESSAGE);
             }
 
         } catch (FileNotFoundException ex) {
             LOGGER.error(ex.toString());
-            messages = "File not found (Code:2007)";
-            //eig error
+            infos.put("File not found (Code:2007)", TranslationInfo.ERROR);
         } catch (IOException ex) {
             LOGGER.error(ex.toString());
-            //error
-            messages = "File is not readable" + " (Code:2002)";
+            infos.put("File is not readable" + " (Code:2002)", TranslationInfo.ERROR);
         }
     }
 
     protected double[] loadFreeFormat() {
-//        double[] val = null;
         ArrayList<Double> val = new ArrayList<>();
 
         if (!fileInput.isEmpty()) {
@@ -175,7 +170,7 @@ public class DataLoader {
                         val.add(Double.parseDouble(s));
                     } catch (NumberFormatException e) {
                         LOGGER.error(e.toString());
-                        messages = "Format is not correct." + " (Code:2003)";
+                        infos.put("Format is not correct." + " (Code:2003)", TranslationInfo.MESSAGE);
                     }
                 }
             }
@@ -211,8 +206,6 @@ public class DataLoader {
                     if (year > Integer.parseInt(split[0])) {
                         year = Integer.parseInt(split[0]);
                         setStart(DateConverter.toJD(split[0] + "." + split[1], true));
-//                        start = DateConverter.toJD(split[0] + "." + split[1], true);
-//                        changeStartDefault();
                     }
                     //calculate max period
                     if (periode < Integer.parseInt(split[1])) {
@@ -235,7 +228,7 @@ public class DataLoader {
             }
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages = "Format is not correct. Try with free format" + " (Code:2004)";
+            infos.put("Format is not correct. Try with free format." + " (Code:2004)", TranslationInfo.MESSAGE);
             loadFreeFormat();
         }
         return val;
@@ -279,7 +272,7 @@ public class DataLoader {
             }
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages = "Format is not correct" + " (Code:2005)";
+            infos.put("Format is not correct" + " (Code:2005)", TranslationInfo.MESSAGE);
         }
 
         return val;
@@ -330,13 +323,10 @@ public class DataLoader {
                 case "DATEVALUE":
                     values = loadDatevalueFormat();
                     break;
-
                 case "X12Save":
                 case "X13Save":
-//                    values = loadX12SaveFormat();
-//                    break;
                 default:
-                    messages = "No support for format " + format.toUpperCase() + " (Code:2006)";
+                    infos.put("No support for format " + format.toUpperCase() + " (Code:2006)", TranslationInfo.MESSAGE);
                     values = null;
                     break;
             }

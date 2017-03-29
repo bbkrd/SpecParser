@@ -54,10 +54,12 @@ import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
 import eu.nbdemetra.specParser.Miscellaneous.DateConverter;
 import eu.nbdemetra.specParser.Miscellaneous.SpecificationPart;
+import eu.nbdemetra.specParser.Miscellaneous.TranslationInfo;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import org.openide.util.Lookup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,23 +74,20 @@ public class WinX12SpecSeparator {
 
     /*
      spec   -   collect the x13Specification for JD+
-     errors -   collect message by translating
+     infos  -   collect message by translating
      period -   Period from WinX12, in JD+ it is given by the data
      */
     private X13Specification spec = new X13Specification();
 
-    private ArrayList<String> errors = new ArrayList();
-    private ArrayList<String> messages = new ArrayList();
-    private ArrayList<String> warnings = new ArrayList();
-    private ArrayList<String> tests = new ArrayList();
+    private HashMap<String, TranslationInfo> infos = new HashMap<>();
 
     //no equivalence in a JD+ spec item, this information is given in Ts
     //for timeseries
-    private DataLoader dataLoader = new DataLoader();
+    private DataLoader dataLoader = new DataLoader(infos);
     private String tsName = null;
     //for regression variables
     private boolean regressionSpec = false;
-    private DataLoaderRegression regressionLoader = new DataLoaderRegression();
+    private DataLoaderRegression regressionLoader = new DataLoaderRegression(infos);
     private String[] regressionTyp;
 //    private String mtaName;
     private String name;
@@ -123,13 +122,6 @@ public class WinX12SpecSeparator {
     }
 
     private void setDefaults() {
-
-        //setX11Defaults();
-//        if (spec.getRegArimaSpecification().equals(RegArimaSpecification.RGDISABLED)) {
-//            //X11
-//            spec.getRegArimaSpecification().getBasic().setPreprocessing(false);
-//
-//        } else {
         //X13
 //            x11
         if (!x12Defaults) {
@@ -219,27 +211,12 @@ public class WinX12SpecSeparator {
         this.path = path;
     }
 
-//    public void setMtaName(String name) {
-//        mtaName = name;
-//    }
     public void setName(String name) {
         this.name = name;
     }
 
-    public String[] getErrorList() {
-        return errors.toArray(new String[errors.size()]);
-    }
-
-    public String[] getMessageList() {
-        return messages.toArray(new String[messages.size()]);
-    }
-
-    public String[] getWarningList() {
-        return warnings.toArray(new String[warnings.size()]);
-    }
-
-    public String[] getTestsList() {
-        return tests.toArray(new String[tests.size()]);
+    public HashMap<String, TranslationInfo> getTranslationInfos() {
+        return infos;
     }
 
     public X13Document getResult() {
@@ -254,7 +231,7 @@ public class WinX12SpecSeparator {
     public Ts getTs() {
 //        TsData data = dataLoader.getData();
         if (dataLoader.isStartDefault() && !dataLoader.isDataFromWebserviceSet()) {
-            messages.add("SERIES: Start date is set to 01/01/1970. (Code: 1409)");
+            infos.put("SERIES: Start date is set to 01/01/1970. (Code: 1409)", TranslationInfo.MESSAGE);
         }
         if (tsName == null) {
             tsName = name;
@@ -279,16 +256,10 @@ public class WinX12SpecSeparator {
     public String[] getRegDesc() {
         return regressionLoader.getRegressorDesc();
     }
-//     public String[] getRegressorZislId() {
-//        return regressionLoader.getRegressorZislIds();
-//    }
 
     public TsVariable[] getRegressor() {
         if (regressionSpec) {
             TsVariable[] reg = regressionLoader.getRegressors();
-            if (regressionLoader.getMessages().length() > 0) {
-                messages.add("REGRESSION: " + regressionLoader.getMessages() + " (Code:1304)");
-            }
             if (reg != null) {
                 return reg;
             }
@@ -336,8 +307,6 @@ public class WinX12SpecSeparator {
                 }
                 line = line.replaceAll("\\n", " ");
                 line = line.replaceAll(";", " ");
-//                sb = new StringBuilder();
-//                line = sb.append(line).toString();
             }
             if (line.contains("(")) {
                 if (!line.contains(")")) {
@@ -394,8 +363,8 @@ public class WinX12SpecSeparator {
                                     m.invoke(this, specPartName, lineSplitted[1]);
                                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
                                     LOGGER.error(ex.toString());
-                                    warnings.add(specPartName.name() + ": No support for argument " + lineSplitted[0].toUpperCase() + " (Code:1901)");
-                                    //eventuell aufgliedern
+                                    infos.put(specPartName.name() + ": No support for argument " + lineSplitted[0].toUpperCase() + " (Code:1901)", TranslationInfo.WARNING1);
+                                    //TODO: eventuell aufgliedern
                                 }
                             }
                         }
@@ -417,7 +386,7 @@ public class WinX12SpecSeparator {
 
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException ex) {
                         LOGGER.error(ex.toString());
-                        warnings.add(specPartName.name() + ": No support for defaults. Please define some arguments." + " (Code:1902)");
+                        infos.put(specPartName.name() + ": No support for defaults. Please define some arguments." + " (Code:1902)", TranslationInfo.WARNING1);
                     }
                 }
                 if (specPartName.equals(SpecificationPart.SERIES)) {
@@ -425,7 +394,7 @@ public class WinX12SpecSeparator {
                 }
             } catch (IllegalArgumentException ex) {
                 LOGGER.error(ex.toString());
-                warnings.add(specPartSplitted[0].toUpperCase() + ": No support for spec " + specPartSplitted[0].toUpperCase() + " (Code:1903)");
+                infos.put(specPartSplitted[0].toUpperCase() + ": No support for spec " + specPartSplitted[0].toUpperCase() + " (Code:1903)", TranslationInfo.WARNING1);
             }
             noArgument = false;
 
@@ -433,12 +402,10 @@ public class WinX12SpecSeparator {
     }
 
     public void setRegressorsInSpec(String[] td, TsVariableDescriptor[] user) {
-//        if (td != null) {
         if (td.length > 0) {
             spec.getRegArimaSpecification().getRegression().getTradingDays().setUserVariables(td);
         }
         if (user.length > 0) {
-//            if (user != null) {
             spec.getRegArimaSpecification().getRegression().setUserDefinedVariables(user);
         }
     }
@@ -458,7 +425,7 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setAcceptDefault(false);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument ACCEPTDEFAULT" + " (Code:1801)");
+                infos.put(partName + ": No support for value " + content + " in argument ACCEPTDEFAULT" + " (Code:1801)", TranslationInfo.MESSAGE);
                 break;
         }
 
@@ -480,7 +447,7 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument ADJUST" + " (Code:1802)");
+                infos.put(partName + ": No support for value " + content + " in argument ADJUST" + " (Code:1802)", TranslationInfo.MESSAGE);
                 spec.getRegArimaSpecification().getTransform().setAdjust(LengthOfPeriodType.None);
                 break;
         }
@@ -498,7 +465,7 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getTransform().setAICDiff(value);
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument AICDIFF" + " (Code:1803)");
+            infos.put(partName + ": No support for value " + content + " in argument AICDIFF" + " (Code:1803)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -599,9 +566,8 @@ public class WinX12SpecSeparator {
                     }
                 }
             }
-        } 
-            else {
-            messages.add(partName + ": The number of values for argument AR is not conform to the number of values in argument MODEL." + " (Code:1506)");
+        } else {
+            infos.put(partName + ": The number of values for argument AR is not conform to the number of values in argument MODEL." + " (Code:1506)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -618,10 +584,10 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getAutoModel().setArmaSignificance(value);
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages.add(partName + ": No support for value " + content + " in argument ARMALIMIT" + " (Code:1804)");
+            infos.put(partName + ": No support for value " + content + " in argument ARMALIMIT" + " (Code:1804)", TranslationInfo.MESSAGE);
         } catch (X13Exception e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": " + e.toString());
+            infos.put(partName + ": " + e.toString(), TranslationInfo.MESSAGE);
         }
     }
 
@@ -642,7 +608,7 @@ public class WinX12SpecSeparator {
                 double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
                 spec.getRegArimaSpecification().getRegression().setFixedCoefficients(ITsVariable.shortName(fixedRegressors.get(i)), new double[]{value});
             } else {
-                warnings.add(partName + ": Initial value for " + fixedRegressors.get(i) + " is not possible.");
+                infos.put(partName + ": Initial value for " + fixedRegressors.get(i) + " is not possible.", TranslationInfo.WARNING1);
             }
         }
     }
@@ -662,7 +628,7 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setBalanced(false);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument BALANCED" + " (Code:1805)");
+                infos.put(partName + ": No support for value " + content + " in argument BALANCED" + " (Code:1805)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -683,7 +649,7 @@ public class WinX12SpecSeparator {
                 x11.setCalendarSigma(CalendarSigma.Signif);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + "in argument CALENDARSIGMA. Calendarsigma will be set to None." + " (Code:1806)");
+                infos.put(partName + ": No support for value " + content + "in argument CALENDARSIGMA. Calendarsigma will be set to None." + " (Code:1806)", TranslationInfo.MESSAGE);
             case "NONE":
                 x11.setCalendarSigma(CalendarSigma.None);
                 break;
@@ -694,7 +660,7 @@ public class WinX12SpecSeparator {
 
 //        content = content.replaceAll(";", "").trim().toUpperCase();
 //        if (content.equals("SEASONAL")) {
-        warnings.add(partName + ": No suppport for argument CENTERUSER. Please use a centred regression variable." + " (Code:1301)");
+        infos.put(partName + ": No suppport for argument CENTERUSER. Please use a centred regression variable." + " (Code:1301)", TranslationInfo.WARNING1);
 //        }
     }
 
@@ -713,7 +679,7 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setCheckMu(false);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument CHECKMU" + " (Code:1807)");
+                infos.put(partName + ": No support for value " + content + " in argument CHECKMU" + " (Code:1807)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -736,23 +702,22 @@ public class WinX12SpecSeparator {
                         o[i].setCriticalValue(Double.parseDouble(s[i]));
                     } catch (NumberFormatException e) {
                         LOGGER.error(e.toString());
-                        messages.add(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1808)");
+                        infos.put(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1808)", TranslationInfo.MESSAGE);
                     }
                 }
             } else {
                 try {
                     spec.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(Double.parseDouble(s[0]));
                     if (s.length > 1) {
-                        messages.add(partName + ": It isn't possible to set more than one critical value. The global critical value will be set to " + s[0] + " (Code:1842)");
+                        infos.put(partName + ": It isn't possible to set more than one critical value. The global critical value will be set to " + s[0] + " (Code:1842)", TranslationInfo.MESSAGE);
                     }
                 } catch (NumberFormatException e) {
                     LOGGER.error(e.toString());
-                    messages.add(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1809)");
+                    infos.put(partName + ": No support for value " + content + " in argument CRITICAL" + " (Code:1809)", TranslationInfo.MESSAGE);
                 }
             }
-//        errors.add(partName + ": No support for more than one critical value , critical value is set to " + s[0]);
         } else {
-            messages.add(partName + ": Argument TYPES have to be defined before argument CRITICAL" + " (Code:1810)");
+            infos.put(partName + ": Argument TYPES have to be defined before argument CRITICAL" + " (Code:1810)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -776,7 +741,7 @@ public class WinX12SpecSeparator {
                 }
                 break;
             default: //Fehler
-                messages.add(partName + ": No support for argument DATA in " + partName.name().toUpperCase() + " (Code:1101)");
+                infos.put(partName + ": No support for argument DATA in " + partName.name().toUpperCase() + " (Code:1101)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -792,7 +757,7 @@ public class WinX12SpecSeparator {
                 spec.getX11Specification().setExcludefcst(false);
             } else {
                 //Fehler
-                messages.add(partName + ": No support  for value " + content + " in argument EXCLUDEFCST." + " (Code:1841)");
+                infos.put(partName + ": No support  for value " + content + " in argument EXCLUDEFCST." + " (Code:1841)", TranslationInfo.MESSAGE);
             }
         }
 
@@ -810,16 +775,9 @@ public class WinX12SpecSeparator {
                 regressionLoader.setFormat(content.toUpperCase());
                 break;
             default:
-                messages.add(partName + ": No support for argument FORMAT in " + partName + " (Code:1102)");
+                infos.put(partName + ": No support for argument FORMAT in " + partName + " (Code:1102)", TranslationInfo.MESSAGE);
                 break;
         }
-
-//        if(content.toUpperCase().equals("FREE") || content.toUpperCase().equals("DATEVALUE")){
-//
-//        }else{
-//            errors.add(partName+": Format "+content.toUpperCase() + " is not supported. Data will be not loaded. ");
-//        }
-//        messages.add(partName + ": Argument FORMAT is ignored. Please have a look in SpecParser UserGuide");
     }
 
     private void read_file(SpecificationPart partName, String content) {
@@ -843,10 +801,6 @@ public class WinX12SpecSeparator {
         switch (partName) {
             case SERIES:
                 dataLoader.load(file);
-                /*                if (!dataLoader.getMessages().isEmpty()) {
-                 errors.add(partName + ": " + dataLoader.getMessages());
-                 dataLoader.setMessage();
-                 }*/
                 break;
             case REGRESSION:
                 regressionSpec = true;
@@ -855,13 +809,9 @@ public class WinX12SpecSeparator {
                     regressionLoader.setStart(dataLoader.getStart());
                 }
                 regressionLoader.setRegressorDesc(content);
-                /*if (!regressionLoader.getMessages().isEmpty()) {
-                 errors.add(partName + ": " + regressionLoader.getMessages());
-                 regressionLoader.setMessage();
-                 }*/
                 break;
             default:
-                messages.add(partName + ": No support for argument FILE in " + partName.name().toUpperCase() + " (Code:1103)");
+                infos.put(partName + ": No support for argument FILE in " + partName.name().toUpperCase() + " (Code:1103)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -874,7 +824,7 @@ public class WinX12SpecSeparator {
         if (content.equals("user")) {
             finalIsUser = true;
         } else {
-            warnings.add(partName + ": No support for value " + content.toUpperCase() + " in argument FINAL." + " (Code:1302)");
+            infos.put(partName + ": No support for value " + content.toUpperCase() + " in argument FINAL." + " (Code:1302)", TranslationInfo.WARNING1);
         }
     }
 
@@ -886,17 +836,13 @@ public class WinX12SpecSeparator {
             case "LOG":
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.Log);
                 spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
-
                 spec.getRegArimaSpecification().getRegression().getTradingDays().setAutoAdjust(false);
-
                 transformLog = true;
                 break;
             case "NONE":
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
                 spec.getX11Specification().setMode(DecompositionMode.Additive);
-
                 spec.getRegArimaSpecification().getRegression().getTradingDays().setAutoAdjust(false);
-
                 transformNone = true;
                 break;
             case "AUTO":
@@ -905,7 +851,7 @@ public class WinX12SpecSeparator {
                 transformAuto = true;
                 break;
             default:
-                warnings.add(partName + ": No support for value " + content + " in argument FUNCTION. Value is changed to NONE" + " (Code:1811)");
+                infos.put(partName + ": No support for value " + content + " in argument FUNCTION. Value is changed to NONE" + " (Code:1811)", TranslationInfo.WARNING1);
                 spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
                 break;
         }
@@ -926,7 +872,7 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setHannanRissanen(false);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument for HRINITIAL" + " (Code:1812)");
+                infos.put(partName + ": No support for value " + content + " in argument for HRINITIAL" + " (Code:1812)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -944,7 +890,7 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getAutoModel().setLjungBoxLimit(value);
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages.add(partName + ": No support for value " + content + " in argument LJUNGBOXLIMIT" + " (Code:1813)");
+            infos.put(partName + ": No support for value " + content + " in argument LJUNGBOXLIMIT" + " (Code:1813)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -960,7 +906,7 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getOutliers().setLSRun(value);
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument LSRUN" + " (Code:1814)");
+            infos.put(partName + ": No support for value " + content + " in argument LSRUN" + " (Code:1814)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1062,7 +1008,7 @@ public class WinX12SpecSeparator {
                 }
             }
         } else {
-            messages.add(partName + ": The number of values for argument MA is not conform to the number of values in argument MODEL. (Code:1505)");
+            infos.put(partName + ": The number of values for argument MA is not conform to the number of values in argument MODEL. (Code:1505)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1075,7 +1021,7 @@ public class WinX12SpecSeparator {
             spec.getX11Specification().setBackcastHorizon(backcast);
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument MAXBACK" + " (Code:1816)");
+            infos.put(partName + ": No support for value " + content + " in argument MAXBACK" + " (Code:1816)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1088,7 +1034,7 @@ public class WinX12SpecSeparator {
             spec.getX11Specification().setForecastHorizon(forecast);
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument MAXLEAD" + " (Code:1815)");
+            infos.put(partName + ": No support for value " + content + " in argument MAXLEAD" + " (Code:1815)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1109,7 +1055,7 @@ public class WinX12SpecSeparator {
 //                spec.getRegArimaSpecification().getOutliers().setMethod(OutlierSpec.Method.AddAll);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument METHOD." + " (Code:1817)");
+                infos.put(partName + ": No support for value " + content + " in argument METHOD." + " (Code:1817)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -1129,7 +1075,7 @@ public class WinX12SpecSeparator {
                 spec.getRegArimaSpecification().getAutoModel().setMixed(false);
                 break;
             default:
-                messages.add(partName + ": No support for value " + content + " in argument MIXED" + " (Code:1818)");
+                infos.put(partName + ": No support for value " + content + " in argument MIXED" + " (Code:1818)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -1147,7 +1093,7 @@ public class WinX12SpecSeparator {
                     if (!transformLog) {
                         spec.getX11Specification().setMode(DecompositionMode.Additive);
                     } else {
-                        warnings.add(SpecificationPart.TRANSFORM + ": Decompostion mode = add is not possible for transform function = log. Value changed to mult" + " (Code:1819)");
+                        infos.put(SpecificationPart.TRANSFORM + ": Decompostion mode = add is not possible for transform function = log. Value changed to mult" + " (Code:1819)", TranslationInfo.WARNING1);
                         spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
                     }
                     break;
@@ -1155,7 +1101,7 @@ public class WinX12SpecSeparator {
                     if (!transformNone) {
                         spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
                     } else {
-                        warnings.add(partName + ": For transform function = none is only mode=add in JD+ possible. Value is changed to add" + " (Code:1820)");
+                        infos.put(partName + ": For transform function = none is only mode=add in JD+ possible. Value is changed to add" + " (Code:1820)", TranslationInfo.WARNING1);
                         spec.getX11Specification().setMode(DecompositionMode.Additive);
                     }
                     break;
@@ -1163,24 +1109,24 @@ public class WinX12SpecSeparator {
                     if (!transformNone) {
                         spec.getX11Specification().setMode(DecompositionMode.LogAdditive);
                     } else {
-                        warnings.add(partName + ": For transform function = none is only mode=add in JD+ possible, Value is changed to mult" + " (Code:1821)");
+                        infos.put(partName + ": For transform function = none is only mode=add in JD+ possible, Value is changed to mult" + " (Code:1821)", TranslationInfo.WARNING1);
                         spec.getX11Specification().setMode(DecompositionMode.Multiplicative);
                     }
                     break;
                 case "pseudoadd":
                     if (!transformNone) {
-                        warnings.add(partName + ": No support for value " + content.toUpperCase() + " in argument MODE" + " (Code:1822)");
+                        infos.put(partName + ": No support for value " + content.toUpperCase() + " in argument MODE" + " (Code:1822)", TranslationInfo.WARNING1);
                     } else {
-                        warnings.add(partName + ": For transform function = none is only mode=add in JD+ possible. Value changed in add" + " (Code:1823)");
+                        infos.put(partName + ": For transform function = none is only mode=add in JD+ possible. Value changed in add" + " (Code:1823)", TranslationInfo.WARNING1);
                         spec.getX11Specification().setMode(DecompositionMode.Additive);
                     }
                     break;
                 default:
-                    messages.add(partName + ": No support for value " + content.toUpperCase() + " in argument MODE" + " (Code:1824)");
+                    infos.put(partName + ": No support for value " + content.toUpperCase() + " in argument MODE" + " (Code:1824)", TranslationInfo.MESSAGE);
                     break;
             }
         } else {
-            warnings.add(SpecificationPart.TRANSFORM + ": For transform function = auto it is not possible to set a decomposition mode" + " (Code:1825)");
+            infos.put(SpecificationPart.TRANSFORM + ": For transform function = auto it is not possible to set a decomposition mode" + " (Code:1825)", TranslationInfo.WARNING1);
             spec.getX11Specification().setMode(DecompositionMode.Undefined);
         }
     }
@@ -1210,7 +1156,7 @@ public class WinX12SpecSeparator {
         //invalid format for ARIMA model: (...)(...)3(...)
         String[] match = content.split("\\d+\\(");
         if (match.length > 1) {
-            warnings.add(partName + ": No support for value " + content + " in argument MODEL" + " (Code:1501)");
+            infos.put(partName + ": No support for value " + content + " in argument MODEL" + " (Code:1501)", TranslationInfo.WARNING1);
         } else {
 
             String[] sep = content.split("\\s*\\)\\s*\\(\\s*");
@@ -1238,7 +1184,7 @@ public class WinX12SpecSeparator {
                     sarima = true;
                     if (dataLoader.getPeriod() != null) {
                         if (!match[1].trim().equals(dataLoader.getPeriod().intValue() + "")) {
-                            messages.add(partName + ": Period are not conform to the period of the data. Model period is changed into the period of data." + " (Code:1502)");
+                            infos.put(partName + ": Period are not conform to the period of the data. Model period is changed into the period of data." + " (Code:1502)", TranslationInfo.MESSAGE);
                         } //else all right
                     } else {
                         read_period(partName, match[1]);
@@ -1259,7 +1205,7 @@ public class WinX12SpecSeparator {
                 }
                 if (s.endsWith("]")) {
                     start = s.indexOf("[");
-                    q_string = s.substring(start+1, s.length()-1).trim();
+                    q_string = s.substring(start + 1, s.length() - 1).trim();
                     q_string = q_string.replaceAll("\\s+", ",");
                     s = s.substring(0, start).trim();
                 }
@@ -1342,7 +1288,7 @@ public class WinX12SpecSeparator {
                     q = Integer.parseInt(q_string);
                 } catch (NumberFormatException e) {
                     LOGGER.error(e.toString());
-                    messages.add(partName + ": No support for value " + content + " in argument MODEL" + " (Code:1503)");
+                    infos.put(partName + ": No support for value " + content + " in argument MODEL" + " (Code:1503)", TranslationInfo.MESSAGE);
                 }
                 try {
                     if (sarima == false) {
@@ -1364,54 +1310,35 @@ public class WinX12SpecSeparator {
                             ArrayList<Parameter> tmp1 = new ArrayList<>();
                             tmp1.add(p_para[0]);
                             spec.getRegArimaSpecification().getArima().setBTheta(tmp1.toArray(new Parameter[0]));
-                            warnings.add(partName + ": Number of seasonal AR parameters is set to 1. " + " (Code:1506)");
+                            infos.put(partName + ": Number of seasonal AR parameters is set to 1. " + " (Code:1506)", TranslationInfo.WARNING1);
                         }
                         if (d <= 1) {
                             spec.getRegArimaSpecification().getArima().setBD(d);
                         } else {
                             spec.getRegArimaSpecification().getArima().setBD(1);
-                            warnings.add(partName + ": Number of seasonal differencing is set to 1. " + " (Code:1506)");
+                            infos.put(partName + ": Number of seasonal differencing is set to 1. " + " (Code:1506)", TranslationInfo.WARNING1);
                         }
                         if (q <= 1) {
                             spec.getRegArimaSpecification().getArima().setBQ(q);
                             spec.getRegArimaSpecification().getArima().setBTheta(q_para);
-                        }else{
+                        } else {
                             spec.getRegArimaSpecification().getArima().setBQ(1);
                             ArrayList<Parameter> tmp = new ArrayList<>();
                             tmp.add(q_para[0]);
                             spec.getRegArimaSpecification().getArima().setBTheta(tmp.toArray(new Parameter[0]));
-                            warnings.add(partName + ": Number of seasonal MA parameters is set to 1. " + " (Code:1506)");
-                        }                        
+                            infos.put(partName + ": Number of seasonal MA parameters is set to 1. " + " (Code:1506)", TranslationInfo.WARNING1);
+                        }
                     }
                 } catch (X13Exception e) {
                     LOGGER.error(e.toString());
-                    warnings.add(partName + ": No support for parameters in argument MODEL" + " (Code:1504)");
+                    infos.put(partName + ": No support for parameters in argument MODEL" + " (Code:1504)", TranslationInfo.WARNING1);
                 }
             }
         }
     }
 
     private void read_modelspan(SpecificationPart partName, String content) {
-
         read_span(SpecificationPart.ESTIMATE, content);
-
-    }
-
-    private void read_name(SpecificationPart partName, String content) {
-
-//        content = content.replaceAll(";", "").trim();
-//        switch (partName) {
-//            case SERIES:
-//                tsName = content.replaceAll("'", "");
-////                if (mtaName == null) {
-////                    mtaName = tsName;
-////                }
-//                break;
-//            case REGRESSION:
-//            default:
-//                messages.add(partName + ": No support for argument NAME");
-//                break;
-//        }
     }
 
     private void read_period(SpecificationPart partName, String content) {
@@ -1438,11 +1365,9 @@ public class WinX12SpecSeparator {
                         sel = spec.getRegArimaSpecification().getBasic().getSpan();
                         if (sel.getD0() != null) {
                             sel.setD0(DateConverter.changeToQuarter(sel.getD0()));
-//                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "span start date"));
                         }
                         if (sel.getD1() != null) {
                             sel.setD1(DateConverter.changeToQuarter(sel.getD1()));
-//                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "span ending date"));
                         }
                         spec.getRegArimaSpecification().getBasic().setSpan(sel);
                     }
@@ -1451,23 +1376,21 @@ public class WinX12SpecSeparator {
                         sel = spec.getRegArimaSpecification().getEstimate().getSpan();
                         if (sel.getD0() != null) {
                             sel.setD0(DateConverter.changeToQuarter(sel.getD0()));
-//                            sel.setD0(toQuarterDay(sel.getD0(), "SERIES", "modelspan start date"));
                         }
                         if (sel.getD1() != null) {
                             sel.setD1(DateConverter.changeToQuarter(sel.getD1()));
-//                            sel.setD1(toQuarterDay(sel.getD1(), "SERIES", "model span ending date"));
                         }
                         spec.getRegArimaSpecification().getEstimate().setSpan(sel);
                     }
 
                     break;
                 default:
-                    warnings.add(partName + ": No support for value " + content + " in argument PERIOD. Set to default 12" + " (Code:1405)");
+                    infos.put(partName + ": No support for value " + content + " in argument PERIOD. Set to default 12" + " (Code:1405)", TranslationInfo.WARNING1);
                     break;
             }
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument PERIOD." + " (Code:1406)");
+            infos.put(partName + ": No support for value " + content + " in argument PERIOD." + " (Code:1406)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1483,7 +1406,7 @@ public class WinX12SpecSeparator {
             }
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument POWER" + " (Code:1826)");
+            infos.put(partName + ": No support for value " + content + " in argument POWER" + " (Code:1826)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1500,10 +1423,10 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getAutoModel().setPercentReductionCV(value);
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages.add(partName + ": No support for value " + content + " in argument REDUCECV" + " (Code:1827)");
+            infos.put(partName + ": No support for value " + content + " in argument REDUCECV" + " (Code:1827)", TranslationInfo.MESSAGE);
         } catch (X13Exception e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": " + e.getMessage());
+            infos.put(partName + ": " + e.getMessage()+" (Code: 1843)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1551,7 +1474,7 @@ public class WinX12SpecSeparator {
                         tmp.add(SeasonalFilterOption.Msr);
                         break;
                     default:
-                        messages.add(partName + ": No Support for value " + content + " in argument SEASONALMA" + " (Code:1828)");
+                        infos.put(partName + ": No Support for value " + content + " in argument SEASONALMA" + " (Code:1828)", TranslationInfo.MESSAGE);
                         tmp.add(null);
                         break;
                 }
@@ -1560,7 +1483,7 @@ public class WinX12SpecSeparator {
         if (tmp.size() == 1 || tmp.size() == dataLoader.getPeriod().intValue()) {
             spec.getX11Specification().setSeasonalFilters(tmp.toArray(new SeasonalFilterOption[tmp.size()]));
         } else {
-            messages.add(partName + ": Period is not conform to the period of the data. Seasonal filter is set to " + tmp.get(0) + " (Code:1829)");
+            infos.put(partName + ": Period is not conform to the period of the data. Seasonal filter is set to " + tmp.get(0) + " (Code:1829)", TranslationInfo.MESSAGE);
             spec.getX11Specification().setSeasonalFilter(tmp.get(0));
         }
     }
@@ -1576,12 +1499,6 @@ public class WinX12SpecSeparator {
         cont = cont.replaceAll("\\s*\\(\\s*", "");
         cont = cont.replaceAll("\\s*\\)\\s*", "");
 
-//        if (cont.startsWith("\\s")) {
-//            cont = cont.substring(1);
-//        }
-//        if (cont.endsWith("\\s")) {
-//            cont = cont.substring(0, cont.length() - 2);
-//        }
         String[] tmp;
         if (cont.contains(",")) {
             tmp = cont.split(",");
@@ -1605,7 +1522,7 @@ public class WinX12SpecSeparator {
             }
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument SIGMALIM" + " (Code:1830)");
+            infos.put(partName + ": No support for value " + content + " in argument SIGMALIM" + " (Code:1830)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1677,11 +1594,10 @@ public class WinX12SpecSeparator {
             if (setGroup1) {
                 spec.getX11Specification().setSigmavec(vec);
             } else {
-                messages.add(partName + ": For argument SIGMACVEC group 1 contains no element." + " (Code:1831)");
+                infos.put(partName + ": For argument SIGMACVEC group 1 contains no element." + " (Code:1831)", TranslationInfo.MESSAGE);
             }
-
         } else {
-            messages.add(partName + ": Argument SIGMAVEC needs argument CALENDARSIGMA = select" + " (Code:1832)");
+            infos.put(partName + ": Argument SIGMAVEC needs argument CALENDARSIGMA = select" + " (Code:1832)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1698,30 +1614,19 @@ public class WinX12SpecSeparator {
             if (split[0].replaceAll("\\s+", "").isEmpty()) {
                 if (split[1].replaceAll("\\s+", "").isEmpty()) {
                     // beides leer, sowas in der art ( , )
-                    messages.add(partName + ": No support for value " + content + " in argument SPAN" + " (Code:1401)");
+                    infos.put(partName + ": No support for value " + content + " in argument SPAN" + " (Code:1401)", TranslationInfo.MESSAGE);
                 } else {
                     //TO
-//                    dummy.setType(PeriodSelectorType.To);
-//                    dummy.to(DateConverter.toJD(split[1], dataLoader.getPeriod()));
-//                    p.to(calcDay(partName, split[1]));
                     //modify to between
-                    dummy.setType(PeriodSelectorType.Between);
-                    dummy.setD0(spec.getRegArimaSpecification().getBasic().getSpan().getD0());
-                    dummy.setD1(DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
-//                    dummy.to(DateConverter.toJD(split[1], dataLoader.getPeriod()));
+                    dummy.between(spec.getRegArimaSpecification().getBasic().getSpan().getD0(), DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
                 }
             } else {
                 if (split[1].replaceAll("\\s+", "").isEmpty()) {
                     //FROM
-                    dummy.setType(PeriodSelectorType.From);
                     dummy.from(DateConverter.toJD(split[0], dataLoader.getPeriod(), true));
-//                    p.from(calcDay(partName, split[0]));
-
                 } else {
                     //BETWEEN
-                    dummy.setType(PeriodSelectorType.Between);
                     dummy.between(DateConverter.toJD(split[0], dataLoader.getPeriod(), true), DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
-//                    p.between(calcDay(partName, split[0]), calcDay(partName, split[1]));
                 }
             }
 
@@ -1729,8 +1634,7 @@ public class WinX12SpecSeparator {
             //andere FÃƒÂ¤lle werden nicht abgeprÃƒÂ¼ft, da von korrekten Spec files ausgegangen wird
             TsPeriodSelector span_current = spec.getRegArimaSpecification().getBasic().getSpan();
             if (dummy.getType().equals(PeriodSelectorType.All)) {
-                dummy.setType(PeriodSelectorType.From);
-                dummy.setD0(span_current.getD0());
+                dummy.from(span_current.getD0());
             }
 
             switch (partName.toString().toUpperCase()) {
@@ -1753,13 +1657,13 @@ public class WinX12SpecSeparator {
                     //anderenfalls war modelspan schon geaendert
                     break;
                 default:
-                    messages.add(partName + ": No support for argument SPAN" + " (Code:1402)");
+                    infos.put(partName + ": No support for argument SPAN" + " (Code:1402)", TranslationInfo.MESSAGE);
                     break;
             }
         } else {
             //Fehler
             //drueber nachdenken
-            messages.add((String) (partName == SpecificationPart.ESTIMATE ? SpecificationPart.SERIES : partName + ": No support for value " + content + " in argument SPAN" + " (Code:1403)"));
+            infos.put((String) (partName == SpecificationPart.ESTIMATE ? SpecificationPart.SERIES : partName + ": No support for value " + content + " in argument SPAN" + " (Code:1403)"), TranslationInfo.MESSAGE);
         }
     }
 
@@ -1777,37 +1681,31 @@ public class WinX12SpecSeparator {
 
                 if (start.isNotBefore(dataLoader.getStart())) {
                     TsPeriodSelector p = spec.getRegArimaSpecification().getBasic().getSpan();
-//                if(spec.getRegArimaSpecification().getBasic().getSpan().)
                     switch (p.getType()) {
                         case All:
-                            p.setType(PeriodSelectorType.From);
-                            p.setD0(start);
+                            p.from(start);
                             break;
                         case To:
-                            p.setType(PeriodSelectorType.Between);
-                            p.setD0(start);
+                            p.to(start);
                             break;
                         case Between:
                         case From:
                             if (p.getD0().isBefore(start)) {
                                 //d0<start
                                 //=> Fehler da d0 vor start
-                                p.setD0(start);
-                                warnings.add(partName + ": Start and span are not correct. (Code:1407)");
+                                p.from(start);
+                                infos.put(partName + ": Start and span are not correct. (Code:1407)", TranslationInfo.WARNING1);
                             }//d0>=start
                             break;
                         default://
-                            warnings.add(partName + ": Something is wrong at start or span argument. (Code:1408)");
+                            infos.put(partName + ": Something is wrong at start or span argument. (Code:1408)", TranslationInfo.WARNING1);
                             //einfach mal auf from und start
-                            p.setType(PeriodSelectorType.From);
-                            p.setD0(start);
+                            p.from(start);
                             break;
                     }
-                    //                spec.getRegArimaSpecification().getBasic().setSpan(p);
                     spec.getRegArimaSpecification().getEstimate().setSpan(p);
-
                 } else {
-                    warnings.add(partName + ": Start date is before start of timeseries. (Code: 1410)");
+                    infos.put(partName + ": Start date is before start of timeseries. (Code: 1410)", TranslationInfo.WARNING1);
                 }
                 break;
             case REGRESSION:
@@ -1817,7 +1715,7 @@ public class WinX12SpecSeparator {
 
                 break;
             default:
-                messages.add(partName + ": No support for argument START" + " (Code:1404)");
+                infos.put(partName + ": No support for argument START" + " (Code:1404)", TranslationInfo.MESSAGE);
                 break;
         }
     }
@@ -1831,14 +1729,8 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getOutliers().setMonthlyTCRate(value);
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": No support for value " + content + " in argument TCRATE" + " (Code:1833)");
+            infos.put(partName + ": No support for value " + content + " in argument TCRATE" + " (Code:1833)", TranslationInfo.MESSAGE);
         }
-    }
-
-    private void read_title(SpecificationPart partName, String content) {
-//        if (partName == SpecificationPart.SERIES) {
-//            tsName = content.replaceAll(";", "").trim();
-//        }
     }
 
     private void read_tol(SpecificationPart partName, String content) {
@@ -1850,10 +1742,10 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getEstimate().setTol(value);
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages.add(partName + ": No support for value " + content + " in argument TOL" + " (Code:1834)");
+            infos.put(partName + ": No support for value " + content + " in argument TOL" + " (Code:1834)", TranslationInfo.MESSAGE);
         } catch (X13Exception e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": " + e.getMessage());
+            infos.put(partName + ": " + e.getMessage() + " (Code: 1838)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1869,7 +1761,7 @@ public class WinX12SpecSeparator {
             spec.getX11Specification().setHendersonFilterLength(t);
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages.add(partName + ": No support for value " + content + " in argument TRENDMA" + " (Code:1835)");
+            infos.put(partName + ": No support for value " + content + " in argument TRENDMA" + " (Code:1835)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1880,7 +1772,7 @@ public class WinX12SpecSeparator {
         if (content.toUpperCase().equals("SUMMARY")) {
             spec.getX11Specification().setSeasonal(false);
         } else {
-            messages.add(partName + ": No support for value " + content.toUpperCase() + " in argument TYPE." + " (Code:1836)");
+            infos.put(partName + ": No support for value " + content.toUpperCase() + " in argument TYPE." + " (Code:1836)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1901,7 +1793,6 @@ public class WinX12SpecSeparator {
         } else {
             split = s.split("\\s+");
         }
-//            ArrayList<SingleOutlierSpec> value = new ArrayList();
         for (String t : split) {
             t = t.trim().toUpperCase();
             switch (t) {
@@ -1909,40 +1800,27 @@ public class WinX12SpecSeparator {
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
-//                        value.add(new SingleOutlierSpec(OutlierType.AO));
-//                        value.add(new SingleOutlierSpec(OutlierType.LS));
-//                        value.add(new SingleOutlierSpec(OutlierType.TC));
                     break;
                 case "NONE":
                     spec.getRegArimaSpecification().getOutliers().clearTypes();
                     break;
                 case "AO":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.AO);
-//                        value.add(new SingleOutlierSpec(OutlierType.AO));
                     break;
                 case "LS":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
-//                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value LS in argument TYPES." + " (Code:1837)");
-
-//                        value.add(new SingleOutlierSpec(OutlierType.LS));
                     break;
                 case "TC":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
-//                        value.add(new SingleOutlierSpec(OutlierType.TC));
-//                    warnings.add(partName + ": It is possible WinX13 and JD+ have different results for the value TC in argument TYPES." + " (Code:1838)");
-
                     break;
                 case "SO":
                     spec.getRegArimaSpecification().getOutliers().add(OutlierType.SO);
                     break;
                 default:
-                    messages.add(partName + ": No support for value " + t.toUpperCase() + " in argument TYPES" + " (Code:1839)");
+                    infos.put(partName + ": No support for value " + t.toUpperCase() + " in argument TYPES" + " (Code:1839)", TranslationInfo.MESSAGE);
                     break;
             }
         }
-        warnings.add(partName + ": It is possible WinX13 and JD+ have different results argument TYPES." + " (Code:1837)");
-//            spec.getRegArimaSpecification().getOutliers().setTypes((SingleOutlierSpec[]) value.toArray());
-
     }
 
     private void read_urfinal(SpecificationPart partName, String content) {
@@ -1957,10 +1835,10 @@ public class WinX12SpecSeparator {
             spec.getRegArimaSpecification().getAutoModel().setUnitRootLimit(value);
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            messages.add(partName + ": No support for value " + content + " in argument URFINAL" + " (Code:1840)");
+            infos.put(partName + ": No support for value " + content + " in argument URFINAL" + " (Code:1840)", TranslationInfo.MESSAGE);
         } catch (X13Exception e) {
             LOGGER.error(e.toString());
-            messages.add(partName + ": " + e.getMessage());
+            infos.put(partName + ": " + e.getMessage() + " (Code: 1816)", TranslationInfo.MESSAGE);
         }
     }
 
@@ -1987,12 +1865,6 @@ public class WinX12SpecSeparator {
                 regressionTyp[i] = "USER";
             }
         }
-//            else {
-//            if (regressionTyp.length != regressors.length) {
-//                regressionTyp = new String[regressors.length];
-//            }
-//        }
-
         regressionSpec = true;
     }
 
@@ -2041,14 +1913,13 @@ public class WinX12SpecSeparator {
                     break;
                 default: // easter, tdstock etc.
                     if (!stretched) {
-                        warnings.add(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
+                        infos.put(partName + ": No support for value " + regressors[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)", TranslationInfo.WARNING1);
                     } else {
                         if (!alreday) {
-                            warnings.add(partName + ": No support for value " + reg[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)");
+                            infos.put(partName + ": No support for value " + reg[i].toUpperCase() + " in argument USERTYPE. Values changed to value USER" + " (Code:1303)", TranslationInfo.WARNING1);
                             alreday = true;
                         }
                     }
-
                     regressionTyp[i] = "USER";
                     break;
             }
@@ -2057,8 +1928,6 @@ public class WinX12SpecSeparator {
     }
 
     private void read_variables(SpecificationPart partName, String content) {
-
-        warnings.add(partName + ": It is possible X12 and JD+ have different results for argument VARIABLES." + " (Code:1602)");
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toLowerCase();
 
@@ -2069,23 +1938,16 @@ public class WinX12SpecSeparator {
             int endIndex = content.indexOf("]", beginIndex) + 1;
             String sincos = content.substring(beginIndex, endIndex);
             content = content.replace(sincos, "");
-//            content = content.replaceAll(sincos, sincos.replaceAll(",", ";")); Komma ersetzen
-            warnings.add(partName + ": Value SINCOS in argument VARIABLES is not supported (Code:1604).");
+            infos.put(partName + ": Value SINCOS in argument VARIABLES is not supported (Code:1604).", TranslationInfo.WARNING1);
         }
 
         // create some separator
         content = content.replaceAll(",", " ");
         String[] variables = content.split("\\s+");
-
-//        if (content.contains(",")) {
-//            variables = content.split(",");
-//        } else {
-//            variables = 
-//        }
         String method;
         String assign;
-        for (String var : variables) {
 
+        for (String var : variables) {
             var = var.trim();
             if (var.contains("[")) {
                 //easter
@@ -2094,7 +1956,6 @@ public class WinX12SpecSeparator {
 
             } else if (var.length() > 2 && (var.charAt(2) == '1' || var.charAt(2) == '2')) {
                 //outlier oder ramp: rp1999.1 or LS2002.4
-
                 method = "do_" + var.substring(0, 2).toLowerCase();
                 assign = var.substring(2);
 
@@ -2110,9 +1971,8 @@ public class WinX12SpecSeparator {
                 m.invoke(this, partName, assign);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
                 LOGGER.error(ex.toString());
-                messages.add(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + content.toUpperCase() + " in VARIABLES is not supported" + " (Code:1600)"));
+                infos.put(partName.name() + ": " + (assign == null ? "Argument VARIABLES is empty" : "Value " + content.toUpperCase() + " in VARIABLES is not supported" + " (Code:1600)"), TranslationInfo.MESSAGE);
             }
-
             //dynamisch mit method und string, exception handling
         }
     }
@@ -2147,9 +2007,6 @@ public class WinX12SpecSeparator {
                                 dataLoader.setMoniker(moniker);
                                 dataLoader.setPeriod(dataFromWebServive.getFrequency());
                                 dataLoader.setZislId(content);
-                                if (!dataLoader.getMessages().isEmpty()) {
-                                    errors.add(partName + ": " + dataLoader.getMessages());
-                                }
                             }
                         } else {
                             // 2. zisl befehl fÃ¼r alte d10
@@ -2163,20 +2020,17 @@ public class WinX12SpecSeparator {
                         regressionLoader.setPeriod(dataFromWebServive.getFrequency());
 //                    regressionLoader.setRegressorDesc(content);
                         regressionLoader.setRegressorZisl(content);
-                        if (!regressionLoader.getMessages().isEmpty()) {
-                            errors.add(partName + ": " + regressionLoader.getMessages());
-                        }
                         regressionSpec = true;
                         break;
                     default:
-                        messages.add(partName + ": Hier wird zisl nicht unterstÃƒÂ¼tzt!" + " (Code:1201)");
+                        infos.put(partName + ": Hier wird zisl nicht unterstuetzt!" + " (Code:1201)", TranslationInfo.MESSAGE);
                         break;
                 }
             } else {
-                errors.add(partName + ": Keine Werte vom Webservice verfÃƒÂ¼gbar" + " (Code:1202)");
+                infos.put(partName + ": Keine Werte vom Webservice verfuegbar" + " (Code:1202)", TranslationInfo.ERROR);
             }
         } else {
-            errors.add(partName + ": WebService-Plugin nicht vorhanden" + " (Code:1203)");
+            infos.put(partName + ": WebService-Plugin nicht vorhanden" + " (Code:1203)", TranslationInfo.ERROR);
         }
     }
 
@@ -2209,14 +2063,11 @@ public class WinX12SpecSeparator {
 
     /*methods for variables*/
     private void do_const(SpecificationPart partName, String content) {
-
         spec.getRegArimaSpecification().getArima().setMean(true);
     }
 
     private void do_td(SpecificationPart partName, String content) {
-
         TradingDaysSpec td = spec.getRegArimaSpecification().getRegression().getTradingDays();
-//        td.setAutoAdjust(false);
         td.setTradingDaysType(TradingDaysType.TradingDays);
         td.setTest(RegressionTestSpec.None);
         td.setHolidays(null);
@@ -2224,7 +2075,7 @@ public class WinX12SpecSeparator {
     }
 
     private void do_seasonal(SpecificationPart partName, String content) {
-        warnings.add(partName + ": No support for value SEASONAL in argument VARIABLES. Please, increase MA parameter and set closed to 1." + " (Code:1601)");
+        infos.put(partName + ": No support for value SEASONAL in argument VARIABLES. Please, increase MA parameter and set closed to 1." + " (Code:1601)", TranslationInfo.WARNING1);
     }
 
     private void do_easter(SpecificationPart partName, String content) {
@@ -2236,7 +2087,7 @@ public class WinX12SpecSeparator {
                 w = Integer.parseInt(content);//abfangen
             } catch (NumberFormatException e) {
                 LOGGER.error(e.toString());
-                warnings.add(partName + ": No support for variables = ( easter[ " + content + " ] )");
+                infos.put(partName + ": No support for variables = ( easter[ " + content + " ] ). (Code: 1605)", TranslationInfo.WARNING1);
             }
         }
         easter.setType(MovingHolidaySpec.Type.Easter);
@@ -2280,7 +2131,7 @@ public class WinX12SpecSeparator {
                 w = Integer.parseInt(content);
             } catch (NumberFormatException e) {
                 LOGGER.error(e.toString());
-                warnings.add(partName + ": No support for variables = ( tdstock[ " + content + " ] )");
+                infos.put(partName + ": No support for variables = ( tdstock[ " + content + " ] ). (Code: 1603)", TranslationInfo.WARNING1);
             }
         }
         td.setStockTradingDays(w);
@@ -2300,9 +2151,6 @@ public class WinX12SpecSeparator {
         String[] ramps = content.split("-");
         Day start = DateConverter.toJD(ramps[0].trim(), dataLoader.getPeriod(), true);
         Day end = DateConverter.toJD(ramps[1].trim(), dataLoader.getPeriod(), false);
-//        Day start = calcDay(partName, ramps[0].trim());
-//        Day end = calcDay(partName, ramps[1].trim());
-
         spec.getRegArimaSpecification().getRegression().add(new Ramp(start, end));
 
         fixedRegressors.add("rp$" + start.toString() + "$" + end.toString());
@@ -2322,6 +2170,9 @@ public class WinX12SpecSeparator {
     private void read_outofsample(SpecificationPart partName, String content) {
     }
 
+    private void read_name(SpecificationPart partName, String content) {
+    }
+
     private void read_precision(SpecificationPart partName, String content) {
     }
 
@@ -2335,5 +2186,8 @@ public class WinX12SpecSeparator {
     }
 
     private void read_spectrumtype(SpecificationPart partName, String content) {
+    }
+
+    private void read_title(SpecificationPart partName, String content) {
     }
 }

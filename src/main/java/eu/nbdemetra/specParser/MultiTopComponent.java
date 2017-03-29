@@ -213,21 +213,10 @@ public final class MultiTopComponent extends TopComponent {
     }//GEN-LAST:event_loadActionPerformed
 
     private void refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshActionPerformed
-        // TODO add your handling code here:
-        SpecCollector newSpec = spec_array.get(specList.getSelectedIndex());//specViewer.getSpecCollector();
+        SpecCollector newSpec = spec_array.get(specList.getSelectedIndex());
         newSpec.setWinX12Spec(specViewer.getWinX12Text());
         newSpec.translate(TranslationTo_Type.JDSpec);
-        
-//        SaProcessing multiDoc = ((MultiProcessingDocument) wsItem.getElement()).getCurrent();
-        
-
-//        newSpec.setJDSpec(newSpec.getJDSpec());
-        specViewer.refresh(newSpec);
-//        
-//                SaItem testi = multiDoc.get(newSpec.getIndex()).newSpecification(newSpec.getTs(), (ISaSpecification) newSpec.getJDSpec().getSpecification(), EstimationPolicyType.None); //setPointSpecification((ISaSpecification) newSpec.getJDSpec());
-//        multiDoc.replace(multiDoc.get(newSpec.getIndex()), testi);
-//        
-//        
+        specViewer.refresh(newSpec);       
         refresh.setEnabled(true);
         refresh.setForeground(Color.black);
     }//GEN-LAST:event_refreshActionPerformed

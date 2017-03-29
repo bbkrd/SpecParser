@@ -102,27 +102,24 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
             winX12Text.setText(this.spec.getWinX12Spec());
             errormessage.setText("ERRORS\n"
                     + "******\n");
-            for (String a : this.spec.getErrors()) {
-                errormessage.append(a + "\n");
+            if (this.spec.getErrors() != null) {
+                this.spec.getErrors().stream().forEach(s -> errormessage.append(s+"\n"));
             }
             errormessage.append("\nWARNINGS\n"
                     + "********\n");
-            for (String a : this.spec.getWarnings()) {
-                errormessage.append(a + "\n");
+            if (this.spec.getWarnings1() != null) {
+                this.spec.getWarnings1().stream().forEach(s -> errormessage.append(s+"\n"));
+            }
+            if (this.spec.getWarnings2() != null) {
+                this.spec.getWarnings2().stream().forEach(s -> errormessage.append(s+"\n"));
             }
             errormessage.append("\nMESSAGES\n"
                     + "********\n");
-            for (String a : this.spec.getMessages()) {
-                errormessage.append(a + "\n");
+            if (this.spec.getMessages() != null) {
+                this.spec.getMessages().stream().forEach(s -> errormessage.append(s+"\n"));
             }
-
-//            errormessage.append("\nTESTS\n"
-//                    + "********\n");
-//            for (String a : this.spec.getTests()) {
-//                errormessage.append(a + "\n");
-//            }
             setDocument(this.spec.getJDSpec());
-           
+
             Component c = ((BorderLayout) specPanel.getLayout()).getLayoutComponent(BorderLayout.SOUTH);
             if (c != null) {
                 specPanel.remove(c);
