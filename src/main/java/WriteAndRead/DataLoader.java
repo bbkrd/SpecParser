@@ -144,15 +144,21 @@ public class DataLoader {
                 //because regression variables
                 fileInput = fileInput.replaceAll("D", "E");
             } else {
-                infos.put("File is empty" + " (Code:2001)", TranslationInfo.MESSAGE);
+                infos.put("File empty"
+                        + ". (Code:2001)", 
+                        TranslationInfo.ERROR);
             }
 
         } catch (FileNotFoundException ex) {
             LOGGER.error(ex.toString());
-            infos.put("File not found (Code:2007)", TranslationInfo.ERROR);
+            infos.put("File not found"
+                    + ". (Code:2007)", 
+                    TranslationInfo.ERROR);
         } catch (IOException ex) {
             LOGGER.error(ex.toString());
-            infos.put("File is not readable" + " (Code:2002)", TranslationInfo.ERROR);
+            infos.put("File not readable"
+                    + ". (Code:2002)", 
+                    TranslationInfo.ERROR);
         }
     }
 
@@ -170,7 +176,9 @@ public class DataLoader {
                         val.add(Double.parseDouble(s));
                     } catch (NumberFormatException e) {
                         LOGGER.error(e.toString());
-                        infos.put("Format is not correct." + " (Code:2003)", TranslationInfo.MESSAGE);
+                        infos.put("Incorrect data format"
+                                + ". (Code:2003)", 
+                                TranslationInfo.ERROR);
                     }
                 }
             }
@@ -228,7 +236,10 @@ public class DataLoader {
             }
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            infos.put("Format is not correct. Try with free format." + " (Code:2004)", TranslationInfo.MESSAGE);
+            infos.put("Incorrect data format. "
+                    + "Free format is used instead"
+                    + ". (Code:2004)", 
+                    TranslationInfo.WARNING2);
             loadFreeFormat();
         }
         return val;
@@ -272,7 +283,9 @@ public class DataLoader {
             }
         } catch (NumberFormatException ex) {
             LOGGER.error(ex.toString());
-            infos.put("Format is not correct" + " (Code:2005)", TranslationInfo.MESSAGE);
+            infos.put("Incorrect data format"
+                    + ". (Code:2005)", 
+                    TranslationInfo.ERROR);
         }
 
         return val;
@@ -326,7 +339,7 @@ public class DataLoader {
                 case "X12Save":
                 case "X13Save":
                 default:
-                    infos.put("No support for format " + format.toUpperCase() + " (Code:2006)", TranslationInfo.MESSAGE);
+                    infos.put("Value " + format.toUpperCase() + " in argument FORMAT not supported. (Code:2006)", TranslationInfo.ERROR);
                     values = null;
                     break;
             }

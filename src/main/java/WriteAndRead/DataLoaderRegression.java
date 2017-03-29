@@ -39,7 +39,7 @@ public class DataLoaderRegression extends DataLoader {
     public DataLoaderRegression(HashMap<String, TranslationInfo> map) {
         super(map);
     }
-    
+
     public void addRegFromWebServive(TsData data) {
         regressorsFromWebService.add(data);
     }
@@ -67,8 +67,8 @@ public class DataLoaderRegression extends DataLoader {
     public void setRegressorDesc(ArrayList<String> regressorDesc) {
         this.regressorDesc = regressorDesc;
     }
-    
-        public void setRegressorDesc(String regressorDesc) {
+
+    public void setRegressorDesc(String regressorDesc) {
         this.regressorDesc.add(regressorDesc);
     }
 
@@ -92,7 +92,7 @@ public class DataLoaderRegression extends DataLoader {
                     for (int i = 0; i < lengthOfRegressors; i++) {
                         tmp[i] = super.getValues()[i * regressorName.size() + regressor];
                     }
-                    //month geht nicht wenn größer als 3
+                    //month geht nicht wenn grÃ¶ÃŸer als 3
                     int p = getStart().getMonth();
                     if (getPeriod().equals(TsFrequency.Quarterly)) {
                         p = (p / 3);
@@ -115,8 +115,11 @@ public class DataLoaderRegression extends DataLoader {
                     }
                     return r.toArray(new TsVariable[0]);
                 } else {
-                    //Fehlermeldung: unterschiedliche Längen bei Namen und Daten
-                    super.infos.put("Unterschiedliche Anzahl an Regressornamen und -daten " + " (Code:2101).", TranslationInfo.MESSAGE);
+                    //Fehlermeldung: unterschiedliche LÃ¤ngen bei Namen und Daten
+                    super.infos.put("REGRESSION"
+                            + ": Number of regressor names not equal to number of regressors"
+                            + ". (Code:2101).",
+                            TranslationInfo.ERROR);
                     return null;
                 }
             }
