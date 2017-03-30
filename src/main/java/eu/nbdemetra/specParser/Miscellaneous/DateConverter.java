@@ -181,7 +181,7 @@ public class DateConverter {
                 break;
             default:
                 //Fehler
-                rslt = null;
+                rslt = month;
                 break;
         }
         return rslt;
