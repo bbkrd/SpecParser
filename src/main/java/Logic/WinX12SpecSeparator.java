@@ -2340,6 +2340,7 @@ public class WinX12SpecSeparator {
                             // 2. zisl befehl fuer alte d10
                             StringBuilder sb = new StringBuilder("prodebene");
                             sb.append(InformationSet.STRSEP).append("seasonalfactor").append(InformationSet.STRSEP).append("loadid");
+                            meta.put(sb.toString(), content);
                         }
                         break;
                     case REGRESSION:
@@ -2388,7 +2389,7 @@ public class WinX12SpecSeparator {
                 tmp = "forecast";
                 break;
             default:
-                //nicht unterstÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼tzt
+                //nicht unterstuetzt
                 break;
         }
 
