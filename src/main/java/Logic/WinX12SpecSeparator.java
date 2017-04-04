@@ -2339,6 +2339,12 @@ public class WinX12SpecSeparator {
                             StringBuilder sb = new StringBuilder("prodebene");
                             sb.append(InformationSet.STRSEP).append("seasonalfactor").append(InformationSet.STRSEP).append("loadid");
                             meta.put(sb.toString(), content);
+
+                            content = content.toUpperCase().replaceAll(":X:", ":K:");
+                            sb = new StringBuilder("prodebene");
+                            sb.append(InformationSet.STRSEP).append("calendarfactor").append(InformationSet.STRSEP).append("loadid");
+                            meta.put(sb.toString(), content);
+
                         }
                         break;
                     case REGRESSION:
