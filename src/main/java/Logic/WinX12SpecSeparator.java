@@ -108,6 +108,7 @@ public class WinX12SpecSeparator {
     private boolean calendarsigmaSelect = false;
     private boolean finalIsUser = false;
     private boolean x12Defaults = false;
+    private boolean seasonalAirline = false;
 
     //ZISD
     private MetaData meta = new MetaData();
@@ -1309,13 +1310,6 @@ public class WinX12SpecSeparator {
          *  delta is an integer (12 for months, 4 for quater year, ...)
          */
         spec.getRegArimaSpecification().getAutoModel().setEnabled(false);
-        //important if one Arima part is not specified
-        spec.getRegArimaSpecification().getArima().setP(0);
-        spec.getRegArimaSpecification().getArima().setD(0);
-        spec.getRegArimaSpecification().getArima().setQ(0);
-        spec.getRegArimaSpecification().getArima().setBP(0);
-        spec.getRegArimaSpecification().getArima().setBD(0);
-        spec.getRegArimaSpecification().getArima().setBQ(0);
 
         //1. Split on ")(" with or without spaces
         content = content.replaceAll(";", "").trim();
@@ -1324,9 +1318,10 @@ public class WinX12SpecSeparator {
         if (match.length > 1) {
             infos.put(partName
                     + ": Value " + content + " in argument MODEL not supported."
-                    + " Value set to default (0 0 0)(0 0 0)"
+                    + " Value set to default (0 1 1)(0 1 1)"
                     + ". (Code:1501)",
                     TranslationInfo.WARNING2);
+            spec.getRegArimaSpecification().getArima().airline();
         } else {
 
             String[] sep = content.split("\\s*\\)\\s*\\(\\s*");
@@ -1479,41 +1474,44 @@ public class WinX12SpecSeparator {
                         spec.getRegArimaSpecification().getArima().setTheta(q_para);
                     } else {
 //                    ii) SARIMA part
-                        if (p <= 1) {
-                            spec.getRegArimaSpecification().getArima().setBP(p);
-                            spec.getRegArimaSpecification().getArima().setBPhi(p_para);
-                        } else {
-                            spec.getRegArimaSpecification().getArima().setBP(1);
-                            // was passiert hier? p_para 
-                            ArrayList<Parameter> tmp1 = new ArrayList<>();
-                            tmp1.add(p_para[0]);
-                            spec.getRegArimaSpecification().getArima().setBTheta(tmp1.toArray(new Parameter[0]));
-                            infos.put(partName
-                                    + ": Order of seasonal AR parameters is " + p + " which is greater than 1. Order of AR parameters reduced to 1."
-                                    + " (Code:1506)",
-                                    TranslationInfo.WARNING1);
-                        }
-                        if (d <= 1) {
-                            spec.getRegArimaSpecification().getArima().setBD(d);
-                        } else {
-                            spec.getRegArimaSpecification().getArima().setBD(1);
-                            infos.put(partName
-                                    + ": Order of seasonal differencing parameters is " + d + " which is greater than 1. Order of differencing parameters reduced to 1."
-                                    + " (Code:1506)",
-                                    TranslationInfo.WARNING1);
-                        }
-                        if (q <= 1) {
-                            spec.getRegArimaSpecification().getArima().setBQ(q);
-                            spec.getRegArimaSpecification().getArima().setBTheta(q_para);
-                        } else {
-                            spec.getRegArimaSpecification().getArima().setBQ(1);
-                            ArrayList<Parameter> tmp = new ArrayList<>();
-                            tmp.add(q_para[0]);
-                            spec.getRegArimaSpecification().getArima().setBTheta(tmp.toArray(new Parameter[0]));
-                            infos.put(partName
-                                    + ": Order of seasonal MA parameters is " + q + " which is greater than 1. Order of MA parameters reduced to 1."
-                                    + " (Code:1506)",
-                                    TranslationInfo.WARNING1);
+                        if (!seasonalAirline) {
+                            if (p <= 1) {
+                                spec.getRegArimaSpecification().getArima().setBP(p);
+                                spec.getRegArimaSpecification().getArima().setBPhi(p_para);
+                            } else {
+                                spec.getRegArimaSpecification().getArima().setBP(1);
+                                // was passiert hier? p_para 
+                                ArrayList<Parameter> tmp1 = new ArrayList<>();
+                                tmp1.add(p_para[0]);
+                                spec.getRegArimaSpecification().getArima().setBTheta(tmp1.toArray(new Parameter[0]));
+                                infos.put(partName
+                                        + ": Order of seasonal AR parameters is " + p + " which is greater than 1. Order of AR parameters reduced to 1."
+                                        + " (Code:1506)",
+                                        TranslationInfo.WARNING1);
+                            }
+
+                            if (d <= 1) {
+                                spec.getRegArimaSpecification().getArima().setBD(d);
+                            } else {
+                                spec.getRegArimaSpecification().getArima().setBD(1);
+                                infos.put(partName
+                                        + ": Order of seasonal differencing parameters is " + d + " which is greater than 1. Order of differencing parameters reduced to 1."
+                                        + " (Code:1506)",
+                                        TranslationInfo.WARNING1);
+                            }
+                            if (q <= 1) {
+                                spec.getRegArimaSpecification().getArima().setBQ(q);
+                                spec.getRegArimaSpecification().getArima().setBTheta(q_para);
+                            } else {
+                                spec.getRegArimaSpecification().getArima().setBQ(1);
+                                ArrayList<Parameter> tmp = new ArrayList<>();
+                                tmp.add(q_para[0]);
+                                spec.getRegArimaSpecification().getArima().setBTheta(tmp.toArray(new Parameter[0]));
+                                infos.put(partName
+                                        + ": Order of seasonal MA parameters is " + q + " which is greater than 1. Order of MA parameters reduced to 1."
+                                        + " (Code:1506)",
+                                        TranslationInfo.WARNING1);
+                            }
                         }
                     }
                 } catch (X13Exception e) {
@@ -2421,6 +2419,7 @@ public class WinX12SpecSeparator {
         spec.getRegArimaSpecification().getArima().setBP(0);
         spec.getRegArimaSpecification().getArima().setBD(1);
         spec.getRegArimaSpecification().getArima().setBQ(1);
+        seasonalAirline = true;
     }
 
     private void do_easter(SpecificationPart partName, String content) {
