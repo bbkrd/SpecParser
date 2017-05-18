@@ -25,21 +25,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * This class represents the multi mode. 
- * 
+ * This class represents the multi mode.
+ *
  * @author Nina Gonschorreck
  */
 public class MultiSpec {
 
-    /** Collect all active multi windows */
+    /**
+     * Collect all active multi windows
+     */
     private static HashMap<Id, MultiTopComponent> activeMultiWindows = new HashMap();
-    /** Collect all SpecColletors for the single documents in the multi mode */
+    /**
+     * Collect all SpecColletors for the single documents in the multi mode
+     */
     private ArrayList<SpecCollector> specList = new ArrayList();
-    /** idetification number of the current multi document*/
+    /**
+     * idetification number of the current multi document
+     */
     private Id id;
 
-    /** 
+    /**
      * Creates an object of the multi mode
+     *
      * @param wsNode current workspace node
      */
     public MultiSpec(WsNode wsNode) {
@@ -52,30 +59,29 @@ public class MultiSpec {
             // Preparation of the new multi window
             this.id = ws.getId();
             window = new MultiTopComponent(wsNode);
-            
+
 //            window = new MultiTopComponent(wsNode);
             window.setName("SpecParser for " + ws.getDisplayName());
 
             // later: Implemantion of reverse direction (JD+ to winx12)
             /*if the list of items in a multi doc has contents */
-           /* if (!((MultiProcessingDocument) ws.getElement()).getCurrent().isEmpty()) {
-                SpecCollector specCollector;
-                int counter = 0;
-                for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
-                    if (!item.getEstimationMethod().name.contains("tramo")) {
-//                        it is possible that here are also tramo docs in the list
-                        specCollector = new SpecCollector((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class), counter);
-                        specCollector.setPath(window.getPath());
-//                        specCollector.translate(TranslationTo_Type.WinX12Spec);
-                        specCollector.setName(item.getTs().getRawName());
-                        specList.add(specCollector);
-                    }
-                    counter++;
+            /* if (!((MultiProcessingDocument) ws.getElement()).getCurrent().isEmpty()) {
+             SpecCollector specCollector;
+             int counter = 0;
+             for (SaItem item : ((MultiProcessingDocument) ws.getElement()).getCurrent()) {
+             if (!item.getEstimationMethod().name.contains("tramo")) {
+             //                        it is possible that here are also tramo docs in the list
+             specCollector = new SpecCollector((WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class), counter);
+             specCollector.setPath(window.getPath());
+             //                        specCollector.translate(TranslationTo_Type.WinX12Spec);
+             specCollector.setName(item.getTs().getRawName());
+             specList.add(specCollector);
+             }
+             counter++;
                     
-                }
-                window.setSpecArray(specList);
-            }*/
-            
+             }
+             window.setSpecArray(specList);
+             }*/
             // Put the window to the list of active windows
             activeMultiWindows.put(this.id, window);
 
@@ -89,7 +95,7 @@ public class MultiSpec {
 
             //close workspace and rename the document
             wsNode.getWorkspace().sortFamily(wsNode.lookup());
-            
+
             // open the window
             window.open();
             window.requestActive();
@@ -98,9 +104,12 @@ public class MultiSpec {
 
     /**
      * Removes the window of the list of active windos
+     *
      * @param id identification number of the window
      */
     public static void deleteWindow(Id id) {
-        activeMultiWindows.remove(id);
+        if (id != null) {
+            activeMultiWindows.remove(id);
+        }
     }
 }

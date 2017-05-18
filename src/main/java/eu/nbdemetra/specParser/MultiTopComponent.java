@@ -5,12 +5,14 @@
  */
 package eu.nbdemetra.specParser;
 
+import Administration.MultiSpec;
 import Logic.SpecCollector;
 import ec.nbdemetra.ws.WorkspaceItem;
 import ec.nbdemetra.ws.nodes.WsNode;
 import ec.satoolkit.ISaSpecification;
 import ec.tss.sa.SaItem;
 import ec.tstoolkit.utilities.IModifiable;
+import ec.tstoolkit.utilities.Id;
 import ec.ui.view.tsprocessing.DefaultProcessingViewer.Type;
 import eu.nbdemetra.specParser.Miscellaneous.MyCellRenderer;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
@@ -291,17 +293,19 @@ public final class MultiTopComponent extends TopComponent {
 
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
+        // TODO add custom code on component opening      
     }
 
     @Override
     public void componentClosed() {
         // TODO add custom code on component closing
+        Id id = wsItem.getId();
+        MultiSpec.deleteWindow(id);
 
     }
 
     protected void deleteWindow(String id) {
-
+        System.out.println("Closed");
     }
 
     void writeProperties(java.util.Properties p) {

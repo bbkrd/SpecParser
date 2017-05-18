@@ -269,7 +269,6 @@ public class WinX12SpecSeparator {
             if (reg != null) {
                 return reg;
             }
-
         }
         return null;
     }
