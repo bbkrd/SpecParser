@@ -142,6 +142,7 @@ public final class MultiTopComponent extends TopComponent {
         top = new javax.swing.JPanel();
         load = new javax.swing.JButton();
         refresh = new javax.swing.JButton();
+        refresh_all = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         specList = new javax.swing.JList();
@@ -163,6 +164,14 @@ public final class MultiTopComponent extends TopComponent {
             }
         });
         top.add(refresh);
+
+        org.openide.awt.Mnemonics.setLocalizedText(refresh_all, org.openide.util.NbBundle.getMessage(MultiTopComponent.class, "MultiTopComponent.refresh_all.text")); // NOI18N
+        refresh_all.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refresh_allActionPerformed(evt);
+            }
+        });
+        top.add(refresh_all);
 
         add(top, java.awt.BorderLayout.PAGE_START);
 
@@ -191,7 +200,7 @@ public final class MultiTopComponent extends TopComponent {
                 File mta_File = fc.getSelectedFile();
                 String name = mta_File.getName();
                 path = fc.getSelectedFile().getParent() + File.separator;
-                name = Pattern.compile("\\.mta",Pattern.CASE_INSENSITIVE).matcher(name).replaceAll("");//name.replace(".mta", "").replace(".MTA", "");
+                name = Pattern.compile("\\.mta", Pattern.CASE_INSENSITIVE).matcher(name).replaceAll("");//name.replace(".mta", "").replace(".MTA", "");
 
                 mtaName = name;
 
@@ -216,24 +225,44 @@ public final class MultiTopComponent extends TopComponent {
         SpecCollector newSpec = spec_array.get(specList.getSelectedIndex());
         newSpec.setWinX12Spec(specViewer.getWinX12Text());
         newSpec.translate(TranslationTo_Type.JDSpec);
-        specViewer.refresh(newSpec);       
+        specViewer.refresh(newSpec);
         refresh.setEnabled(true);
         refresh.setForeground(Color.black);
     }//GEN-LAST:event_refreshActionPerformed
 
     private void specListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_specListValueChanged
 
-        specViewer.refresh(spec_array.get(specList.getSelectedIndex()));
-        refresh.setEnabled(true);
-        refresh.setForeground(Color.black);
+        if (specList.getSelectedIndex() >= 0) {
+            specViewer.refresh(spec_array.get(specList.getSelectedIndex()));
+            refresh.setEnabled(true);
+            refresh.setForeground(Color.black);
+        } else {
+            if (spec_array != null && spec_array.size() > 0) {
+                specViewer.refresh(spec_array.get(0));
+                refresh.setEnabled(true);
+                refresh.setForeground(Color.black);
+            }
+        }
+
 
     }//GEN-LAST:event_specListValueChanged
+
+    private void refresh_allActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refresh_allActionPerformed
+        spec_array = new ArrayList<>();
+        MultiTopComponent.LoadRunnable loadProcess = new MultiTopComponent.LoadRunnable();
+        File file = new File(path + mtaName + ".mta");
+        loadProcess.setMta_File(file);
+        Thread thread = new Thread(loadProcess);
+        thread.start();
+        MultiTopComponent.this.repaint();
+    }//GEN-LAST:event_refresh_allActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JButton load;
     private javax.swing.JButton refresh;
+    private javax.swing.JButton refresh_all;
     private javax.swing.JList specList;
     private javax.swing.JPanel top;
     // End of variables declaration//GEN-END:variables
