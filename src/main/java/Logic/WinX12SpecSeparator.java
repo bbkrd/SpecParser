@@ -652,15 +652,27 @@ public class WinX12SpecSeparator {
         }
 
         for (int i = 0; i < values.length; i++) {
-            if (values[i].contains("F")) {
-                double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
-                spec.getRegArimaSpecification().getRegression().setFixedCoefficients(ITsVariable.shortName(fixedRegressors.get(i)), new double[]{value});
-            } else {
-                infos.put(partName
-                        + ": Initial value for " + fixedRegressors.get(i) + " not possible"
-                        + ". (Code:1304)",
-                        TranslationInfo.ERROR);
-            }
+            if (!values[i].trim().isEmpty()) {
+                String reg = fixedRegressors.get(i);
+                // zurzeit unterstuetzte Fixieungen
+                if (reg.startsWith("AO") || reg.startsWith("LS") || reg.startsWith("TC") || reg.startsWith("SO") || reg.startsWith("TL") || reg.startsWith("RP") || reg.startsWith("reg_SpecParser") | reg.startsWith("easter")) {
+                    if (values[i].contains("F")) {
+                        double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
+                        spec.getRegArimaSpecification().getRegression().setFixedCoefficients(ITsVariable.shortName(reg), new double[]{value});
+                    } else {
+                        infos.put(partName
+                                + ": Initial value for " + fixedRegressors.get(i) + " not possible"
+                                + ". (Code:1304)",
+                                TranslationInfo.ERROR);
+                    }
+                }else{
+                    // Meldung Fixierung wird derzeit nicht unterstuetzt
+                    infos.put(partName
+                                + ": Fixed Coefficient for value " + fixedRegressors.get(i) + " not possible"
+                                + ". (Code:1305)",
+                                TranslationInfo.ERROR);
+                } 
+            }//leerer Parameter wird ignoriert (Komma)
         }
     }
 
@@ -2244,19 +2256,6 @@ public class WinX12SpecSeparator {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toLowerCase();
 
-        if (content.contains("sincos")) {
-            //hier die kommas tauschen durch semikolon
-            //beachten wenn sincos mal genutzt werden sollte
-            int beginIndex = content.indexOf("sincos");
-            int endIndex = content.indexOf("]", beginIndex) + 1;
-            String sincos = content.substring(beginIndex, endIndex);
-            content = content.replace(sincos, "");
-            infos.put(partName
-                    + ": Value SINCOS in argument VARIABLES not supported. Alternative model needs to be specified"
-                    + ". (Code:1604)",
-                    TranslationInfo.ERROR);
-        }
-
         // create some separator
         content = content.replaceAll(",", " ");
         String[] variables = content.split("\\s+");
@@ -2266,7 +2265,7 @@ public class WinX12SpecSeparator {
         for (String var : variables) {
             var = var.trim();
             if (var.contains("[")) {
-                //easter
+                //easter, sincos
                 method = "do_" + var.substring(0, var.indexOf("[")).trim().toLowerCase();
                 assign = var.substring(var.indexOf("[") + 1, var.indexOf("]")).trim();
 
@@ -2291,14 +2290,22 @@ public class WinX12SpecSeparator {
                 if (assign == null) {
                     message = "Argument VARIABLES empty";
                 } else {
+                    // TODO: statt content besser var?
                     message = "Value " + content.toUpperCase() + " in argument VARIABLES not supported";
+                    fixedRegressors.add(var.toUpperCase());
                 }
-                infos.put(partName
-                        + ": " + message
-                        + ". (Code:1600)",
-                        TranslationInfo.WARNING2);
+                if (var.toUpperCase().contains("SINCOS")) {
+                    infos.put(partName
+                            + ": Value SINCOS in argument VARIABLES not supported. Alternative model needs to be specified"
+                            + ". (Code:1604)",
+                            TranslationInfo.ERROR);
+                } else {
+                    infos.put(partName
+                            + ": " + message
+                            + ". (Code:1600)",
+                            TranslationInfo.WARNING2);
+                }
             }
-            //dynamisch mit method und string, exception handling
         }
     }
 
@@ -2405,6 +2412,7 @@ public class WinX12SpecSeparator {
     /*methods for variables*/
     private void do_const(SpecificationPart partName, String content) {
         spec.getRegArimaSpecification().getArima().setMean(true);
+        fixedRegressors.add("CONST");
     }
 
     private void do_td(SpecificationPart partName, String content) {
@@ -2413,6 +2421,10 @@ public class WinX12SpecSeparator {
         td.setTest(RegressionTestSpec.None);
         td.setHolidays(null);
         td.setUserVariables(null);
+
+        for (int i = 0; i < 5; i++) {
+            fixedRegressors.add("TD");
+        }
     }
 
     private void do_seasonal(SpecificationPart partName, String content) {
@@ -2425,6 +2437,8 @@ public class WinX12SpecSeparator {
         spec.getRegArimaSpecification().getArima().setBD(1);
         spec.getRegArimaSpecification().getArima().setBQ(1);
         seasonalAirline = true;
+
+        fixedRegressors.add("SEASONAL");
     }
 
     private void do_easter(SpecificationPart partName, String content) {
@@ -2447,6 +2461,7 @@ public class WinX12SpecSeparator {
         easter.setTest(RegressionTestSpec.None);
         easter.setW(w);
         spec.getRegArimaSpecification().getRegression().add(easter);
+        fixedRegressors.add("easter");
     }
 
     private void do_ao(SpecificationPart partName, String content) {
@@ -2493,6 +2508,11 @@ public class WinX12SpecSeparator {
         }
         td.setStockTradingDays(w);
         spec.getRegArimaSpecification().getRegression().setTradingDays(td);
+
+        // Dummyvariable wegen argument b anlegen
+        for (int i = 0; i < 6; i++) {
+            fixedRegressors.add("TDSTOCK");
+        }
     }
 
     private void do_so(SpecificationPart partName, String content) {

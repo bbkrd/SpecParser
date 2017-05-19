@@ -251,6 +251,8 @@ public final class MultiTopComponent extends TopComponent {
 
     private void refresh_allActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refresh_allActionPerformed
         spec_array = new ArrayList<>();
+        
+        progressHandle = ProgressHandleFactory.createHandle("calculate ...");
         MultiTopComponent.LoadRunnable loadProcess = new MultiTopComponent.LoadRunnable();
         File file = new File(path + mtaName + ".mta");
         loadProcess.setMta_File(file);
@@ -327,7 +329,7 @@ public final class MultiTopComponent extends TopComponent {
     public String getPath() {
         return path;
     }
-
+    
     private class LoadRunnable implements Runnable {
 
         private File mta_File;
@@ -358,7 +360,7 @@ public final class MultiTopComponent extends TopComponent {
                     //lies Zeile aus MTA
                     while ((mta_line = mta_BufferedReader.readLine()) != null) {
                         mta_line = mta_line.trim();
-                        if (!mta_line.isEmpty()) {
+                        if (!mta_line.isEmpty() && !mta_line.startsWith("#")) {
 //                            mta_files.addSpec(mta_line);
                             specFromMTA.addLast(mta_line);
                             counter_mta++;
