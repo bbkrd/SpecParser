@@ -4,14 +4,14 @@
 
     <groupId>eu.nbdemetra</groupId>
     <artifactId>SpecParser</artifactId>
-    <version>2.0.5</version>
+    <version>2.0.6</version>
     <packaging>nbm</packaging>
 
     <name>SpecParser</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jdemetra.version>2.2.0-SNAPSHOT</jdemetra.version>
+        <jdemetra.version>2.2.0-RC2</jdemetra.version>
         <netbeans.version>RELEASE82</netbeans.version>
         <findbugs-maven-plugin.version>3.0.3</findbugs-maven-plugin.version>
     </properties>

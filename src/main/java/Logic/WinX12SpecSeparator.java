@@ -2315,7 +2315,7 @@ public class WinX12SpecSeparator {
         if (content.endsWith(";")) {
             content = content.substring(0, content.lastIndexOf(";"));
         }
-        String[] zewil_reihen = content.split(";");
+        String[] zewil_reihen = content.trim().split("\\s+");
         for (String reihe : zewil_reihen) {
             read_zisl(partName, reihe);
         }
@@ -2375,6 +2375,7 @@ public class WinX12SpecSeparator {
                         TranslationInfo.ERROR);
             }
         } else {
+            LOGGER.error("ZISL Adapter not available");
             infos.put(partName
                     + ": WebService plug-in not available"
                     + ". (Code:1203)",
