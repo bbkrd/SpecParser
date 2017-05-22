@@ -178,6 +178,10 @@ public class WinX12SpecSeparator {
         spec.getRegArimaSpecification().getOutliers().setSpan(spec.getRegArimaSpecification().getBasic().getSpan());
     }
 
+    private void setEstimateDefaults(){
+        
+    }
+    
     private void setAUTOMDLDefaults() {
         //automdl
 
@@ -396,7 +400,8 @@ public class WinX12SpecSeparator {
                         infos.put(specPartName
                                 + ": Arguments missing"
                                 + ". (Code:1902)",
-                                TranslationInfo.ERROR);
+                                // Warning
+                                TranslationInfo.WARNING1);
                     }
                 }
                 if (specPartName.equals(SpecificationPart.SERIES)) {
