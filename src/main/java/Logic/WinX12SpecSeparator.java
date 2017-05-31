@@ -415,7 +415,7 @@ public class WinX12SpecSeparator {
                 switch (specPartSplitted[0].toUpperCase()) {
                     case "CHECK":
                     case "HISTORY":
-                    case "SLIDIBGSPANS":
+                    case "SLIDINGSPANS":
                     case "SPECTRUM":
                         color = TranslationInfo.MESSAGE;
                         break;
@@ -861,7 +861,7 @@ public class WinX12SpecSeparator {
                 //Fehler
                 infos.put(partName
                         + ": Value " + content + " in argument EXCLUDEFCST not supported."
-                        + " Value set to default false"
+                        + " Value set to default FALSE"
                         + ". (Code:1841)",
                         TranslationInfo.WARNING2);
             }
@@ -1307,7 +1307,7 @@ public class WinX12SpecSeparator {
             }
         } else {
             infos.put(SpecificationPart.TRANSFORM
-                    + ": Value in argument MODE set to default (UNDEFINED)"
+                    + ": Value in argument MODE set to default UNDEFINED"
                     + ". (Code:1825)",
                     TranslationInfo.WARNING2);
             spec.getX11Specification().setMode(DecompositionMode.Undefined);
@@ -1734,7 +1734,7 @@ public class WinX12SpecSeparator {
                         break;
                     default:
                         infos.put(partName
-                                + ": Value <" + content + " in argument SEASONALMA not supported."
+                                + ": Value " + content + " in argument SEASONALMA not supported."
                                 + " Value set to default " + spec.getX11Specification().getSeasonalFilters() + "."
                                 + " (Code:1828)",
                                 TranslationInfo.WARNING2);
@@ -1790,7 +1790,7 @@ public class WinX12SpecSeparator {
             LOGGER.error(e.toString());
             infos.put(partName
                     + ": Value " + content + " in argument SIGMALIM not supported."
-                    + " Value set to default (" + spec.getX11Specification().getLowerSigma() + ", " + spec.getX11Specification().getUpperSigma() + ")."
+                    + " Value set to default " + spec.getX11Specification().getLowerSigma() + ", " + spec.getX11Specification().getUpperSigma() + "."
                     + " (Code:1830)",
                     TranslationInfo.WARNING2);
         }
