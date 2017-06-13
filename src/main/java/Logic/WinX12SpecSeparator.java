@@ -178,10 +178,10 @@ public class WinX12SpecSeparator {
         spec.getRegArimaSpecification().getOutliers().setSpan(spec.getRegArimaSpecification().getBasic().getSpan());
     }
 
-    private void setEstimateDefaults(){
-        
+    private void setEstimateDefaults() {
+
     }
-    
+
     private void setAUTOMDLDefaults() {
         //automdl
 
@@ -670,13 +670,13 @@ public class WinX12SpecSeparator {
                                 + ". (Code:1304)",
                                 TranslationInfo.ERROR);
                     }
-                }else{
+                } else {
                     // Meldung Fixierung wird derzeit nicht unterstuetzt
                     infos.put(partName
-                                + ": Fixed Coefficient for value " + fixedRegressors.get(i) + " not possible"
-                                + ". (Code:1305)",
-                                TranslationInfo.ERROR);
-                } 
+                            + ": Fixed Coefficient for value " + fixedRegressors.get(i) + " not possible"
+                            + ". (Code:1305)",
+                            TranslationInfo.ERROR);
+                }
             }//leerer Parameter wird ignoriert (Komma)
         }
     }
@@ -854,17 +854,15 @@ public class WinX12SpecSeparator {
 
         if (content.equals("YES")) {
             spec.getX11Specification().setExcludefcst(true);
+        } else if (content.equals("NO")) {
+            spec.getX11Specification().setExcludefcst(false);
         } else {
-            if (content.equals("NO")) {
-                spec.getX11Specification().setExcludefcst(false);
-            } else {
-                //Fehler
-                infos.put(partName
-                        + ": Value " + content + " in argument EXCLUDEFCST not supported."
-                        + " Value set to default FALSE"
-                        + ". (Code:1841)",
-                        TranslationInfo.WARNING2);
-            }
+            //Fehler
+            infos.put(partName
+                    + ": Value " + content + " in argument EXCLUDEFCST not supported."
+                    + " Value set to default FALSE"
+                    + ". (Code:1841)",
+                    TranslationInfo.WARNING2);
         }
 
     }
@@ -1488,8 +1486,8 @@ public class WinX12SpecSeparator {
 //
                         spec.getRegArimaSpecification().getArima().setPhi(p_para);
                         spec.getRegArimaSpecification().getArima().setTheta(q_para);
-                    } else {
-//                    ii) SARIMA part
+                    } else //                    ii) SARIMA part
+                    {
                         if (!seasonalAirline) {
                             if (p <= 1) {
                                 spec.getRegArimaSpecification().getArima().setBP(p);
@@ -1777,14 +1775,12 @@ public class WinX12SpecSeparator {
         try {
             if (tmp.length == 1) {
                 spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), 2.5);
+            } else if (tmp[0].isEmpty() || tmp[0].equals(" ")) {
+                spec.getX11Specification().setSigma(1.5, Double.parseDouble(tmp[1]));
+            } else if (tmp[1].isEmpty() || tmp[1].equals(" ")) {
+                spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), 2.5);
             } else {
-                if (tmp[0].isEmpty() || tmp[0].equals(" ")) {
-                    spec.getX11Specification().setSigma(1.5, Double.parseDouble(tmp[1]));
-                } else if (tmp[1].isEmpty() || tmp[1].equals(" ")) {
-                    spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), 2.5);
-                } else {
-                    spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), Double.parseDouble(tmp[1]));
-                }
+                spec.getX11Specification().setSigma(Double.parseDouble(tmp[0]), Double.parseDouble(tmp[1]));
             }
         } catch (NumberFormatException e) {
             LOGGER.error(e.toString());
@@ -1900,14 +1896,12 @@ public class WinX12SpecSeparator {
                     //modify to between
                     dummy.between(spec.getRegArimaSpecification().getBasic().getSpan().getD0(), DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
                 }
+            } else if (split[1].replaceAll("\\s+", "").isEmpty()) {
+                //FROM
+                dummy.from(DateConverter.toJD(split[0], dataLoader.getPeriod(), true));
             } else {
-                if (split[1].replaceAll("\\s+", "").isEmpty()) {
-                    //FROM
-                    dummy.from(DateConverter.toJD(split[0], dataLoader.getPeriod(), true));
-                } else {
-                    //BETWEEN
-                    dummy.between(DateConverter.toJD(split[0], dataLoader.getPeriod(), true), DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
-                }
+                //BETWEEN
+                dummy.between(DateConverter.toJD(split[0], dataLoader.getPeriod(), true), DateConverter.toJD(split[1], dataLoader.getPeriod(), false));
             }
 
             //dummy modifizieren falls ALL ist, da wir nicht mehr mit all arbeiten stattdessen mit from, da start argument missbraucht wird
@@ -2240,15 +2234,13 @@ public class WinX12SpecSeparator {
                                 + " USERTYPE set to USER"
                                 + ". (Code:1303)",
                                 TranslationInfo.WARNING2);
-                    } else {
-                        if (!alreday) {
-                            infos.put(partName
-                                    + ": Value " + reg[i].toUpperCase() + " in argument USERTYPE not supported."
-                                    + " USERTYPE set to USER"
-                                    + ". (Code:1303)",
-                                    TranslationInfo.WARNING2);
-                            alreday = true;
-                        }
+                    } else if (!alreday) {
+                        infos.put(partName
+                                + ": Value " + reg[i].toUpperCase() + " in argument USERTYPE not supported."
+                                + " USERTYPE set to USER"
+                                + ". (Code:1303)",
+                                TranslationInfo.WARNING2);
+                        alreday = true;
                     }
                     regressionTyp[i] = "USER";
                     break;
@@ -2544,6 +2536,9 @@ public class WinX12SpecSeparator {
      *
      *   argument is not supported, but it is not an error
      */
+    private void read_appendbcst(SpecificationPart partName, String content) {
+    }
+
     private void read_appendfcst(SpecificationPart partName, String content) {
     }
 
