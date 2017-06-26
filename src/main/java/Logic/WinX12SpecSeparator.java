@@ -60,6 +60,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import org.openide.util.Lookup;
 import org.slf4j.Logger;
@@ -1733,7 +1734,7 @@ public class WinX12SpecSeparator {
                     default:
                         infos.put(partName
                                 + ": Value " + content + " in argument SEASONALMA not supported."
-                                + " Value set to default " + spec.getX11Specification().getSeasonalFilters() + "."
+                                + " Value set to default " + Arrays.toString(spec.getX11Specification().getSeasonalFilters()) + "."
                                 + " (Code:1828)",
                                 TranslationInfo.WARNING2);
                         tmp.add(null);
@@ -2396,15 +2397,18 @@ public class WinX12SpecSeparator {
             case "FCT":
                 tmp = "forecast";
                 break;
-            default:
-                //nicht unterstuetzt
-                break;
         }
+        if (tmp.isEmpty()) {
+            infos.put(partName
+                    +": Value "+zisd[0].toUpperCase()+" in argument ZISD not supported"
+                    + ". (Code:1204)"
+                    , TranslationInfo.MESSAGE);
+        } else {
+            StringBuilder sb = new StringBuilder("zebene");
+            sb.append(InformationSet.STRSEP).append(tmp).append(InformationSet.STRSEP).append("updateid");
 
-        StringBuilder sb = new StringBuilder("zebene");
-        sb.append(InformationSet.STRSEP).append(tmp).append(InformationSet.STRSEP).append("updateid");
-
-        meta.put(sb.toString(), zisd[1]);
+            meta.put(sb.toString(), zisd[1]);
+        }
     }
 
     /*methods for variables*/
