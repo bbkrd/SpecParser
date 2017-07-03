@@ -2402,7 +2402,7 @@ public class WinX12SpecSeparator {
             infos.put(partName
                     +": Value "+zisd[0].toUpperCase()+" in argument ZISD not supported"
                     + ". (Code:1204)"
-                    , TranslationInfo.MESSAGE);
+                    , TranslationInfo.WARNING2);
         } else {
             StringBuilder sb = new StringBuilder("zebene");
             sb.append(InformationSet.STRSEP).append(tmp).append(InformationSet.STRSEP).append("updateid");
