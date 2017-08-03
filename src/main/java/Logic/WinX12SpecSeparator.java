@@ -248,10 +248,9 @@ public class WinX12SpecSeparator {
             tsName = name;
         }
 
-        if (dataLoader.getZislId() != null) {
-            tsName = tsName + " from " + dataLoader.getZislId();
-        }
-
+//        if (dataLoader.getZislId() != null) {
+//            tsName = tsName + " from " + dataLoader.getZislId();
+//        }
         //MetaData
         return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, data);
     }
@@ -1488,8 +1487,7 @@ public class WinX12SpecSeparator {
                         spec.getRegArimaSpecification().getArima().setPhi(p_para);
                         spec.getRegArimaSpecification().getArima().setTheta(q_para);
                     } else //                    ii) SARIMA part
-                    {
-                        if (!seasonalAirline) {
+                     if (!seasonalAirline) {
                             if (p <= 1) {
                                 spec.getRegArimaSpecification().getArima().setBP(p);
                                 spec.getRegArimaSpecification().getArima().setBPhi(p_para);
@@ -1528,7 +1526,6 @@ public class WinX12SpecSeparator {
                                         TranslationInfo.WARNING1);
                             }
                         }
-                    }
                 } catch (X13Exception e) {
                     // I guess it's never gone to happen
                     LOGGER.error(e.toString());
@@ -2400,15 +2397,18 @@ public class WinX12SpecSeparator {
         }
         if (tmp.isEmpty()) {
             infos.put(partName
-                    +": Value "+zisd[0].toUpperCase()+" in argument ZISD not supported"
-                    + ". (Code:1204)"
-                    , TranslationInfo.WARNING2);
+                    + ": Value " + zisd[0].toUpperCase() + " in argument ZISD&/ZISS not supported"
+                    + ". (Code:1204)", TranslationInfo.WARNING2);
         } else {
             StringBuilder sb = new StringBuilder("zebene");
             sb.append(InformationSet.STRSEP).append(tmp).append(InformationSet.STRSEP).append("updateid");
 
             meta.put(sb.toString(), zisd[1]);
         }
+    }
+
+    private void read_ziss(SpecificationPart partName, String content) {
+        read_zisd(partName, content);
     }
 
     /*methods for variables*/
