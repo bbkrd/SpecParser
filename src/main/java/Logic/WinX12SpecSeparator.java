@@ -26,6 +26,7 @@ import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
 import ec.tss.TsFactory;
+import ec.tss.TsInformationType;
 import ec.tss.TsMoniker;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.MetaData;
@@ -220,6 +221,10 @@ public class WinX12SpecSeparator {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public HashMap<String, TranslationInfo> getTranslationInfos() {
@@ -2397,7 +2402,7 @@ public class WinX12SpecSeparator {
         }
         if (tmp.isEmpty()) {
             infos.put(partName
-                    + ": Value " + zisd[0].toUpperCase() + " in argument ZISD&/ZISS not supported"
+                    + ": Value " + zisd[0].toUpperCase() + " in argument ZISD not supported"
                     + ". (Code:1204)", TranslationInfo.WARNING2);
         } else {
             StringBuilder sb = new StringBuilder("zebene");
@@ -2408,7 +2413,32 @@ public class WinX12SpecSeparator {
     }
 
     private void read_ziss(SpecificationPart partName, String content) {
-        read_zisd(partName, content);
+
+        content = content.replaceAll("\\(", "").replaceAll("\\)", "").replaceAll(";", "").trim();
+        String[] ziss = content.split("-");
+
+        String tmp = "";
+        switch (ziss[0].toUpperCase()) {
+            case "USR":
+                tmp = "calendarfactor";
+                break;
+            case "D10":
+                tmp = "seasonalfactor";
+                break;
+            case "FCT":
+                tmp = "forecast";
+                break;
+        }
+        if (tmp.isEmpty()) {
+            infos.put(partName
+                    + ": Value " + ziss[0].toUpperCase() + " in argument ZISS not supported"
+                    + ". (Code:1205)", TranslationInfo.WARNING2);
+        } else {
+            StringBuilder sb = new StringBuilder("spielkennung");
+            sb.append(InformationSet.STRSEP).append(tmp).append(InformationSet.STRSEP).append("updateid");
+
+            meta.put(sb.toString(), ziss[1]);
+        }
     }
 
     /*methods for variables*/
