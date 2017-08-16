@@ -34,10 +34,8 @@ import eu.nbdemetra.specParser.Miscellaneous.TranslationInfo;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.prefs.Preferences;
 import options.SpecParserOptionsPanelController;
 import org.openide.util.NbPreferences;
@@ -64,7 +62,6 @@ public class SpecCollector {
 
     /*  errors      -   collects errors which appear by translating
      *   messages    -   collects messages which appear by translating   */
-
     private HashMap<String, TranslationInfo> translation_messages = new HashMap<>();
 
     /*  index   -   reference to each single item in a multi doc the corresponding SpecCollector (only for multi docs important)
@@ -140,7 +137,7 @@ public class SpecCollector {
     public HashMap<String, TranslationInfo> getTranslation_messages() {
         return translation_messages;
     }
-    
+
     public List<String> getErrors() {
 
         if (!translation_messages.containsValue(TranslationInfo.ERROR)) {
@@ -167,7 +164,6 @@ public class SpecCollector {
         }
         return result;
     }
-
 
     public List<String> getWarnings1() {
         if (!translation_messages.containsValue(TranslationInfo.WARNING1)) {
@@ -259,12 +255,14 @@ public class SpecCollector {
 
             translation_messages = separator.getTranslationInfos();
             if (ts.getTsData() != null) {
-                refreshWS();
+                refreshWS(separator.getName());
+            } else {
+                translation_messages.put("NO DATA", TranslationInfo.ERROR);
             }
         }
     }
 
-    private void refreshWS() {
+    private void refreshWS(String name) {
 
         if (wsItem != null) {
 
@@ -277,6 +275,7 @@ public class SpecCollector {
                 SaProcessing processing = ((MultiProcessingDocument) wsItem.getElement()).getCurrent();
                 SaItem saItem = new SaItem((ISaSpecification) jdSpec.getSpecification(), ts);
                 saItem.setMetaData(jdSpec.getMetaData());
+                saItem.setName(name);
                 if (processing.size() - 1 >= index) {
 //                    replace a single Item to the workspace
                     processing.replace(processing.get(index), saItem);

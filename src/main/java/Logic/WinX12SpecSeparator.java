@@ -2402,7 +2402,7 @@ public class WinX12SpecSeparator {
         }
         if (tmp.isEmpty()) {
             infos.put(partName
-                    + ": Value " + zisd[0].toUpperCase() + " in argument ZISD not supported"
+                    + ": Value " + zisd[0].toUpperCase() + " in argument ZISD/ZEWID not supported"
                     + ". (Code:1204)", TranslationInfo.WARNING2);
         } else {
             StringBuilder sb = new StringBuilder("zebene");
@@ -2439,6 +2439,10 @@ public class WinX12SpecSeparator {
 
             meta.put(sb.toString(), ziss[1]);
         }
+    }
+
+    public void read_zewid(SpecificationPart partName, String content){
+        read_zisd(partName, content);
     }
 
     /*methods for variables*/
