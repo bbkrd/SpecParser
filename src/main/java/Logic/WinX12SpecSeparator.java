@@ -2399,6 +2399,9 @@ public class WinX12SpecSeparator {
             case "FCT":
                 tmp = "forecast";
                 break;
+            case "D11":
+                tmp = "seasonaladjusted";
+                break;
         }
         if (tmp.isEmpty()) {
             infos.put(partName
@@ -2441,7 +2444,7 @@ public class WinX12SpecSeparator {
         }
     }
 
-    public void read_zewid(SpecificationPart partName, String content){
+    public void read_zewid(SpecificationPart partName, String content) {
         read_zisd(partName, content);
     }
 
