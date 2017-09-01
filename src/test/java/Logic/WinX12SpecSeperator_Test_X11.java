@@ -10,11 +10,9 @@ import ec.satoolkit.x11.CalendarSigma;
 import ec.satoolkit.x11.SeasonalFilterOption;
 import ec.satoolkit.x11.SigmavecOption;
 import ec.satoolkit.x13.X13Specification;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -24,9 +22,6 @@ import org.junit.Test;
 public class WinX12SpecSeperator_Test_X11 {
     
     private X13Specification expected;
-    
-    public WinX12SpecSeperator_Test_X11(){
-    }
     
     public X13Specification createActual(String values) {
 
@@ -47,8 +42,6 @@ public class WinX12SpecSeperator_Test_X11 {
         expected.getX11Specification().setForecastHorizon(0);
     }
     
-    // X13Specification actual = createActual(spc);
-    
     @Test
     public void test_default(){
 	String testname = "test_default";
@@ -59,11 +52,7 @@ public class WinX12SpecSeperator_Test_X11 {
                 "{      \n"+
                 "}";
         
-        WinX12SpecSeparator x12 = new WinX12SpecSeparator();
-        x12.buildSpec(spc);
-        X13Specification actual = x12.getCurrentSpec();
-        
-        
+        X13Specification actual = createActual(spc);
         
         assertEquals(expected.getX11Specification().getMode(), actual.getX11Specification().getMode());
         Assert.assertArrayEquals(expected.getX11Specification().getSeasonalFilters(), actual.getX11Specification().getSeasonalFilters());
@@ -77,8 +66,6 @@ public class WinX12SpecSeperator_Test_X11 {
         
     }
     
-    //X13Specification actual = createActual(spc);
-    
     @Test
     public void test_read_trendma_valid(){
 	String testname = "test_read_trendma_valid";
@@ -88,9 +75,7 @@ public class WinX12SpecSeperator_Test_X11 {
                 + "trendma = 17"
                 + "}";
 
-        WinX12SpecSeparator x12 = new WinX12SpecSeparator();
-        x12.buildSpec(spc);
-        X13Specification actual = x12.getCurrentSpec();
+        X13Specification actual = createActual(spc);
         
         expected.getX11Specification().setHendersonFilterLength(17);
 
@@ -157,7 +142,7 @@ public class WinX12SpecSeperator_Test_X11 {
 	Logger.logTestStart(testname);
 
         String spc = "X11{"
-                + "trendma = blafasel"
+                + "trendma = invalid"
                 + "}";
 
         X13Specification actual = createActual(spc);
@@ -182,8 +167,6 @@ public class WinX12SpecSeperator_Test_X11 {
         //assertEquals(expected, actual);
 	Logger.logTestEnd(testname);
     }
-    
-    
 
     @Test
     public void test_mode_add(){
@@ -281,7 +264,6 @@ public class WinX12SpecSeperator_Test_X11 {
 	Logger.logTestEnd(testname);
     }
 
-    
     @Test
     public void test_seasonalma_quarter(){
 	String testname = "test_seasonalma_quarter";
@@ -402,7 +384,6 @@ public class WinX12SpecSeperator_Test_X11 {
         assertEquals(expected, actual);
 	Logger.logTestEnd(testname);
     }
-    
     
     @Test
     public void test_seasonalma_invalid(){
