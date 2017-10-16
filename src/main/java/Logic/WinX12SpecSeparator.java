@@ -26,7 +26,6 @@ import ec.satoolkit.x11.X11Specification;
 import ec.satoolkit.x13.X13Specification;
 import ec.tss.Ts;
 import ec.tss.TsFactory;
-import ec.tss.TsInformationType;
 import ec.tss.TsMoniker;
 import ec.tss.sa.documents.X13Document;
 import ec.tstoolkit.MetaData;
@@ -63,6 +62,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.openide.util.Lookup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,17 +81,17 @@ public class WinX12SpecSeparator {
      infos  -   collect message by translating
      period -   Period from WinX12, in JD+ it is given by the data
      */
-    private X13Specification spec = new X13Specification();
+    private final X13Specification spec = new X13Specification();
 
-    private HashMap<String, TranslationInfo> infos = new HashMap<>();
+    private final HashMap<String, TranslationInfo> infos = new HashMap<>();
 
     //no equivalence in a JD+ spec item, this information is given in Ts
     //for timeseries
-    private DataLoader dataLoader = new DataLoader(infos);
+    private final DataLoader dataLoader = new DataLoader(infos);
     private String tsName = null;
     //for regression variables
     private boolean regressionSpec = false;
-    private DataLoaderRegression regressionLoader = new DataLoaderRegression(infos);
+    private final DataLoaderRegression regressionLoader = new DataLoaderRegression(infos);
     private String[] regressionTyp;
 //    private String mtaName;
     private String name;
@@ -117,6 +118,9 @@ public class WinX12SpecSeparator {
 
     // collect all variables and user names in order of appereance in the spc file for b argument
     ArrayList<String> fixedRegressors = new ArrayList<>();
+
+    //collects outliers, important for order in Editor
+    private Map<Day, List<OutlierDefinition>> definitions_;
 
     public WinX12SpecSeparator() {
 //        setDefaults();
@@ -664,7 +668,7 @@ public class WinX12SpecSeparator {
         for (int i = 0; i < values.length; i++) {
             if (!values[i].trim().isEmpty()) {
                 String reg = fixedRegressors.get(i);
-                // zurzeit unterstuetzte Fixieungen
+                // supported outliertypes for fixed coefficients
                 if (reg.startsWith("AO") || reg.startsWith("LS") || reg.startsWith("TC") || reg.startsWith("SO") || reg.startsWith("TL") || reg.startsWith("RP") || reg.startsWith("reg_SpecParser") | reg.startsWith("easter")) {
                     if (values[i].contains("F")) {
                         double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
@@ -857,17 +861,21 @@ public class WinX12SpecSeparator {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim().toUpperCase();
 
-        if (content.equals("YES")) {
-            spec.getX11Specification().setExcludefcst(true);
-        } else if (content.equals("NO")) {
-            spec.getX11Specification().setExcludefcst(false);
-        } else {
-            //Fehler
-            infos.put(partName
-                    + ": Value " + content + " in argument EXCLUDEFCST not supported."
-                    + " Value set to default FALSE"
-                    + ". (Code:1841)",
-                    TranslationInfo.WARNING2);
+        switch (content) {
+            case "YES":
+                spec.getX11Specification().setExcludefcst(true);
+                break;
+            case "NO":
+                spec.getX11Specification().setExcludefcst(false);
+                break;
+            default:
+                //Fehler
+                infos.put(partName
+                        + ": Value " + content + " in argument EXCLUDEFCST not supported."
+                        + " Value set to default FALSE"
+                        + ". (Code:1841)",
+                        TranslationInfo.WARNING2);
+                break;
         }
 
     }
@@ -2262,6 +2270,9 @@ public class WinX12SpecSeparator {
         String method;
         String assign;
 
+        // collect outliers in correct order
+        definitions_ = new HashMap<>();
+
         for (String var : variables) {
             var = var.trim();
             if (var.contains("[")) {
@@ -2284,6 +2295,7 @@ public class WinX12SpecSeparator {
                 Method m = this.getClass().getDeclaredMethod(method.toLowerCase(), SpecificationPart.class, String.class);
                 m.setAccessible(true);
                 m.invoke(this, partName, assign);
+
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
                 LOGGER.error(ex.toString());
                 String message;
@@ -2307,6 +2319,10 @@ public class WinX12SpecSeparator {
                 }
             }
         }
+        
+        definitions_.values().stream().forEach((outliers) -> {
+            spec.getRegArimaSpecification().getRegression().add(outliers.get(0));
+        });
     }
 
     private void read_zewil(SpecificationPart partName, String content) {
@@ -2398,9 +2414,6 @@ public class WinX12SpecSeparator {
                 break;
             case "FCT":
                 tmp = "forecast";
-                break;
-            case "D11":
-                tmp = "seasonaladjusted";
                 break;
         }
         if (tmp.isEmpty()) {
@@ -2507,7 +2520,12 @@ public class WinX12SpecSeparator {
 
         Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
         OutlierDefinition o = new OutlierDefinition(day, OutlierType.AO);
-        spec.getRegArimaSpecification().getRegression().add(o);
+//        spec.getRegArimaSpecification().getRegression().add(o);
+        if (!definitions_.containsKey(day) || definitions_.get(day) == null) {
+            definitions_.put(day, new ArrayList<>());
+        }
+        // makes copies
+        definitions_.get(day).add(new OutlierDefinition(day, OutlierType.AO));
 
         fixedRegressors.add("AO (" + day.toString() + ")");
     }
@@ -2516,7 +2534,12 @@ public class WinX12SpecSeparator {
 
         Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
         OutlierDefinition o = new OutlierDefinition(day, OutlierType.LS);
-        spec.getRegArimaSpecification().getRegression().add(o);
+//        spec.getRegArimaSpecification().getRegression().add(o);
+        if (!definitions_.containsKey(day) || definitions_.get(day) == null) {
+            definitions_.put(day, new ArrayList<>());
+        }
+        // makes copies
+        definitions_.get(day).add(new OutlierDefinition(day, OutlierType.LS));
 
         fixedRegressors.add("LS (" + day.toString() + ")");
     }
@@ -2524,7 +2547,13 @@ public class WinX12SpecSeparator {
     private void do_tc(SpecificationPart partName, String content) {
         Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
         OutlierDefinition o = new OutlierDefinition(day, OutlierType.TC);
-        spec.getRegArimaSpecification().getRegression().add(o);
+//        spec.getRegArimaSpecification().getRegression().add(o);
+        if (!definitions_.containsKey(day) || definitions_.get(day) == null) {
+            definitions_.put(day, new ArrayList<>());
+        }
+        // makes copies
+        definitions_.get(day).add(new OutlierDefinition(day, OutlierType.TC));
+
         fixedRegressors.add("TC (" + day.toString() + ")");
     }
 
@@ -2557,7 +2586,12 @@ public class WinX12SpecSeparator {
     private void do_so(SpecificationPart partName, String content) {
         Day day = DateConverter.toJD(content, dataLoader.getPeriod(), true);
         OutlierDefinition o = new OutlierDefinition(day, OutlierType.SO);
-        spec.getRegArimaSpecification().getRegression().add(o);
+//        spec.getRegArimaSpecification().getRegression().add(o);
+        if (!definitions_.containsKey(day) || definitions_.get(day) == null) {
+            definitions_.put(day, new ArrayList<>());
+        }
+        // makes copies
+        definitions_.get(day).add(new OutlierDefinition(day, OutlierType.SO));
 
         fixedRegressors.add("SO (" + day.toString() + ")");
     }
