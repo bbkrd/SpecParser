@@ -151,7 +151,7 @@ public class WinX12SpecSeparator {
 
             //no outliers
             spec.getRegArimaSpecification().getOutliers().reset();
-
+            
             //transform
             spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
             spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
@@ -1164,7 +1164,7 @@ public class WinX12SpecSeparator {
 
         content = content.trim();
 
-        int backcast = -1;
+        int backcast = 0;
         try {
             backcast = Integer.parseInt(content);
 
@@ -1500,7 +1500,8 @@ public class WinX12SpecSeparator {
                         spec.getRegArimaSpecification().getArima().setPhi(p_para);
                         spec.getRegArimaSpecification().getArima().setTheta(q_para);
                     } else //                    ii) SARIMA part
-                     if (!seasonalAirline) {
+                    {
+                        if (!seasonalAirline) {
                             if (p <= 1) {
                                 spec.getRegArimaSpecification().getArima().setBP(p);
                                 spec.getRegArimaSpecification().getArima().setBPhi(p_para);
@@ -1539,6 +1540,7 @@ public class WinX12SpecSeparator {
                                         TranslationInfo.WARNING1);
                             }
                         }
+                    }
                 } catch (X13Exception e) {
                     // I guess it's never gone to happen
                     LOGGER.error(e.toString());
@@ -2319,7 +2321,7 @@ public class WinX12SpecSeparator {
                 }
             }
         }
-        
+
         definitions_.values().stream().forEach((outliers) -> {
             spec.getRegArimaSpecification().getRegression().add(outliers.get(0));
         });

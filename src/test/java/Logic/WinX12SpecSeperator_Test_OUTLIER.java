@@ -69,6 +69,7 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         Logger.logTestEnd(testname);
     }
       
+    /*
     @Test
     public void test_attributes_empty(){
         String testname = "test_attributes_empty";
@@ -94,8 +95,9 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         assertEquals(expected.getRegArimaSpecification().getOutliers(), actual.getRegArimaSpecification().getOutliers());
         
         Logger.logTestEnd(testname);
-    }
+    }*/
     
+    /*
     @Test
     public void test_attributes_invalid(){
         String testname = "test_attributes_invalid";
@@ -122,6 +124,7 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         
         Logger.logTestEnd(testname);
     }
+    */
     
     @Test
     public void test_types_all(){
@@ -250,7 +253,8 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         Logger.logTestEnd(testname);
     }
     
-    @Test
+    // big value in JD* allowed
+    /*@Test
     public void test_lsrun_tooBig(){
         String testname = "test_lsrun_tooBig";
         Logger.logTestStart(testname);
@@ -267,8 +271,9 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         assertEquals(expected.getRegArimaSpecification().getOutliers(), actual.getRegArimaSpecification().getOutliers());
         
         Logger.logTestEnd(testname);
-    }
+    }*/
     
+    /*
     @Test
     public void test_lsrun_tooLow(){
         String testname = "test_lsrun_tooLow";
@@ -287,6 +292,7 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         
         Logger.logTestEnd(testname);
     }
+    */
     
     @Test
     public void test_lsrun_valid(){
@@ -389,7 +395,7 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         
         expected.getRegArimaSpecification().getOutliers().clearTypes();
         expected.getRegArimaSpecification().getOutliers().add(OutlierType.LS);
-        expected.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(4.22);
+        expected.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(3.75);
         
         assertEquals(expected.getRegArimaSpecification().getOutliers().getDefaultCriticalValue(), actual.getRegArimaSpecification().getOutliers().getDefaultCriticalValue(), 0.00001);;
         assertEquals(expected.getRegArimaSpecification().getOutliers(), actual.getRegArimaSpecification().getOutliers());
@@ -404,7 +410,7 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         
         String spc = "OUTLIER\n"
                 + "{\n"
-                + "types = ao\n"
+                + "types = tc\n"
                 + "critical = (3.75,4.22,4.77)\n"
                 + "}\n";
         
@@ -412,7 +418,7 @@ public class WinX12SpecSeperator_Test_OUTLIER {
         
         expected.getRegArimaSpecification().getOutliers().clearTypes();
         expected.getRegArimaSpecification().getOutliers().add(OutlierType.TC);
-        expected.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(4.77);
+        expected.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(3.75);
         
         assertEquals(expected.getRegArimaSpecification().getOutliers().getDefaultCriticalValue(), actual.getRegArimaSpecification().getOutliers().getDefaultCriticalValue(), 0.00001);;
         assertEquals(expected.getRegArimaSpecification().getOutliers(), actual.getRegArimaSpecification().getOutliers());

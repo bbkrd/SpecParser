@@ -385,6 +385,7 @@ public class WinX12SpecSeperator_Test_X11 {
 	Logger.logTestEnd(testname);
     }
     
+    /*
     @Test
     public void test_seasonalma_invalid(){
 	String testname = "test_seasonalma_invalid";
@@ -402,6 +403,7 @@ public class WinX12SpecSeperator_Test_X11 {
         assertEquals(expected.getX11Specification(), actual.getX11Specification());
         Logger.logTestEnd(testname);
     }
+    */
     
     @Test
     public void test_sigmalim_valid(){
