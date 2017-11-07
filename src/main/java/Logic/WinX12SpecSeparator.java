@@ -2268,6 +2268,17 @@ public class WinX12SpecSeparator {
 
         // create some separator
         content = content.replaceAll(",", " ");
+        
+        if(content.trim().isEmpty()){
+            //Meldung
+            String message = "Argument VARIABLES empty";
+            infos.put(partName
+                            + ": " + message
+                            + ". (Code:1600)",
+                            TranslationInfo.WARNING2);
+            return;
+        }
+        
         String[] variables = content.split("\\s+");
         String method;
         String assign;
