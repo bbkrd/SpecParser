@@ -225,12 +225,14 @@ public final class MultiTopComponent extends TopComponent {
     }//GEN-LAST:event_loadActionPerformed
 
     private void refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshActionPerformed
+       if(specList!=null && specList.getSelectedIndex() >= 0){
         SpecCollector newSpec = spec_array.get(specList.getSelectedIndex());
         newSpec.setWinX12Spec(specViewer.getWinX12Text());
         newSpec.translate(TranslationTo_Type.JDSpec);
         specViewer.refresh(newSpec);
         refresh.setEnabled(true);
         refresh.setForeground(Color.black);
+       }
     }//GEN-LAST:event_refreshActionPerformed
 
     private void specListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_specListValueChanged
