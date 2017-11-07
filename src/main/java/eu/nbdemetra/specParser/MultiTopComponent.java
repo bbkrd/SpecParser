@@ -97,7 +97,8 @@ public final class MultiTopComponent extends TopComponent {
         setToolTipText(Bundle.HINT_MultiTopComponentTopComponent());
         progressHandle = ProgressHandleFactory.createHandle("calculate ...");
         this.wsItem = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
-        specViewer = new SpecViewer(Type.APPLY_RESTORE_SAVE, new SpecCollector(wsItem));
+        specViewer = SpecViewer.create( new SpecCollector(wsItem));
+//                new SpecViewer(Type.APPLY_RESTORE_SAVE, new SpecCollector(wsItem));
 
         //button faerben
         specViewer.getWinDoc().addDocumentListener(new DocumentListener() {

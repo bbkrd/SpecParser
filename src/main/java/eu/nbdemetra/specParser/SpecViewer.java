@@ -48,7 +48,7 @@ public class SpecViewer extends DefaultProcessingViewer<TsDocument> {
         return viewer;
     }
 
-    public SpecViewer(Type type, final SpecCollector spec) {
+    private SpecViewer(Type type, final SpecCollector spec) {
         super(type);
         this.spec = spec;
         remove(splitter);

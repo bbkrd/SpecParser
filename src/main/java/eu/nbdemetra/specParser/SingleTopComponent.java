@@ -142,7 +142,8 @@ public final class SingleTopComponent extends TopComponent {
         if (!multi) {
             specViewer = SpecViewer.create(spec);
         }else{
-            specViewer= new SpecViewer(Type.APPLY_RESTORE_SAVE, spec);
+            specViewer = SpecViewer.create(spec);
+//                    new SpecViewer(Type.APPLY_RESTORE_SAVE, spec);
         }
 
         specViewer = specViewer.refresh(spec);

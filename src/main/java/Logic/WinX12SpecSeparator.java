@@ -2446,6 +2446,9 @@ public class WinX12SpecSeparator {
             case "FCT":
                 tmp = "forecast";
                 break;
+            case "D11":
+                tmp = "seasonaladjusted";
+                break;
         }
         if (tmp.isEmpty()) {
             infos.put(partName
