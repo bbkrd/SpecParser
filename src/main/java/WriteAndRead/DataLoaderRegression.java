@@ -16,6 +16,7 @@
 package WriteAndRead;
 
 import ec.tss.DynamicTsVariable;
+import ec.tss.TsMoniker;
 import ec.tstoolkit.timeseries.regression.TsVariable;
 import ec.tstoolkit.timeseries.simplets.TsData;
 import ec.tstoolkit.timeseries.simplets.TsFrequency;
@@ -33,6 +34,7 @@ public class DataLoaderRegression extends DataLoader {
     private ArrayList<String> regressorName = new ArrayList();
     private ArrayList<String> regressorDesc = new ArrayList<>();
     private ArrayList<String> regressorZislId = new ArrayList();
+    private ArrayList<TsMoniker> regressorMoniker = new ArrayList();
 
     private ArrayList<TsData> regressorsFromWebService = new ArrayList();
 
@@ -71,6 +73,10 @@ public class DataLoaderRegression extends DataLoader {
     public void setRegressorDesc(String regressorDesc) {
         this.regressorDesc.add(regressorDesc);
     }
+    
+    public void addMoniker(TsMoniker moniker){
+        regressorMoniker.add(moniker);
+    }
 
     public TsVariable[] getRegressors() {
 
@@ -106,22 +112,20 @@ public class DataLoaderRegression extends DataLoader {
             //Fehlermeldung: Keine Werte vorhanden
 //            messages = "Keine Werte vorhanden";
             return null;
-        } else {
-            if (regressorName != null) {
-                if (regressorName.size() == regressorsFromWebService.size()) {
-                    ArrayList<TsVariable> r = new ArrayList();
-                    for (int regressor = 0; regressor < regressorName.size(); regressor++) {
-                        r.add(new DynamicTsVariable(regressorZislId.get(regressor), getMoniker(), regressorsFromWebService.get(regressor)));
-                    }
-                    return r.toArray(new TsVariable[0]);
-                } else {
-                    //Fehlermeldung: unterschiedliche LÃ¤ngen bei Namen und Daten
-                    super.infos.put("REGRESSION"
-                            + ": Number of regressor names not equal to number of regressors"
-                            + ". (Code:2101).",
-                            TranslationInfo.ERROR);
-                    return null;
+        } else if (regressorName != null) {
+            if (regressorName.size() == regressorsFromWebService.size()) {
+                ArrayList<TsVariable> r = new ArrayList();
+                for (int regressor = 0; regressor < regressorName.size(); regressor++) {
+                    r.add(new DynamicTsVariable(regressorZislId.get(regressor), regressorMoniker.get(regressor), regressorsFromWebService.get(regressor)));
                 }
+                return r.toArray(new TsVariable[0]);
+            } else {
+                //Fehlermeldung: unterschiedliche Laengen bei Namen und Daten
+                super.infos.put("REGRESSION"
+                        + ": Number of regressor names not equal to number of regressors"
+                        + ". (Code:2101).",
+                        TranslationInfo.ERROR);
+                return null;
             }
         }
         return null;

@@ -151,7 +151,7 @@ public class WinX12SpecSeparator {
 
             //no outliers
             spec.getRegArimaSpecification().getOutliers().reset();
-            
+
             //transform
             spec.getRegArimaSpecification().getTransform().setFunction(DefaultTransformationType.None);
             spec.getRegArimaSpecification().getTransform().setAICDiff(-2.0);
@@ -257,9 +257,6 @@ public class WinX12SpecSeparator {
             tsName = name;
         }
 
-//        if (dataLoader.getZislId() != null) {
-//            tsName = tsName + " from " + dataLoader.getZislId();
-//        }
         //MetaData
         return TsFactory.instance.createTs(tsName, dataLoader.getMoniker(), null, data);
     }
@@ -669,7 +666,7 @@ public class WinX12SpecSeparator {
             if (!values[i].trim().isEmpty()) {
                 String reg = fixedRegressors.get(i);
                 // supported outliertypes for fixed coefficients
-                if (reg.startsWith("AO") || reg.startsWith("LS") || reg.startsWith("TC") || reg.startsWith("SO") || reg.startsWith("TL") || reg.startsWith("RP") || reg.startsWith("reg_SpecParser") | reg.startsWith("easter")) {
+                if (reg.startsWith("AO") || reg.startsWith("LS") || reg.startsWith("TC") || reg.startsWith("SO") || reg.startsWith("TL") || reg.startsWith("RP") || reg.startsWith("easter")) {
                     if (values[i].contains("F")) {
                         double value = Double.parseDouble(values[i].replaceAll("F", "").trim());
                         spec.getRegArimaSpecification().getRegression().setFixedCoefficients(ITsVariable.shortName(reg), new double[]{value});
@@ -679,6 +676,11 @@ public class WinX12SpecSeparator {
                                 + ". (Code:1304)",
                                 TranslationInfo.ERROR);
                     }
+                } else if (reg.startsWith("reg_SpecParser")) {
+                    infos.put(partName
+                            + ": Argument B not supported for user defined variables. Parameter needs to be fixed manually"
+                            + ". (Code:1306)",
+                            TranslationInfo.WARNING1);
                 } else {
                     // Meldung Fixierung wird derzeit nicht unterstuetzt
                     infos.put(partName
@@ -784,24 +786,6 @@ public class WinX12SpecSeparator {
 
         SingleOutlierSpec[] o = spec.getRegArimaSpecification().getOutliers().getTypes();
         if (o != null) {
-            // TODO: pruefe ob critical value richtig gesetzt wird
-
-//            if (s.length == o.length) {
-//                for (int i = 0; i < s.length; i++) {
-//                    try {
-//                        o[i].setCriticalValue(Double.parseDouble(s[i]));
-//                    } catch (NumberFormatException e) {
-//                        LOGGER.error(e.toString());
-//                        infos.put(partName
-//                                + ": Value " + content + " in argument CRITICAL not supported."
-//                                + " Value set to default " + spec.getRegArimaSpecification().getOutliers().getDefaultCriticalValue()
-//                                + ". (Code:1808)",
-//                                TranslationInfo.WARNING2);
-//                        o[i].setCriticalValue(spec.getRegArimaSpecification().getOutliers().getDefaultCriticalValue());
-//                    }
-//                }
-//            } else
-//            {
             try {
                 spec.getRegArimaSpecification().getOutliers().setDefaultCriticalValue(Double.parseDouble(s[0]));
                 if (s.length > 1) {
@@ -819,7 +803,6 @@ public class WinX12SpecSeparator {
                         + ". (Code:1809)",
                         TranslationInfo.WARNING2);
             }
-//            }
         } else {
             infos.put(partName
                     + ": Only an overall value in argument CRITICAL supported."
@@ -2268,17 +2251,17 @@ public class WinX12SpecSeparator {
 
         // create some separator
         content = content.replaceAll(",", " ");
-        
-        if(content.trim().isEmpty()){
+
+        if (content.trim().isEmpty()) {
             //Meldung
             String message = "Argument VARIABLES empty";
             infos.put(partName
-                            + ": " + message
-                            + ". (Code:1600)",
-                            TranslationInfo.WARNING2);
+                    + ": " + message
+                    + ". (Code:1600)",
+                    TranslationInfo.WARNING2);
             return;
         }
-        
+
         String[] variables = content.split("\\s+");
         String method;
         String assign;
@@ -2359,6 +2342,8 @@ public class WinX12SpecSeparator {
             TsData dataFromWebServive = zisl.getData();
             TsMoniker moniker = zisl.getMoniker();
 
+            
+            
             if (dataFromWebServive != null) {
                 switch (partName) {
                     case SERIES:
@@ -2384,7 +2369,7 @@ public class WinX12SpecSeparator {
                         break;
                     case REGRESSION:
                         regressionLoader.addRegFromWebServive(dataFromWebServive);
-                        regressionLoader.setMoniker(moniker);
+                        regressionLoader.addMoniker(moniker);
                         regressionLoader.setPeriod(dataFromWebServive.getFrequency());
 //                    regressionLoader.setRegressorDesc(content);
                         regressionLoader.setRegressorZisl(content);
@@ -2475,6 +2460,10 @@ public class WinX12SpecSeparator {
 
     public void read_zewid(SpecificationPart partName, String content) {
         read_zisd(partName, content);
+    }
+
+    public void read_zewis(SpecificationPart partName, String content) {
+        read_ziss(partName, content);
     }
 
     /*methods for variables*/
