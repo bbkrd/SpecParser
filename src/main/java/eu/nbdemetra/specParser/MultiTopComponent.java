@@ -13,7 +13,6 @@ import ec.satoolkit.ISaSpecification;
 import ec.tss.sa.SaItem;
 import ec.tstoolkit.utilities.IModifiable;
 import ec.tstoolkit.utilities.Id;
-import ec.ui.view.tsprocessing.DefaultProcessingViewer.Type;
 import eu.nbdemetra.specParser.Miscellaneous.MyCellRenderer;
 import eu.nbdemetra.specParser.Miscellaneous.MyFilter;
 import eu.nbdemetra.specParser.Miscellaneous.TranslationTo_Type;
@@ -37,8 +36,8 @@ import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.util.Exceptions;
-import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.TopComponent;
 
 /**
  * Top component which displays something.
@@ -49,7 +48,7 @@ import org.openide.util.NbBundle.Messages;
 )
 @TopComponent.Description(
         preferredID = "MultiTopComponentTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE", 
+        //iconBase="SET/PATH/TO/ICON/HERE",
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(mode = "editor", openAtStartup = false)
@@ -97,7 +96,7 @@ public final class MultiTopComponent extends TopComponent {
         setToolTipText(Bundle.HINT_MultiTopComponentTopComponent());
         progressHandle = ProgressHandleFactory.createHandle("calculate ...");
         this.wsItem = (WorkspaceItem) wsNode.getWorkspace().searchDocument(wsNode.lookup(), IModifiable.class);
-        specViewer = SpecViewer.create( new SpecCollector(wsItem));
+        specViewer = SpecViewer.create(new SpecCollector(wsItem));
 //                new SpecViewer(Type.APPLY_RESTORE_SAVE, new SpecCollector(wsItem));
 
         //button faerben
@@ -225,14 +224,14 @@ public final class MultiTopComponent extends TopComponent {
     }//GEN-LAST:event_loadActionPerformed
 
     private void refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshActionPerformed
-       if(specList!=null && specList.getSelectedIndex() >= 0){
-        SpecCollector newSpec = spec_array.get(specList.getSelectedIndex());
-        newSpec.setWinX12Spec(specViewer.getWinX12Text());
-        newSpec.translate(TranslationTo_Type.JDSpec);
-        specViewer.refresh(newSpec);
-        refresh.setEnabled(true);
-        refresh.setForeground(Color.black);
-       }
+        if (specList != null && specList.getSelectedIndex() >= 0) {
+            SpecCollector newSpec = spec_array.get(specList.getSelectedIndex());
+            newSpec.setWinX12Spec(specViewer.getWinX12Text());
+            newSpec.translate(TranslationTo_Type.JDSpec);
+            specViewer.refresh(newSpec);
+            refresh.setEnabled(true);
+            refresh.setForeground(Color.black);
+        }
     }//GEN-LAST:event_refreshActionPerformed
 
     private void specListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_specListValueChanged
@@ -241,20 +240,17 @@ public final class MultiTopComponent extends TopComponent {
             specViewer.refresh(spec_array.get(specList.getSelectedIndex()));
             refresh.setEnabled(true);
             refresh.setForeground(Color.black);
-        } else {
-            if (spec_array != null && spec_array.size() > 0) {
-                specViewer.refresh(spec_array.get(0));
-                refresh.setEnabled(true);
-                refresh.setForeground(Color.black);
-            }
+        } else if (spec_array != null && spec_array.size() > 0) {
+            specViewer.refresh(spec_array.get(0));
+            refresh.setEnabled(true);
+            refresh.setForeground(Color.black);
         }
-
 
     }//GEN-LAST:event_specListValueChanged
 
     private void refresh_allActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refresh_allActionPerformed
         spec_array = new ArrayList<>();
-        
+
         progressHandle = ProgressHandleFactory.createHandle("calculate ...");
         MultiTopComponent.LoadRunnable loadProcess = new MultiTopComponent.LoadRunnable();
         File file = new File(path + mtaName + ".mta");
@@ -298,7 +294,7 @@ public final class MultiTopComponent extends TopComponent {
 
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening      
+        // TODO add custom code on component opening
     }
 
     @Override
@@ -332,7 +328,7 @@ public final class MultiTopComponent extends TopComponent {
     public String getPath() {
         return path;
     }
-    
+
     private class LoadRunnable implements Runnable {
 
         private File mta_File;
