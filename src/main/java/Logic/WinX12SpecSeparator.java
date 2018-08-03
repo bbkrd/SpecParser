@@ -242,7 +242,10 @@ public class WinX12SpecSeparator {
                     + ". (Code: 1409)",
                     TranslationInfo.WARNING2);
         }
-        if (tsName == null) {
+
+        if (dataLoader.isDataFromWebserviceSet()) {
+            tsName = dataLoader.getZislId();
+        } else {
             tsName = name;
         }
 
@@ -1472,7 +1475,8 @@ public class WinX12SpecSeparator {
                         spec.getRegArimaSpecification().getArima().setPhi(p_para);
                         spec.getRegArimaSpecification().getArima().setTheta(q_para);
                     } else //                    ii) SARIMA part
-                     if (!seasonalAirline) {
+                    {
+                        if (!seasonalAirline) {
                             if (p <= 1) {
                                 spec.getRegArimaSpecification().getArima().setBP(p);
                                 spec.getRegArimaSpecification().getArima().setBPhi(p_para);
@@ -1511,6 +1515,7 @@ public class WinX12SpecSeparator {
                                         TranslationInfo.WARNING1);
                             }
                         }
+                    }
                 } catch (X13Exception e) {
                     // I guess it's never gone to happen
                     LOGGER.error(e.toString());
