@@ -2256,29 +2256,40 @@ public class WinX12SpecSeparator {
         }
 
         String[] variables = content.split("\\s+");
-        String method;
-        String assign;
+        String method = "";
+        String assign = "";
 
         // collect outliers in correct order
         definitions_ = new HashMap<>();
 
         for (String var : variables) {
-            var = var.trim();
-            if (var.contains("[")) {
-                //easter, sincos
-                method = "do_" + var.substring(0, var.indexOf("[")).trim().toLowerCase();
-                assign = var.substring(var.indexOf("[") + 1, var.indexOf("]")).trim();
+            var = var.toLowerCase().trim();
 
-            } else if (var.length() > 2 && (var.charAt(2) == '1' || var.charAt(2) == '2')) {
-                //outlier oder ramp: rp1999.1 or LS2002.4
-                method = "do_" + var.substring(0, 2).toLowerCase();
-                assign = var.substring(2);
-
-            } else {
-                //const oder td
+            if (var.matches("\\D*")) {
+                //variable without a number: const, seasonal, td
                 method = "do_" + var.toLowerCase();
                 assign = "";
+            } else {
+                // variable with number
+
+                if (var.contains("[")) {
+                    //variables with [...]: sincos, easter, tdstock
+                    method = "do_" + var.substring(0, var.indexOf("[")).trim().toLowerCase();
+                    assign = var.substring(var.indexOf("[") + 1, var.indexOf("]")).trim();
+                }
+
+                if (var.contains(".")) {
+                    // variable with date : rp, ao, so, tc, ls
+                    method = "do_" + var.substring(0, 2).toLowerCase();
+                    assign = var.substring(2);
+                }
+
+                if ("td1coeff".equals(var)) {
+                    method = "do_" + var.toLowerCase();
+                    assign = "";
+                }
             }
+
             try {
                 //5. try to invoke the method for the argument
                 Method m = this.getClass().getDeclaredMethod(method.toLowerCase(), SpecificationPart.class, String.class);
@@ -2309,9 +2320,11 @@ public class WinX12SpecSeparator {
             }
         }
 
-        definitions_.values().stream().forEach((outliers) -> {
-            spec.getRegArimaSpecification().getRegression().add(outliers.get(0));
-        });
+        definitions_.values()
+                .stream().forEach((outliers) -> {
+                    spec.getRegArimaSpecification().getRegression().add(outliers.get(0));
+                }
+                );
     }
 
     private void read_zewil(SpecificationPart partName, String content) {
@@ -2329,7 +2342,8 @@ public class WinX12SpecSeparator {
     private void read_zisl(SpecificationPart partName, String content) {
 
         content = content.replaceAll(";", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
-        Izisl zisl = Lookup.getDefault().lookup(Izisl.class);
+        Izisl zisl = Lookup.getDefault().lookup(Izisl.class
+        );
         if (zisl != null) {
             zisl.setId(content.toUpperCase(), name);
             TsData dataFromWebServive = zisl.getData();
@@ -2472,6 +2486,19 @@ public class WinX12SpecSeparator {
 
         for (int i = 0; i < 5; i++) {
             fixedRegressors.add("TD");
+        }
+    }
+
+    private void do_td1coeff(SpecificationPart partName, String content) {
+        TradingDaysSpec td = spec.getRegArimaSpecification().getRegression().getTradingDays();
+        td.setTradingDaysType(TradingDaysType.WorkingDays);
+        td.setTest(RegressionTestSpec.None);
+        td.setHolidays(null);
+        td.setUserVariables(null);
+
+        // TODO: sinnvoll?
+        for (int i = 0; i < 2; i++) {
+            fixedRegressors.add("WD");
         }
     }
 
